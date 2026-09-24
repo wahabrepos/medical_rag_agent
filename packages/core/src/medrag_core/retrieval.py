@@ -6,7 +6,7 @@ removed) and Reciprocal Rank Fusion over the BM25 and dense result lists.
 """
 
 import re
-from collections.abc import Sequence
+from collections.abc import Hashable, Sequence
 from enum import StrEnum
 
 RRF_K = 60
@@ -59,14 +59,14 @@ def tokenize(text: str) -> list[str]:
     return [t for t in text.split() if t not in STOPWORDS and len(t) > 1]
 
 
-def reciprocal_rank_fusion(
-    bm25: Sequence[str],
-    dense: Sequence[str],
+def reciprocal_rank_fusion[T: Hashable](
+    bm25: Sequence[T],
+    dense: Sequence[T],
     *,
     k: int = RRF_K,
     weight_bm25: float = 1.0,
     weight_dense: float = 1.0,
-) -> list[str]:
+) -> list[T]:
     """Merge two ranked lists of document ids by weighted Reciprocal Rank Fusion.
 
     Each occurrence at rank r (1-based) adds weight / (k + r); an id that appears
@@ -74,23 +74,23 @@ def reciprocal_rank_fusion(
     first-seen order (BM25 before dense). Equal weights give the research work's
     unweighted ordering.
     """
-    scores: dict[str, float] = {}
+    scores: dict[T, float] = {}
     for weight, ranked in ((weight_bm25, bm25), (weight_dense, dense)):
         for rank, doc_id in enumerate(ranked, start=1):
             scores[doc_id] = scores.get(doc_id, 0.0) + weight * (1.0 / (k + rank))
     return [doc_id for doc_id, _ in sorted(scores.items(), key=lambda kv: kv[1], reverse=True)]
 
 
-def select_context(
-    bm25: Sequence[str],
-    dense: Sequence[str],
+def select_context[T: Hashable](
+    bm25: Sequence[T],
+    dense: Sequence[T],
     *,
     mode: RetrievalMode = RetrievalMode.HYBRID,
     top_k: int = 5,
     k: int = RRF_K,
     weight_bm25: float = 1.0,
     weight_dense: float = 1.0,
-) -> list[str]:
+) -> list[T]:
     """The passages handed to the generator for one iteration."""
     if mode is RetrievalMode.BM25_ONLY:
         return list(bm25[:top_k])

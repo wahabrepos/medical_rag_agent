@@ -8,7 +8,7 @@ The agent retrieves PubMed evidence with hybrid search, generates a JSON answer 
 
 ## Status
 
-Early development. The workspace, tooling and the research-work reference data are in place, and the core Self-MedRAG logic (prompts, JSON parsing, BM25 tokenizer, RRF fusion, NLI verification and the loop's stop rules) is ported to `packages/core` and tested against the research-work behaviour. The first milestone is a **parity build** that reproduces the research-work results before any behaviour changes:
+Early development. The workspace, tooling and the research-work reference data are in place. The core Self-MedRAG logic (prompts, JSON parsing, BM25 tokenizer, RRF fusion, NLI verification and the loop's stop rules) is ported to `packages/core`, and the data layer (PostgreSQL + pgvector schema, corpus ingestion, hybrid retrieval) reproduces the research-work retrieval: on 200 reference questions the fused top-5 overlap is 0.996 and BM25 results are identical. The first milestone is a **parity build** that reproduces the research-work results before any behaviour changes:
 
 | System (research work) | MedQA | PubMedQA |
 |---|---|---|
@@ -141,13 +141,15 @@ Fields of the graph state (`TypedDict`): `question`, `question_type`, `options`,
 ```
 packages/settings/    typed runtime settings (pydantic-settings)
 packages/core/        framework-free Self-MedRAG logic
+packages/db/          PostgreSQL + pgvector schema (SQLAlchemy)
+packages/search/      BM25 index, pgvector search, hybrid retriever
 packages/agent/       LangGraph agent
 apps/api/             FastAPI service
 apps/web/             Next.js UI
 services/inference/   embedding + NLI service (CPU)
 workers/ingest/       corpus ingestion jobs
 eval/                 golden sets, reference results, evaluation gate
-db/migrations/        Alembic migrations
+db/                   Alembic migrations
 infra/tofu/           OpenTofu modules and environments
 deploy/               Docker Compose and Caddy config
 ```
@@ -162,6 +164,33 @@ make install              # uv sync --all-packages
 make hooks                # install pre-commit hooks (ruff, mypy, gitleaks, ...)
 make check                # lint + type-check + tests
 ```
+
+Integration tests need PostgreSQL with pgvector:
+
+```bash
+docker compose -f deploy/docker-compose.dev.yml up -d
+TEST_DATABASE_URL=postgresql+psycopg://medrag:medrag@localhost:5432/medrag \
+  uv run pytest -m integration        # uses throwaway databases, never the dev one
+```
+
+### Corpus and retrieval
+
+```bash
+uv run --env-file .env alembic -c db/alembic.ini upgrade head
+uv run --env-file .env medrag-ingest all --limit 10000 --reset       # research-work corpus size
+uv run --env-file .env --with datasets python eval/scripts/fetch_eval_sets.py
+uv run --env-file .env python eval/scripts/check_retrieval_parity.py  # needs >= 0.8, got 0.996
+```
+
+The corpus is PubMedQA (`pqa_labeled` + `pqa_unlabeled`): 203,429 abstract sections with their
+PubMed IDs, exactly the research-work corpus. Two chunking profiles are stored side by side:
+`parity` (the research-work chunker, used for the parity build) and `standard` (token-aware
+chunks of about 350 tokens over whole abstracts).
+
+> **Known limitation.** `pqa_labeled` contains the abstracts of the PubMedQA evaluation
+> questions, so for about 98% of those questions the source abstract is retrieved in the top 5.
+> PubMedQA accuracy is therefore "open-book", in the research work and here. A leakage-free
+> evaluation will exclude those abstracts.
 
 
 

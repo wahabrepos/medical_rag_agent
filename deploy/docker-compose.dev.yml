@@ -1,0 +1,26 @@
+# Local development services. Bound to localhost only.
+#   docker compose -f deploy/docker-compose.dev.yml up -d
+name: medrag-dev
+
+services:
+  postgres:
+    image: pgvector/pgvector:0.8.1-pg17
+    environment:
+      POSTGRES_USER: medrag
+      POSTGRES_PASSWORD: medrag  # local development only
+      POSTGRES_DB: medrag
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # Parallel HNSW builds use shared memory; Docker's default /dev/shm is only 64 MB.
+    shm_size: 1gb
+    command: ["postgres", "-c", "shared_buffers=256MB", "-c", "maintenance_work_mem=256MB"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U medrag -d medrag"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  pgdata:

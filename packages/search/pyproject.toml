@@ -1,0 +1,18 @@
+[project]
+name = "medrag-search"
+version = "0.1.0"
+description = "Hybrid retrieval: BM25 index, pgvector search and rank fusion."
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "medrag-core",
+    "medrag-db",
+    "numpy>=2.2",
+]
+
+[build-system]
+requires = ["uv_build>=0.8.15,<0.9"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+medrag-core = { workspace = true }
+medrag-db = { workspace = true }

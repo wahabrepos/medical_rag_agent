@@ -4,7 +4,11 @@ version = "0.1.0"
 description = "CPU inference service: BGE embeddings and DeBERTa NLI."
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "huggingface-hub>=0.34",
     "medrag-settings",
+    "numpy>=2.2",
+    "onnxruntime>=1.22",
+    "tokenizers>=0.21",
 ]
 
 [build-system]
