@@ -1,0 +1,15 @@
+[project]
+name = "medrag-eval"
+version = "0.1.0"
+description = "Benchmark loaders, metrics and the evaluation gate."
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "medrag-core",
+]
+
+[build-system]
+requires = ["uv_build>=0.8.15,<0.9"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+medrag-core = { workspace = true }

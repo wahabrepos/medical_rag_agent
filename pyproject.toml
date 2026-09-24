@@ -1,0 +1,94 @@
+[project]
+name = "medical-rag-agent"
+version = "0.1.0"
+description = "Cloud agentic RAG for medical question answering (Self-MedRAG migration)"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+license = "MIT"
+dependencies = [
+    "medrag-settings",
+    "medrag-core",
+    "medrag-agent",
+    "medrag-api",
+    "medrag-inference",
+    "medrag-ingest",
+    "medrag-eval",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.17",
+    "pre-commit>=4.3",
+    "pytest>=8.4",
+    "pytest-cov>=6.2",
+    "ruff>=0.12",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = [
+    "packages/*",
+    "apps/api",
+    "services/inference",
+    "workers/ingest",
+    "eval",
+]
+
+[tool.uv.sources]
+medrag-settings = { workspace = true }
+medrag-core = { workspace = true }
+medrag-agent = { workspace = true }
+medrag-api = { workspace = true }
+medrag-inference = { workspace = true }
+medrag-ingest = { workspace = true }
+medrag-eval = { workspace = true }
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["apps/web", "infra", "db/migrations/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "N", "S", "PT"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["S101"]
+
+[tool.ruff.lint.isort]
+known-first-party = [
+    "medrag_settings",
+    "medrag_core",
+    "medrag_agent",
+    "medrag_api",
+    "medrag_inference",
+    "medrag_ingest",
+    "medrag_eval",
+]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+files = [
+    "packages/settings/src",
+    "packages/core/src",
+    "packages/agent/src",
+    "apps/api/src",
+    "services/inference/src",
+    "workers/ingest/src",
+    "eval/src",
+]
+
+[tool.pytest.ini_options]
+addopts = "-ra --strict-markers --import-mode=importlib"
+testpaths = [
+    "packages/settings/tests",
+    "packages/core/tests",
+    "packages/agent/tests",
+    "apps/api/tests",
+    "services/inference/tests",
+    "workers/ingest/tests",
+    "eval/tests",
+]

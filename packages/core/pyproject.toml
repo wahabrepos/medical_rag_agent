@@ -1,0 +1,11 @@
+[project]
+name = "medrag-core"
+version = "0.1.0"
+description = "Framework-free Self-MedRAG logic: prompts, parsing, fusion, verification, stop rules."
+requires-python = ">=3.12,<3.13"
+dependencies = [
+]
+
+[build-system]
+requires = ["uv_build>=0.8.15,<0.9"]
+build-backend = "uv_build"

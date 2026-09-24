@@ -1,0 +1,17 @@
+[project]
+name = "medrag-api"
+version = "0.1.0"
+description = "FastAPI service exposing the agent."
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "medrag-agent",
+    "medrag-settings",
+]
+
+[build-system]
+requires = ["uv_build>=0.8.15,<0.9"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+medrag-agent = { workspace = true }
+medrag-settings = { workspace = true }

@@ -1,0 +1,17 @@
+[project]
+name = "medrag-ingest"
+version = "0.1.0"
+description = "Corpus ingestion jobs: load, chunk, embed, index."
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "medrag-core",
+    "medrag-settings",
+]
+
+[build-system]
+requires = ["uv_build>=0.8.15,<0.9"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+medrag-core = { workspace = true }
+medrag-settings = { workspace = true }

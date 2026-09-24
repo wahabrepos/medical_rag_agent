@@ -1,0 +1,58 @@
+# Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Models, data and generated artifacts (downloaded or built, never committed)
+models/
+data/
+cache/
+logs/
+checkpoints/
+*.onnx
+*.safetensors
+*.bin
+*.pt
+*.faiss
+*.npy
+
+# Evaluation outputs (curated references live in eval/reference/)
+eval/runs/
+eval/reports/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+.pnpm-store/
+
+# OpenTofu
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+
+# Editors / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
