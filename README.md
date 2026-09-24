@@ -8,7 +8,7 @@ The agent retrieves PubMed evidence with hybrid search, generates a JSON answer 
 
 ## Status
 
-Early development. The workspace, tooling and the research-work reference data are in place. The core Self-MedRAG logic (prompts, JSON parsing, BM25 tokenizer, RRF fusion, NLI verification and the loop's stop rules) is ported to `packages/core`, and the data layer (PostgreSQL + pgvector schema, corpus ingestion, hybrid retrieval) reproduces the research-work retrieval: on 200 reference questions the fused top-5 overlap is 0.996 and BM25 results are identical. The first milestone is a **parity build** that reproduces the research-work results before any behaviour changes:
+Early development. The workspace, tooling and the research-work reference data are in place. The core Self-MedRAG logic (prompts, JSON parsing, BM25 tokenizer, RRF fusion, NLI verification and the loop's stop rules) is ported to `packages/core`, and the data layer (PostgreSQL + pgvector schema, corpus ingestion, hybrid retrieval) reproduces the research-work retrieval: on 200 reference questions the fused top-5 overlap is 0.996 and BM25 scores are bit-identical. The first milestone is a **parity build** that reproduces the research-work results before any behaviour changes:
 
 | System (research work) | MedQA | PubMedQA |
 |---|---|---|

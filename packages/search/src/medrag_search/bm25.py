@@ -2,8 +2,9 @@
 
 Scores are computed with the same operations in the same order as
 `rank_bm25.BM25Okapi` 0.2.2 (including the epsilon floor for negative IDF), so
-rankings match bit for bit. Postings are stored per term, so a query only touches
-the documents that contain its terms when building the frequency vectors.
+scores match bit for bit and rankings match wherever scores are not tied.
+Postings are stored per term, so a query only touches the documents that contain
+its terms when building the frequency vectors.
 """
 
 import json
@@ -131,8 +132,13 @@ class BM25Index:
         return score
 
     def top_positions(self, query_tokens: Sequence[str], n: int) -> list[int]:
-        """Index positions of the n best documents, in rank_bm25's order (ties included)."""
-        order = np.argsort(self.scores(query_tokens))[::-1][:n]
+        """Index positions of the n best documents, best first.
+
+        rank_bm25 uses numpy's default sort, whose order for tied scores differs
+        between CPU architectures. A stable sort makes ties deterministic on every
+        platform (the later document first); non-tied rankings are unchanged.
+        """
+        order = np.argsort(self.scores(query_tokens), kind="stable")[::-1][:n]
         return [int(i) for i in order]
 
     def search(self, query: str, n: int = 10) -> list[int]:
