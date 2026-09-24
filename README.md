@@ -8,7 +8,7 @@ The agent retrieves PubMed evidence with hybrid search, generates a JSON answer 
 
 ## Status
 
-Early development. The repository currently holds the workspace skeleton and tooling. The first milestone is a **parity build** that reproduces the research-work results before any behaviour changes:
+Early development. The workspace, tooling and the research-work reference data are in place, and the core Self-MedRAG logic (prompts, JSON parsing, BM25 tokenizer, RRF fusion, NLI verification and the loop's stop rules) is ported to `packages/core` and tested against the research-work behaviour. The first milestone is a **parity build** that reproduces the research-work results before any behaviour changes:
 
 | System (research work) | MedQA | PubMedQA |
 |---|---|---|

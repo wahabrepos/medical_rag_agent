@@ -17,25 +17,14 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from medrag_eval.datasets import format_medqa_question
+
 ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = ROOT / "eval/reference/eval_sets_manifest.json"
-OPTION_LABELS = "ABCDE"
 
 
 def sha256(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
-
-
-def format_medqa(question: str, options: list[str]) -> str:
-    """Same prompt format as the research-work MedQA loader."""
-    if not options:
-        return question
-    choices = "\n".join(f"{OPTION_LABELS[i]}. {opt}" for i, opt in enumerate(options[:5]))
-    return (
-        f"{question}\n\n"
-        f"Answer choices:\n{choices}\n\n"
-        "Output ONLY the single letter (A/B/C/D) of the correct answer."
-    )
 
 
 def load_medqa() -> list[dict[str, Any]]:
@@ -53,7 +42,7 @@ def load_medqa() -> list[dict[str, Any]]:
         question = str(inner.get("Question", inner.get("question", ""))).strip()
         rows.append(
             {
-                "question": format_medqa(question, options),
+                "question": format_medqa_question(question, options),
                 "options": options,
                 "answer": str(inner.get("Correct Option", "")).strip().upper(),
                 "answer_text": str(inner.get("Correct Answer", "")).strip(),
