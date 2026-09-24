@@ -48,7 +48,8 @@ medrag-eval = { workspace = true }
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-extend-exclude = ["apps/web", "infra", "db/migrations/versions"]
+# eval/capture runs on the research-work Python 3.10 virtualenv and is kept exactly as run.
+extend-exclude = ["apps/web", "infra", "db/migrations/versions", "eval/capture"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "N", "S", "PT"]
@@ -92,3 +93,5 @@ testpaths = [
     "workers/ingest/tests",
     "eval/tests",
 ]
+# Fixture folders are data, not test modules.
+norecursedirs = ["fixtures"]

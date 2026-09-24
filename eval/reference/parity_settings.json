@@ -1,0 +1,47 @@
+{
+  "source_config": "config_selfmedrag_mistral.yaml",
+  "generator": {
+    "provider": "mistral",
+    "model": "mistral-small-latest",
+    "max_tokens": 400,
+    "temperature": null,
+    "temperature_note": "Not sent in the API call, so the provider default applied (the config's 0.1 only affected the local model).",
+    "system_prompt": "You are a medical AI assistant specialized in evidence-based clinical reasoning.\nBase ALL claims on provided context. If context doesn't support a claim, state \"insufficient evidence\".\n\nOUTPUT FORMAT (JSON):\n{\n  \"answer\": \"Brief answer\",\n  \"rationale\": [\"Reasoning step 1\", \"Step 2\"],\n  \"confidence\": 0.85,\n  \"citations\": [\"Context used\"]\n}\n",
+    "user_prompt_template": "CONTEXT (Retrieved Medical Literature):\n{context}\n\n{history}\n\nQUESTION: {query}\n\nProvide your answer in the JSON format specified in the system prompt.",
+    "pubmedqa_binary_constraint": true
+  },
+  "retrieval": {
+    "corpus": "first 10,000 records of pubmed_abstracts.jsonl; abstract text only (title not included); sentence chunks of <=512 words, min 20 words",
+    "num_chunks": 8968,
+    "bm25": {
+      "use_idf": true,
+      "k1": 1.5,
+      "b": 0.75
+    },
+    "dense_model": "BAAI/bge-small-en-v1.5",
+    "dense_pooling": "CLS token, L2-normalised, max_length 512",
+    "per_retriever_top_k": 10,
+    "rrf_k": 60,
+    "rrf_weights_applied": false,
+    "top_k": 5
+  },
+  "verification": {
+    "nli_model": "cross-encoder/nli-deberta-v3-base",
+    "entailment_label_index": 2,
+    "verification_threshold": 0.7,
+    "max_length": 512
+  },
+  "loop": {
+    "max_iterations": 3,
+    "early_stopping": true,
+    "min_improvement": 0.05,
+    "max_time_seconds": 600,
+    "refinement_strategy": "structured",
+    "rationale_score_threshold": 0.7
+  },
+  "targets": {
+    "medqa_accuracy": 0.713,
+    "pubmedqa_accuracy": 0.7596,
+    "tolerance_pp": 2.0
+  }
+}

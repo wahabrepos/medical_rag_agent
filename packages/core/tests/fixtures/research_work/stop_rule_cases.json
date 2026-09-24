@@ -1,0 +1,735 @@
+{
+  "settings": {
+    "max_iterations": 3,
+    "early_stopping": true,
+    "min_improvement": 0.05,
+    "rationale_score_threshold": 0.7,
+    "top_k": 5
+  },
+  "fakes": {
+    "generator": "call n returns answer-n, [stmt-n-a, stmt-n-b], confidence 0.5+n/10, [cite-n]",
+    "retrieval": "bm25 [b1, b2], dense [d1, b1], fused = order-preserving union"
+  },
+  "cases": [
+    {
+      "id": "meets-threshold-first",
+      "refinement_strategy": "structured",
+      "reflector_script": [
+        [
+          0.8,
+          []
+        ]
+      ],
+      "expected": {
+        "answer": "answer-1",
+        "rationale": [
+          "stmt-1-a",
+          "stmt-1-b"
+        ],
+        "iterations": 1,
+        "support_score": 0.8,
+        "retrieval_queries": [
+          "What is the question?"
+        ],
+        "history": [
+          {
+            "iteration": 1,
+            "query": "What is the question?",
+            "answer": "answer-1",
+            "rationale": [
+              "stmt-1-a",
+              "stmt-1-b"
+            ],
+            "confidence": 0.6,
+            "support_score": 0.8,
+            "citations": [
+              "cite-1"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "meets-threshold-second",
+      "refinement_strategy": "structured",
+      "reflector_script": [
+        [
+          0.5,
+          [
+            "unsupported claim one",
+            "unsupported claim two"
+          ]
+        ],
+        [
+          0.75,
+          []
+        ]
+      ],
+      "expected": {
+        "answer": "answer-2",
+        "rationale": [
+          "stmt-2-a",
+          "stmt-2-b"
+        ],
+        "iterations": 2,
+        "support_score": 0.75,
+        "retrieval_queries": [
+          "What is the question?",
+          "  What is the question?   Find specific evidence for: unsupported claim one unsupported claim two"
+        ],
+        "history": [
+          {
+            "iteration": 1,
+            "query": "What is the question?",
+            "answer": "answer-1",
+            "rationale": [
+              "stmt-1-a",
+              "stmt-1-b"
+            ],
+            "confidence": 0.6,
+            "support_score": 0.5,
+            "citations": [
+              "cite-1"
+            ]
+          },
+          {
+            "iteration": 2,
+            "query": "  What is the question?   Find specific evidence for: unsupported claim one unsupported claim two",
+            "answer": "answer-2",
+            "rationale": [
+              "stmt-2-a",
+              "stmt-2-b"
+            ],
+            "confidence": 0.7,
+            "support_score": 0.75,
+            "citations": [
+              "cite-2"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "threshold-exactly-equal",
+      "refinement_strategy": "structured",
+      "reflector_script": [
+        [
+          0.6,
+          [
+            "unsupported claim one"
+          ]
+        ],
+        [
+          0.7,
+          []
+        ]
+      ],
+      "expected": {
+        "answer": "answer-2",
+        "rationale": [
+          "stmt-2-a",
+          "stmt-2-b"
+        ],
+        "iterations": 2,
+        "support_score": 0.7,
+        "retrieval_queries": [
+          "What is the question?",
+          "  What is the question?   Find specific evidence for: unsupported claim one"
+        ],
+        "history": [
+          {
+            "iteration": 1,
+            "query": "What is the question?",
+            "answer": "answer-1",
+            "rationale": [
+              "stmt-1-a",
+              "stmt-1-b"
+            ],
+            "confidence": 0.6,
+            "support_score": 0.6,
+            "citations": [
+              "cite-1"
+            ]
+          },
+          {
+            "iteration": 2,
+            "query": "  What is the question?   Find specific evidence for: unsupported claim one",
+            "answer": "answer-2",
+            "rationale": [
+              "stmt-2-a",
+              "stmt-2-b"
+            ],
+            "confidence": 0.7,
+            "support_score": 0.7,
+            "citations": [
+              "cite-2"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "early-stop-small-gain",
+      "refinement_strategy": "structured",
+      "reflector_script": [
+        [
+          0.5,
+          [
+            "unsupported claim one",
+            "unsupported claim two"
+          ]
+        ],
+        [
+          0.52,
+          [
+            "unsupported claim one"
+          ]
+        ]
+      ],
+      "expected": {
+        "answer": "answer-2",
+        "rationale": [
+          "stmt-2-a",
+          "stmt-2-b"
+        ],
+        "iterations": 2,
+        "support_score": 0.52,
+        "retrieval_queries": [
+          "What is the question?",
+          "  What is the question?   Find specific evidence for: unsupported claim one unsupported claim two"
+        ],
+        "history": [
+          {
+            "iteration": 1,
+            "query": "What is the question?",
+            "answer": "answer-1",
+            "rationale": [
+              "stmt-1-a",
+              "stmt-1-b"
+            ],
+            "confidence": 0.6,
+            "support_score": 0.5,
+            "citations": [
+              "cite-1"
+            ]
+          },
+          {
+            "iteration": 2,
+            "query": "  What is the question?   Find specific evidence for: unsupported claim one unsupported claim two",
+            "answer": "answer-2",
+            "rationale": [
+              "stmt-2-a",
+              "stmt-2-b"
+            ],
+            "confidence": 0.7,
+            "support_score": 0.52,
+            "citations": [
+              "cite-2"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "early-stop-drop-third",
+      "refinement_strategy": "structured",
+      "reflector_script": [
+        [
+          0.3,
+          [
+            "unsupported claim one",
+            "unsupported claim two",
+            "claim three",
+            "claim four"
+          ]
+        ],
+        [
+          0.4,
+          [
+            "unsupported claim one",
+            "unsupported claim two",
+            "claim three",
+            "claim four"
+          ]
+        ],
+        [
+          0.35,
+          [
+            "unsupported claim one",
+            "unsupported claim two",
+            "claim three",
+            "claim four"
+          ]
+        ]
+      ],
+      "expected": {
+        "answer": "answer-3",
+        "rationale": [
+          "stmt-3-a",
+          "stmt-3-b"
+        ],
+        "iterations": 3,
+        "support_score": 0.35,
+        "retrieval_queries": [
+          "What is the question?",
+          "  What is the question?   Find specific evidence for: unsupported claim one unsupported claim two claim three",
+          "  What is the question?   Find specific evidence for: unsupported claim one unsupported claim two claim three"
+        ],
+        "history": [
+          {
+            "iteration": 1,
+            "query": "What is the question?",
+            "answer": "answer-1",
+            "rationale": [
+              "stmt-1-a",
+              "stmt-1-b"
+            ],
+            "confidence": 0.6,
+            "support_score": 0.3,
+            "citations": [
+              "cite-1"
+            ]
+          },
+          {
+            "iteration": 2,
+            "query": "  What is the question?   Find specific evidence for: unsupported claim one unsupported claim two claim three",
+            "answer": "answer-2",
+            "rationale": [
+              "stmt-2-a",
+              "stmt-2-b"
+            ],
+            "confidence": 0.7,
+            "support_score": 0.4,
+            "citations": [
+              "cite-2"
+            ]
+          },
+          {
+            "iteration": 3,
+            "query": "  What is the question?   Find specific evidence for: unsupported claim one unsupported claim two claim three",
+            "answer": "answer-3",
+            "rationale": [
+              "stmt-3-a",
+              "stmt-3-b"
+            ],
+            "confidence": 0.8,
+            "support_score": 0.35,
+            "citations": [
+              "cite-3"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "exhaust-best-of-history",
+      "refinement_strategy": "structured",
+      "reflector_script": [
+        [
+          0.4,
+          [
+            "unsupported claim one",
+            "unsupported claim two",
+            "claim three",
+            "claim four"
+          ]
+        ],
+        [
+          0.5,
+          [
+            "unsupported claim one",
+            "unsupported claim two",
+            "claim three",
+            "claim four"
+          ]
+        ],
+        [
+          0.6,
+          [
+            "unsupported claim one",
+            "unsupported claim two",
+            "claim three",
+            "claim four"
+          ]
+        ]
+      ],
+      "expected": {
+        "answer": "answer-3",
+        "rationale": [
+          "stmt-3-a",
+          "stmt-3-b"
+        ],
+        "iterations": 3,
+        "support_score": 0.6,
+        "retrieval_queries": [
+          "What is the question?",
+          "  What is the question?   Find specific evidence for: unsupported claim one unsupported claim two claim three",
+          "  What is the question?   Find specific evidence for: unsupported claim one unsupported claim two claim three"
+        ],
+        "history": [
+          {
+            "iteration": 1,
+            "query": "What is the question?",
+            "answer": "answer-1",
+            "rationale": [
+              "stmt-1-a",
+              "stmt-1-b"
+            ],
+            "confidence": 0.6,
+            "support_score": 0.4,
+            "citations": [
+              "cite-1"
+            ]
+          },
+          {
+            "iteration": 2,
+            "query": "  What is the question?   Find specific evidence for: unsupported claim one unsupported claim two claim three",
+            "answer": "answer-2",
+            "rationale": [
+              "stmt-2-a",
+              "stmt-2-b"
+            ],
+            "confidence": 0.7,
+            "support_score": 0.5,
+            "citations": [
+              "cite-2"
+            ]
+          },
+          {
+            "iteration": 3,
+            "query": "  What is the question?   Find specific evidence for: unsupported claim one unsupported claim two claim three",
+            "answer": "answer-3",
+            "rationale": [
+              "stmt-3-a",
+              "stmt-3-b"
+            ],
+            "confidence": 0.8,
+            "support_score": 0.6,
+            "citations": [
+              "cite-3"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "no-unsupported-keeps-query",
+      "refinement_strategy": "structured",
+      "reflector_script": [
+        [
+          0.5,
+          []
+        ],
+        [
+          0.6,
+          []
+        ],
+        [
+          0.69,
+          []
+        ]
+      ],
+      "expected": {
+        "answer": "answer-3",
+        "rationale": [
+          "stmt-3-a",
+          "stmt-3-b"
+        ],
+        "iterations": 3,
+        "support_score": 0.69,
+        "retrieval_queries": [
+          "What is the question?",
+          "What is the question?",
+          "What is the question?"
+        ],
+        "history": [
+          {
+            "iteration": 1,
+            "query": "What is the question?",
+            "answer": "answer-1",
+            "rationale": [
+              "stmt-1-a",
+              "stmt-1-b"
+            ],
+            "confidence": 0.6,
+            "support_score": 0.5,
+            "citations": [
+              "cite-1"
+            ]
+          },
+          {
+            "iteration": 2,
+            "query": "What is the question?",
+            "answer": "answer-2",
+            "rationale": [
+              "stmt-2-a",
+              "stmt-2-b"
+            ],
+            "confidence": 0.7,
+            "support_score": 0.6,
+            "citations": [
+              "cite-2"
+            ]
+          },
+          {
+            "iteration": 3,
+            "query": "What is the question?",
+            "answer": "answer-3",
+            "rationale": [
+              "stmt-3-a",
+              "stmt-3-b"
+            ],
+            "confidence": 0.8,
+            "support_score": 0.69,
+            "citations": [
+              "cite-3"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "error-first-iteration",
+      "refinement_strategy": "structured",
+      "reflector_script": [
+        "raise"
+      ],
+      "expected": {
+        "answer": "Error during generation",
+        "rationale": [
+          "scripted failure"
+        ],
+        "iterations": 1,
+        "support_score": 0.0,
+        "retrieval_queries": [
+          "What is the question?"
+        ],
+        "history": []
+      }
+    },
+    {
+      "id": "error-second-iteration",
+      "refinement_strategy": "structured",
+      "reflector_script": [
+        [
+          0.5,
+          [
+            "unsupported claim one"
+          ]
+        ],
+        "raise"
+      ],
+      "expected": {
+        "answer": "answer-1",
+        "rationale": [
+          "stmt-1-a",
+          "stmt-1-b"
+        ],
+        "iterations": 2,
+        "support_score": 0.5,
+        "retrieval_queries": [
+          "What is the question?",
+          "  What is the question?   Find specific evidence for: unsupported claim one"
+        ],
+        "history": [
+          {
+            "iteration": 1,
+            "query": "What is the question?",
+            "answer": "answer-1",
+            "rationale": [
+              "stmt-1-a",
+              "stmt-1-b"
+            ],
+            "confidence": 0.6,
+            "support_score": 0.5,
+            "citations": [
+              "cite-1"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "strategy-decomposition",
+      "refinement_strategy": "decomposition",
+      "reflector_script": [
+        [
+          0.4,
+          [
+            "unsupported claim one",
+            "unsupported claim two",
+            "claim three",
+            "claim four"
+          ]
+        ],
+        [
+          0.5,
+          [
+            "unsupported claim one",
+            "unsupported claim two",
+            "claim three",
+            "claim four"
+          ]
+        ],
+        [
+          0.6,
+          [
+            "unsupported claim one",
+            "unsupported claim two",
+            "claim three",
+            "claim four"
+          ]
+        ]
+      ],
+      "expected": {
+        "answer": "answer-3",
+        "rationale": [
+          "stmt-3-a",
+          "stmt-3-b"
+        ],
+        "iterations": 3,
+        "support_score": 0.6,
+        "retrieval_queries": [
+          "What is the question?",
+          "Sub-question 1: What evidence supports that unsupported claim one unsupported claim two claim three?",
+          "Sub-question 2: What evidence supports that unsupported claim one unsupported claim two claim three?"
+        ],
+        "history": [
+          {
+            "iteration": 1,
+            "query": "What is the question?",
+            "answer": "answer-1",
+            "rationale": [
+              "stmt-1-a",
+              "stmt-1-b"
+            ],
+            "confidence": 0.6,
+            "support_score": 0.4,
+            "citations": [
+              "cite-1"
+            ]
+          },
+          {
+            "iteration": 2,
+            "query": "Sub-question 1: What evidence supports that unsupported claim one unsupported claim two claim three?",
+            "answer": "answer-2",
+            "rationale": [
+              "stmt-2-a",
+              "stmt-2-b"
+            ],
+            "confidence": 0.7,
+            "support_score": 0.5,
+            "citations": [
+              "cite-2"
+            ]
+          },
+          {
+            "iteration": 3,
+            "query": "Sub-question 2: What evidence supports that unsupported claim one unsupported claim two claim three?",
+            "answer": "answer-3",
+            "rationale": [
+              "stmt-3-a",
+              "stmt-3-b"
+            ],
+            "confidence": 0.8,
+            "support_score": 0.6,
+            "citations": [
+              "cite-3"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "strategy-concatenation",
+      "refinement_strategy": "concatenation",
+      "reflector_script": [
+        [
+          0.4,
+          [
+            "unsupported claim one",
+            "unsupported claim two",
+            "claim three",
+            "claim four"
+          ]
+        ],
+        [
+          0.5,
+          [
+            "unsupported claim one",
+            "unsupported claim two",
+            "claim three",
+            "claim four"
+          ]
+        ],
+        [
+          0.6,
+          [
+            "unsupported claim one",
+            "unsupported claim two",
+            "claim three",
+            "claim four"
+          ]
+        ]
+      ],
+      "expected": {
+        "answer": "answer-3",
+        "rationale": [
+          "stmt-3-a",
+          "stmt-3-b"
+        ],
+        "iterations": 3,
+        "support_score": 0.6,
+        "retrieval_queries": [
+          "What is the question?",
+          "  What is the question?   unsupported claim one unsupported claim two claim three",
+          "  What is the question?   unsupported claim one unsupported claim two claim three"
+        ],
+        "history": [
+          {
+            "iteration": 1,
+            "query": "What is the question?",
+            "answer": "answer-1",
+            "rationale": [
+              "stmt-1-a",
+              "stmt-1-b"
+            ],
+            "confidence": 0.6,
+            "support_score": 0.4,
+            "citations": [
+              "cite-1"
+            ]
+          },
+          {
+            "iteration": 2,
+            "query": "  What is the question?   unsupported claim one unsupported claim two claim three",
+            "answer": "answer-2",
+            "rationale": [
+              "stmt-2-a",
+              "stmt-2-b"
+            ],
+            "confidence": 0.7,
+            "support_score": 0.5,
+            "citations": [
+              "cite-2"
+            ]
+          },
+          {
+            "iteration": 3,
+            "query": "  What is the question?   unsupported claim one unsupported claim two claim three",
+            "answer": "answer-3",
+            "rationale": [
+              "stmt-3-a",
+              "stmt-3-b"
+            ],
+            "confidence": 0.8,
+            "support_score": 0.6,
+            "citations": [
+              "cite-3"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

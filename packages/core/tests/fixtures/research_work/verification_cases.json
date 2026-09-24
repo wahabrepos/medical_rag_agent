@@ -1,0 +1,235 @@
+{
+  "verification_threshold": 0.7,
+  "cases": [
+    {
+      "id": "all-supported",
+      "rationale": [
+        "s1",
+        "s2"
+      ],
+      "context": [
+        "p1",
+        "p2"
+      ],
+      "entailment_probs": [
+        0.9,
+        0.1,
+        0.2,
+        0.8
+      ],
+      "expected_pairs": [
+        [
+          "p1",
+          "s1"
+        ],
+        [
+          "p2",
+          "s1"
+        ],
+        [
+          "p1",
+          "s2"
+        ],
+        [
+          "p2",
+          "s2"
+        ]
+      ],
+      "expected_support_score": 1.0,
+      "expected_unsupported": []
+    },
+    {
+      "id": "one-unsupported",
+      "rationale": [
+        "s1",
+        "s2",
+        "s3"
+      ],
+      "context": [
+        "p1",
+        "p2"
+      ],
+      "entailment_probs": [
+        0.9,
+        0.1,
+        0.3,
+        0.2,
+        0.1,
+        0.75
+      ],
+      "expected_pairs": [
+        [
+          "p1",
+          "s1"
+        ],
+        [
+          "p2",
+          "s1"
+        ],
+        [
+          "p1",
+          "s2"
+        ],
+        [
+          "p2",
+          "s2"
+        ],
+        [
+          "p1",
+          "s3"
+        ],
+        [
+          "p2",
+          "s3"
+        ]
+      ],
+      "expected_support_score": 0.6666666666666666,
+      "expected_unsupported": [
+        "s2"
+      ]
+    },
+    {
+      "id": "boundary-equal",
+      "rationale": [
+        "s1"
+      ],
+      "context": [
+        "p1",
+        "p2"
+      ],
+      "entailment_probs": [
+        0.7,
+        0.2
+      ],
+      "expected_pairs": [
+        [
+          "p1",
+          "s1"
+        ],
+        [
+          "p2",
+          "s1"
+        ]
+      ],
+      "expected_support_score": 1.0,
+      "expected_unsupported": []
+    },
+    {
+      "id": "boundary-below",
+      "rationale": [
+        "s1"
+      ],
+      "context": [
+        "p1"
+      ],
+      "entailment_probs": [
+        0.6999
+      ],
+      "expected_pairs": [
+        [
+          "p1",
+          "s1"
+        ]
+      ],
+      "expected_support_score": 0.0,
+      "expected_unsupported": [
+        "s1"
+      ]
+    },
+    {
+      "id": "none-supported",
+      "rationale": [
+        "s1",
+        "s2"
+      ],
+      "context": [
+        "p1"
+      ],
+      "entailment_probs": [
+        0.1,
+        0.2
+      ],
+      "expected_pairs": [
+        [
+          "p1",
+          "s1"
+        ],
+        [
+          "p1",
+          "s2"
+        ]
+      ],
+      "expected_support_score": 0.0,
+      "expected_unsupported": [
+        "s1",
+        "s2"
+      ]
+    },
+    {
+      "id": "empty-rationale",
+      "rationale": [],
+      "context": [
+        "p1"
+      ],
+      "entailment_probs": [],
+      "expected_pairs": [],
+      "expected_support_score": 1.0,
+      "expected_unsupported": []
+    },
+    {
+      "id": "no-passages",
+      "rationale": [
+        "s1",
+        "s2"
+      ],
+      "context": [],
+      "entailment_probs": [],
+      "expected_pairs": [],
+      "expected_support_score": 0.0,
+      "expected_unsupported": [
+        "s1",
+        "s2"
+      ]
+    },
+    {
+      "id": "batch-failure-zeros",
+      "rationale": [
+        "s1",
+        "s2"
+      ],
+      "context": [
+        "p1",
+        "p2"
+      ],
+      "entailment_probs": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "expected_pairs": [
+        [
+          "p1",
+          "s1"
+        ],
+        [
+          "p2",
+          "s1"
+        ],
+        [
+          "p1",
+          "s2"
+        ],
+        [
+          "p2",
+          "s2"
+        ]
+      ],
+      "expected_support_score": 0.0,
+      "expected_unsupported": [
+        "s1",
+        "s2"
+      ]
+    }
+  ]
+}

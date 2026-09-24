@@ -1,0 +1,197 @@
+[
+  {
+    "system": "base_bm25",
+    "dataset": "medqa",
+    "n": 75,
+    "expected": {
+      "accuracy": 0.6933333333333334,
+      "f1_score": 0.6800007599939201,
+      "avg_iterations": 1.0,
+      "more_than_one_iter_pct": 0.0,
+      "avg_support_score": 0.9813333333333333,
+      "avg_confidence": 0.9350666666666668,
+      "latency_p50": 20.369240760803223,
+      "latency_p95": 41.39052348136901
+    }
+  },
+  {
+    "system": "base_bm25",
+    "dataset": "pubmedqa",
+    "n": 75,
+    "expected": {
+      "accuracy": 0.7066666666666667,
+      "f1_score": 0.37484737484737485,
+      "avg_iterations": 1.0,
+      "more_than_one_iter_pct": 0.0,
+      "avg_support_score": 0.9255555555555556,
+      "avg_confidence": 0.8724000000000003,
+      "latency_p50": 11.774305582046509,
+      "latency_p95": 26.233306312561027
+    }
+  },
+  {
+    "system": "base_dense",
+    "dataset": "medqa",
+    "n": 75,
+    "expected": {
+      "accuracy": 0.72,
+      "f1_score": 0.7126118611719799,
+      "avg_iterations": 1.0,
+      "more_than_one_iter_pct": 0.0,
+      "avg_support_score": 1.0,
+      "avg_confidence": 0.9238666666666667,
+      "latency_p50": 28.80882740020752,
+      "latency_p95": 62.56413319110868
+    }
+  },
+  {
+    "system": "base_dense",
+    "dataset": "pubmedqa",
+    "n": 75,
+    "expected": {
+      "accuracy": 0.8266666666666667,
+      "f1_score": 0.8221127531472359,
+      "avg_iterations": 1.0,
+      "more_than_one_iter_pct": 0.0,
+      "avg_support_score": 0.9955555555555554,
+      "avg_confidence": 0.9374666666666667,
+      "latency_p50": 20.52355146408081,
+      "latency_p95": 40.91077818870544
+    }
+  },
+  {
+    "system": "base_hybrid",
+    "dataset": "pubmedqa",
+    "n": 75,
+    "expected": {
+      "accuracy": 0.8,
+      "f1_score": 0.5390600684718332,
+      "avg_iterations": 1.0,
+      "more_than_one_iter_pct": 0.0,
+      "avg_support_score": 0.9933333333333333,
+      "avg_confidence": 0.9334666666666669,
+      "latency_p50": 4.9022088050842285,
+      "latency_p95": 6.445221424102783
+    }
+  },
+  {
+    "system": "selfmedrag_qwen_full",
+    "dataset": "medqa",
+    "n": 75,
+    "expected": {
+      "accuracy": 0.41333333333333333,
+      "f1_score": 0.2564862298195631,
+      "avg_iterations": 1.0,
+      "more_than_one_iter_pct": 0.0,
+      "avg_support_score": 1.0,
+      "avg_confidence": 0.5349333333333333,
+      "latency_p50": 4.569905042648315,
+      "latency_p95": 14.013557052612304
+    }
+  },
+  {
+    "system": "selfmedrag_qwen_full",
+    "dataset": "pubmedqa",
+    "n": 75,
+    "expected": {
+      "accuracy": 0.5466666666666666,
+      "f1_score": 0.284873625313525,
+      "avg_iterations": 1.04,
+      "more_than_one_iter_pct": 4.0,
+      "avg_support_score": 0.9866666666666667,
+      "avg_confidence": 0.6460000000000001,
+      "latency_p50": 5.077465534210205,
+      "latency_p95": 14.611621570587152
+    }
+  },
+  {
+    "system": "selfmedrag_qwen7b",
+    "dataset": "medqa",
+    "n": 75,
+    "expected": {
+      "accuracy": 0.5066666666666667,
+      "f1_score": 0.14412619718076516,
+      "avg_iterations": 1.0,
+      "more_than_one_iter_pct": 0.0,
+      "avg_support_score": 1.0,
+      "avg_confidence": 0.5842666666666666,
+      "latency_p50": 1.0208370685577393,
+      "latency_p95": 9.638528919219963
+    }
+  },
+  {
+    "system": "selfmedrag_qwen7b",
+    "dataset": "pubmedqa",
+    "n": 75,
+    "expected": {
+      "accuracy": 0.76,
+      "f1_score": 0.7525659824046921,
+      "avg_iterations": 1.0133333333333334,
+      "more_than_one_iter_pct": 1.3333333333333335,
+      "avg_support_score": 1.0,
+      "avg_confidence": 0.7011999999999999,
+      "latency_p50": 5.840480804443359,
+      "latency_p95": 9.105403780937193
+    }
+  },
+  {
+    "system": "selfmedrag_qwen14b",
+    "dataset": "medqa",
+    "n": 75,
+    "expected": {
+      "accuracy": 0.6,
+      "f1_score": 0.22947363088000383,
+      "avg_iterations": 1.0133333333333334,
+      "more_than_one_iter_pct": 1.3333333333333335,
+      "avg_support_score": 1.0,
+      "avg_confidence": 0.6969333333333334,
+      "latency_p50": 18.67949914932251,
+      "latency_p95": 42.061030983924866
+    }
+  },
+  {
+    "system": "selfmedrag_qwen14b",
+    "dataset": "pubmedqa",
+    "n": 75,
+    "expected": {
+      "accuracy": 0.8,
+      "f1_score": 0.7904637735146209,
+      "avg_iterations": 1.0,
+      "more_than_one_iter_pct": 0.0,
+      "avg_support_score": 1.0,
+      "avg_confidence": 0.8062666666666667,
+      "latency_p50": 7.648644924163818,
+      "latency_p95": 10.948410058021544
+    }
+  },
+  {
+    "system": "selfmedrag_mistral",
+    "dataset": "medqa",
+    "n": 75,
+    "expected": {
+      "accuracy": 0.6933333333333334,
+      "f1_score": 0.6788073038073037,
+      "avg_iterations": 1.0,
+      "more_than_one_iter_pct": 0.0,
+      "avg_support_score": 1.0,
+      "avg_confidence": 0.9328000000000003,
+      "latency_p50": 7.2358880043029785,
+      "latency_p95": 11.988420462608337
+    }
+  },
+  {
+    "system": "selfmedrag_mistral",
+    "dataset": "pubmedqa",
+    "n": 75,
+    "expected": {
+      "accuracy": 0.76,
+      "f1_score": 0.3825396825396825,
+      "avg_iterations": 1.0,
+      "more_than_one_iter_pct": 0.0,
+      "avg_support_score": 0.9844444444444443,
+      "avg_confidence": 0.9293333333333333,
+      "latency_p50": 4.837324857711792,
+      "latency_p95": 7.763314318656918
+    }
+  }
+]

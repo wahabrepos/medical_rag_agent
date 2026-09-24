@@ -1,0 +1,528 @@
+[
+  {
+    "id": "real-0-plain",
+    "input": "{\n  \"answer\": \"B\",\n  \"rationale\": [\n    \"The coronary sinus drains deoxygenated blood from the myocardium into the right atrium, which typically has the lowest oxygen content in the body due to high oxygen extraction by the heart muscle.\",\n    \"This is true both before and after exercise, as the heart continues to extract a high percentage of oxygen from coronary blood flow.\"\n  ],\n  \"confidence\": 0.95,\n  \"citations\": [\n    \"Passage 1\"\n  ]\n}",
+    "expected": {
+      "answer": "B",
+      "rationale": [
+        "The coronary sinus drains deoxygenated blood from the myocardium into the right atrium, which typically has the lowest oxygen content in the body due to high oxygen extraction by the heart muscle.",
+        "This is true both before and after exercise, as the heart continues to extract a high percentage of oxygen from coronary blood flow."
+      ],
+      "confidence": 0.95,
+      "citations": [
+        "Passage 1"
+      ]
+    }
+  },
+  {
+    "id": "real-0-fenced",
+    "input": "```json\n{\n  \"answer\": \"B\",\n  \"rationale\": [\n    \"The coronary sinus drains deoxygenated blood from the myocardium into the right atrium, which typically has the lowest oxygen content in the body due to high oxygen extraction by the heart muscle.\",\n    \"This is true both before and after exercise, as the heart continues to extract a high percentage of oxygen from coronary blood flow.\"\n  ],\n  \"confidence\": 0.95,\n  \"citations\": [\n    \"Passage 1\"\n  ]\n}\n```",
+    "expected": {
+      "answer": "B",
+      "rationale": [
+        "The coronary sinus drains deoxygenated blood from the myocardium into the right atrium, which typically has the lowest oxygen content in the body due to high oxygen extraction by the heart muscle.",
+        "This is true both before and after exercise, as the heart continues to extract a high percentage of oxygen from coronary blood flow."
+      ],
+      "confidence": 0.95,
+      "citations": [
+        "Passage 1"
+      ]
+    }
+  },
+  {
+    "id": "real-0-prose-around",
+    "input": "Here is my answer:\n{\n  \"answer\": \"B\",\n  \"rationale\": [\n    \"The coronary sinus drains deoxygenated blood from the myocardium into the right atrium, which typically has the lowest oxygen content in the body due to high oxygen extraction by the heart muscle.\",\n    \"This is true both before and after exercise, as the heart continues to extract a high percentage of oxygen from coronary blood flow.\"\n  ],\n  \"confidence\": 0.95,\n  \"citations\": [\n    \"Passage 1\"\n  ]\n}\nHope this helps.",
+    "expected": {
+      "answer": "B",
+      "rationale": [
+        "The coronary sinus drains deoxygenated blood from the myocardium into the right atrium, which typically has the lowest oxygen content in the body due to high oxygen extraction by the heart muscle.",
+        "This is true both before and after exercise, as the heart continues to extract a high percentage of oxygen from coronary blood flow."
+      ],
+      "confidence": 0.95,
+      "citations": [
+        "Passage 1"
+      ]
+    }
+  },
+  {
+    "id": "real-1-plain",
+    "input": "{\n  \"answer\": \"C\",\n  \"rationale\": [\n    \"The patient presents with distal interphalangeal (DIP) joint swelling, nail pitting and cracking, and erythematous skin patches over the elbows, which are classic features of psoriatic arthritis.\",\n    \"The presence of psoriasis-like skin lesions (erythematous patches, nail dystrophy) and a family history of a similar condition supports the diagnosis of psoriatic arthritis.\",\n    \"The chronic nature of the knee symptoms (6 weeks) and the involvement of DIP joints are more consistent with psoriatic arthritis than gout (typically acute, monoarticular, and affects the first metatarsophalangeal joint) or reactive arthritis (often post-infectious, asymmetric oligoarthritis).\",\n    \"Dermatomyositis typically presents with proximal muscle weakness and characteristic skin findings (e.g., heliotrope rash, Gottron's papules), which are not described here.\"\n  ],\n  \"confidence\": 0.95,\n  \"citations\": [\n    \"Passage 1\"\n  ]\n}",
+    "expected": {
+      "answer": "C",
+      "rationale": [
+        "The patient presents with distal interphalangeal (DIP) joint swelling, nail pitting and cracking, and erythematous skin patches over the elbows, which are classic features of psoriatic arthritis.",
+        "The presence of psoriasis-like skin lesions (erythematous patches, nail dystrophy) and a family history of a similar condition supports the diagnosis of psoriatic arthritis.",
+        "The chronic nature of the knee symptoms (6 weeks) and the involvement of DIP joints are more consistent with psoriatic arthritis than gout (typically acute, monoarticular, and affects the first metatarsophalangeal joint) or reactive arthritis (often post-infectious, asymmetric oligoarthritis).",
+        "Dermatomyositis typically presents with proximal muscle weakness and characteristic skin findings (e.g., heliotrope rash, Gottron's papules), which are not described here."
+      ],
+      "confidence": 0.95,
+      "citations": [
+        "Passage 1"
+      ]
+    }
+  },
+  {
+    "id": "real-1-fenced",
+    "input": "```json\n{\n  \"answer\": \"C\",\n  \"rationale\": [\n    \"The patient presents with distal interphalangeal (DIP) joint swelling, nail pitting and cracking, and erythematous skin patches over the elbows, which are classic features of psoriatic arthritis.\",\n    \"The presence of psoriasis-like skin lesions (erythematous patches, nail dystrophy) and a family history of a similar condition supports the diagnosis of psoriatic arthritis.\",\n    \"The chronic nature of the knee symptoms (6 weeks) and the involvement of DIP joints are more consistent with psoriatic arthritis than gout (typically acute, monoarticular, and affects the first metatarsophalangeal joint) or reactive arthritis (often post-infectious, asymmetric oligoarthritis).\",\n    \"Dermatomyositis typically presents with proximal muscle weakness and characteristic skin findings (e.g., heliotrope rash, Gottron's papules), which are not described here.\"\n  ],\n  \"confidence\": 0.95,\n  \"citations\": [\n    \"Passage 1\"\n  ]\n}\n```",
+    "expected": {
+      "answer": "C",
+      "rationale": [
+        "The patient presents with distal interphalangeal (DIP) joint swelling, nail pitting and cracking, and erythematous skin patches over the elbows, which are classic features of psoriatic arthritis.",
+        "The presence of psoriasis-like skin lesions (erythematous patches, nail dystrophy) and a family history of a similar condition supports the diagnosis of psoriatic arthritis.",
+        "The chronic nature of the knee symptoms (6 weeks) and the involvement of DIP joints are more consistent with psoriatic arthritis than gout (typically acute, monoarticular, and affects the first metatarsophalangeal joint) or reactive arthritis (often post-infectious, asymmetric oligoarthritis).",
+        "Dermatomyositis typically presents with proximal muscle weakness and characteristic skin findings (e.g., heliotrope rash, Gottron's papules), which are not described here."
+      ],
+      "confidence": 0.95,
+      "citations": [
+        "Passage 1"
+      ]
+    }
+  },
+  {
+    "id": "real-1-prose-around",
+    "input": "Here is my answer:\n{\n  \"answer\": \"C\",\n  \"rationale\": [\n    \"The patient presents with distal interphalangeal (DIP) joint swelling, nail pitting and cracking, and erythematous skin patches over the elbows, which are classic features of psoriatic arthritis.\",\n    \"The presence of psoriasis-like skin lesions (erythematous patches, nail dystrophy) and a family history of a similar condition supports the diagnosis of psoriatic arthritis.\",\n    \"The chronic nature of the knee symptoms (6 weeks) and the involvement of DIP joints are more consistent with psoriatic arthritis than gout (typically acute, monoarticular, and affects the first metatarsophalangeal joint) or reactive arthritis (often post-infectious, asymmetric oligoarthritis).\",\n    \"Dermatomyositis typically presents with proximal muscle weakness and characteristic skin findings (e.g., heliotrope rash, Gottron's papules), which are not described here.\"\n  ],\n  \"confidence\": 0.95,\n  \"citations\": [\n    \"Passage 1\"\n  ]\n}\nHope this helps.",
+    "expected": {
+      "answer": "C",
+      "rationale": [
+        "The patient presents with distal interphalangeal (DIP) joint swelling, nail pitting and cracking, and erythematous skin patches over the elbows, which are classic features of psoriatic arthritis.",
+        "The presence of psoriasis-like skin lesions (erythematous patches, nail dystrophy) and a family history of a similar condition supports the diagnosis of psoriatic arthritis.",
+        "The chronic nature of the knee symptoms (6 weeks) and the involvement of DIP joints are more consistent with psoriatic arthritis than gout (typically acute, monoarticular, and affects the first metatarsophalangeal joint) or reactive arthritis (often post-infectious, asymmetric oligoarthritis).",
+        "Dermatomyositis typically presents with proximal muscle weakness and characteristic skin findings (e.g., heliotrope rash, Gottron's papules), which are not described here."
+      ],
+      "confidence": 0.95,
+      "citations": [
+        "Passage 1"
+      ]
+    }
+  },
+  {
+    "id": "real-2-plain",
+    "input": "{\n  \"answer\": \"B\",\n  \"rationale\": [\n    \"The patient presents with progressive proximal muscle weakness, myalgia, and dysphagia, which are consistent with inflammatory myopathy (e.g., dermatomyositis or polymyositis).\",\n    \"Passage 1 describes a similar clinical picture with proximal weakness, myalgia, elevated CPK, and muscle biopsy showing myositis, supporting an inflammatory myopathy diagnosis.\",\n    \"Perifascicular and perivascular infiltration on muscle biopsy is characteristic of dermatomyositis, a subtype of inflammatory myopathy, making this the most likely confirmatory finding.\"\n  ],\n  \"confidence\": 0.9,\n  \"citations\": [\n    \"Passage 1\"\n  ]\n}",
+    "expected": {
+      "answer": "B",
+      "rationale": [
+        "The patient presents with progressive proximal muscle weakness, myalgia, and dysphagia, which are consistent with inflammatory myopathy (e.g., dermatomyositis or polymyositis).",
+        "Passage 1 describes a similar clinical picture with proximal weakness, myalgia, elevated CPK, and muscle biopsy showing myositis, supporting an inflammatory myopathy diagnosis.",
+        "Perifascicular and perivascular infiltration on muscle biopsy is characteristic of dermatomyositis, a subtype of inflammatory myopathy, making this the most likely confirmatory finding."
+      ],
+      "confidence": 0.9,
+      "citations": [
+        "Passage 1"
+      ]
+    }
+  },
+  {
+    "id": "real-2-fenced",
+    "input": "```json\n{\n  \"answer\": \"B\",\n  \"rationale\": [\n    \"The patient presents with progressive proximal muscle weakness, myalgia, and dysphagia, which are consistent with inflammatory myopathy (e.g., dermatomyositis or polymyositis).\",\n    \"Passage 1 describes a similar clinical picture with proximal weakness, myalgia, elevated CPK, and muscle biopsy showing myositis, supporting an inflammatory myopathy diagnosis.\",\n    \"Perifascicular and perivascular infiltration on muscle biopsy is characteristic of dermatomyositis, a subtype of inflammatory myopathy, making this the most likely confirmatory finding.\"\n  ],\n  \"confidence\": 0.9,\n  \"citations\": [\n    \"Passage 1\"\n  ]\n}\n```",
+    "expected": {
+      "answer": "B",
+      "rationale": [
+        "The patient presents with progressive proximal muscle weakness, myalgia, and dysphagia, which are consistent with inflammatory myopathy (e.g., dermatomyositis or polymyositis).",
+        "Passage 1 describes a similar clinical picture with proximal weakness, myalgia, elevated CPK, and muscle biopsy showing myositis, supporting an inflammatory myopathy diagnosis.",
+        "Perifascicular and perivascular infiltration on muscle biopsy is characteristic of dermatomyositis, a subtype of inflammatory myopathy, making this the most likely confirmatory finding."
+      ],
+      "confidence": 0.9,
+      "citations": [
+        "Passage 1"
+      ]
+    }
+  },
+  {
+    "id": "real-2-prose-around",
+    "input": "Here is my answer:\n{\n  \"answer\": \"B\",\n  \"rationale\": [\n    \"The patient presents with progressive proximal muscle weakness, myalgia, and dysphagia, which are consistent with inflammatory myopathy (e.g., dermatomyositis or polymyositis).\",\n    \"Passage 1 describes a similar clinical picture with proximal weakness, myalgia, elevated CPK, and muscle biopsy showing myositis, supporting an inflammatory myopathy diagnosis.\",\n    \"Perifascicular and perivascular infiltration on muscle biopsy is characteristic of dermatomyositis, a subtype of inflammatory myopathy, making this the most likely confirmatory finding.\"\n  ],\n  \"confidence\": 0.9,\n  \"citations\": [\n    \"Passage 1\"\n  ]\n}\nHope this helps.",
+    "expected": {
+      "answer": "B",
+      "rationale": [
+        "The patient presents with progressive proximal muscle weakness, myalgia, and dysphagia, which are consistent with inflammatory myopathy (e.g., dermatomyositis or polymyositis).",
+        "Passage 1 describes a similar clinical picture with proximal weakness, myalgia, elevated CPK, and muscle biopsy showing myositis, supporting an inflammatory myopathy diagnosis.",
+        "Perifascicular and perivascular infiltration on muscle biopsy is characteristic of dermatomyositis, a subtype of inflammatory myopathy, making this the most likely confirmatory finding."
+      ],
+      "confidence": 0.9,
+      "citations": [
+        "Passage 1"
+      ]
+    }
+  },
+  {
+    "id": "real-3-plain",
+    "input": "{\n  \"answer\": \"yes\",\n  \"rationale\": [\n    \"Passage 1 describes programmed cell death (PCD) in lace plant leaves, which is responsible for leaf remodelling through perforation formation.\",\n    \"Passage 2 explicitly investigates the role of mitochondrial dynamics during PCD in A. madagascariensis, dividing cells into NPCD, EPCD, and LPCD stages and examining mitochondrial characteristics.\",\n    \"Passage 2 further shows that cyclosporine A (CsA) treatment, which affects mitochondrial permeability transition pore (PTP) formation, results in significantly fewer leaf perforations compared to controls, linking mitochondrial activity to leaf remodelling during PCD.\"\n  ],\n  \"confidence\": 0.95,\n  \"citations\": [\n    \"Passage 1\"\n  ]\n}",
+    "expected": {
+      "answer": "yes",
+      "rationale": [
+        "Passage 1 describes programmed cell death (PCD) in lace plant leaves, which is responsible for leaf remodelling through perforation formation.",
+        "Passage 2 explicitly investigates the role of mitochondrial dynamics during PCD in A. madagascariensis, dividing cells into NPCD, EPCD, and LPCD stages and examining mitochondrial characteristics.",
+        "Passage 2 further shows that cyclosporine A (CsA) treatment, which affects mitochondrial permeability transition pore (PTP) formation, results in significantly fewer leaf perforations compared to controls, linking mitochondrial activity to leaf remodelling during PCD."
+      ],
+      "confidence": 0.95,
+      "citations": [
+        "Passage 1"
+      ]
+    }
+  },
+  {
+    "id": "real-3-fenced",
+    "input": "```json\n{\n  \"answer\": \"yes\",\n  \"rationale\": [\n    \"Passage 1 describes programmed cell death (PCD) in lace plant leaves, which is responsible for leaf remodelling through perforation formation.\",\n    \"Passage 2 explicitly investigates the role of mitochondrial dynamics during PCD in A. madagascariensis, dividing cells into NPCD, EPCD, and LPCD stages and examining mitochondrial characteristics.\",\n    \"Passage 2 further shows that cyclosporine A (CsA) treatment, which affects mitochondrial permeability transition pore (PTP) formation, results in significantly fewer leaf perforations compared to controls, linking mitochondrial activity to leaf remodelling during PCD.\"\n  ],\n  \"confidence\": 0.95,\n  \"citations\": [\n    \"Passage 1\"\n  ]\n}\n```",
+    "expected": {
+      "answer": "yes",
+      "rationale": [
+        "Passage 1 describes programmed cell death (PCD) in lace plant leaves, which is responsible for leaf remodelling through perforation formation.",
+        "Passage 2 explicitly investigates the role of mitochondrial dynamics during PCD in A. madagascariensis, dividing cells into NPCD, EPCD, and LPCD stages and examining mitochondrial characteristics.",
+        "Passage 2 further shows that cyclosporine A (CsA) treatment, which affects mitochondrial permeability transition pore (PTP) formation, results in significantly fewer leaf perforations compared to controls, linking mitochondrial activity to leaf remodelling during PCD."
+      ],
+      "confidence": 0.95,
+      "citations": [
+        "Passage 1"
+      ]
+    }
+  },
+  {
+    "id": "real-3-prose-around",
+    "input": "Here is my answer:\n{\n  \"answer\": \"yes\",\n  \"rationale\": [\n    \"Passage 1 describes programmed cell death (PCD) in lace plant leaves, which is responsible for leaf remodelling through perforation formation.\",\n    \"Passage 2 explicitly investigates the role of mitochondrial dynamics during PCD in A. madagascariensis, dividing cells into NPCD, EPCD, and LPCD stages and examining mitochondrial characteristics.\",\n    \"Passage 2 further shows that cyclosporine A (CsA) treatment, which affects mitochondrial permeability transition pore (PTP) formation, results in significantly fewer leaf perforations compared to controls, linking mitochondrial activity to leaf remodelling during PCD.\"\n  ],\n  \"confidence\": 0.95,\n  \"citations\": [\n    \"Passage 1\"\n  ]\n}\nHope this helps.",
+    "expected": {
+      "answer": "yes",
+      "rationale": [
+        "Passage 1 describes programmed cell death (PCD) in lace plant leaves, which is responsible for leaf remodelling through perforation formation.",
+        "Passage 2 explicitly investigates the role of mitochondrial dynamics during PCD in A. madagascariensis, dividing cells into NPCD, EPCD, and LPCD stages and examining mitochondrial characteristics.",
+        "Passage 2 further shows that cyclosporine A (CsA) treatment, which affects mitochondrial permeability transition pore (PTP) formation, results in significantly fewer leaf perforations compared to controls, linking mitochondrial activity to leaf remodelling during PCD."
+      ],
+      "confidence": 0.95,
+      "citations": [
+        "Passage 1"
+      ]
+    }
+  },
+  {
+    "id": "real-4-plain",
+    "input": "{\n  \"answer\": \"yes\",\n  \"rationale\": [\n    \"Passage 2 explicitly states that differences between Landolt C acuity (LR) and Snellen E acuity (SE) were small but measurable, with mean decimal values of 0.14 (LR) and 0.16 (SE) for eyes with strabismus amblyopia.\",\n    \"The mean difference between LR and SE in this group was 0.55 lines, with higher values for SE, indicating a detectable difference in visual acuity measurements between the two optotypes in strabismus amblyopia.\"\n  ],\n  \"confidence\": 0.95,\n  \"citations\": [\n    \"Passage 1\"\n  ]\n}",
+    "expected": {
+      "answer": "yes",
+      "rationale": [
+        "Passage 2 explicitly states that differences between Landolt C acuity (LR) and Snellen E acuity (SE) were small but measurable, with mean decimal values of 0.14 (LR) and 0.16 (SE) for eyes with strabismus amblyopia.",
+        "The mean difference between LR and SE in this group was 0.55 lines, with higher values for SE, indicating a detectable difference in visual acuity measurements between the two optotypes in strabismus amblyopia."
+      ],
+      "confidence": 0.95,
+      "citations": [
+        "Passage 1"
+      ]
+    }
+  },
+  {
+    "id": "real-4-fenced",
+    "input": "```json\n{\n  \"answer\": \"yes\",\n  \"rationale\": [\n    \"Passage 2 explicitly states that differences between Landolt C acuity (LR) and Snellen E acuity (SE) were small but measurable, with mean decimal values of 0.14 (LR) and 0.16 (SE) for eyes with strabismus amblyopia.\",\n    \"The mean difference between LR and SE in this group was 0.55 lines, with higher values for SE, indicating a detectable difference in visual acuity measurements between the two optotypes in strabismus amblyopia.\"\n  ],\n  \"confidence\": 0.95,\n  \"citations\": [\n    \"Passage 1\"\n  ]\n}\n```",
+    "expected": {
+      "answer": "yes",
+      "rationale": [
+        "Passage 2 explicitly states that differences between Landolt C acuity (LR) and Snellen E acuity (SE) were small but measurable, with mean decimal values of 0.14 (LR) and 0.16 (SE) for eyes with strabismus amblyopia.",
+        "The mean difference between LR and SE in this group was 0.55 lines, with higher values for SE, indicating a detectable difference in visual acuity measurements between the two optotypes in strabismus amblyopia."
+      ],
+      "confidence": 0.95,
+      "citations": [
+        "Passage 1"
+      ]
+    }
+  },
+  {
+    "id": "real-4-prose-around",
+    "input": "Here is my answer:\n{\n  \"answer\": \"yes\",\n  \"rationale\": [\n    \"Passage 2 explicitly states that differences between Landolt C acuity (LR) and Snellen E acuity (SE) were small but measurable, with mean decimal values of 0.14 (LR) and 0.16 (SE) for eyes with strabismus amblyopia.\",\n    \"The mean difference between LR and SE in this group was 0.55 lines, with higher values for SE, indicating a detectable difference in visual acuity measurements between the two optotypes in strabismus amblyopia.\"\n  ],\n  \"confidence\": 0.95,\n  \"citations\": [\n    \"Passage 1\"\n  ]\n}\nHope this helps.",
+    "expected": {
+      "answer": "yes",
+      "rationale": [
+        "Passage 2 explicitly states that differences between Landolt C acuity (LR) and Snellen E acuity (SE) were small but measurable, with mean decimal values of 0.14 (LR) and 0.16 (SE) for eyes with strabismus amblyopia.",
+        "The mean difference between LR and SE in this group was 0.55 lines, with higher values for SE, indicating a detectable difference in visual acuity measurements between the two optotypes in strabismus amblyopia."
+      ],
+      "confidence": 0.95,
+      "citations": [
+        "Passage 1"
+      ]
+    }
+  },
+  {
+    "id": "real-5-plain",
+    "input": "{\n  \"answer\": \"yes\",\n  \"rationale\": [\n    \"Passage 1 describes eight infants who experienced pale, hypotonic, still, and unreactive episodes during immersion in baths, with rapid recovery upon withdrawal and stimulation.\",\n    \"The initial differential diagnoses included seizure or gastroesophageal reflux, but these were deemed doubtful.\",\n    \"The hypothesis of an aquagenic urticaria equivalent was considered, supported by family history of dermographism or water/sun-induced maladies in all six infants tested.\",\n    \"All six infants had dermographism, and two tested showed increased blood histamine levels after a trial bath, consistent with an urticarial response.\",\n    \"The favorable evolution after avoiding baths and the persistence of symptoms related to water or sun exposure in some infants further supports this as a pediatric form of water-induced urticaria.\"\n  ],\n  \"confidence\": 0.95,\n  \"citations\": [\n    \"Passage 1\"\n  ]\n}",
+    "expected": {
+      "answer": "yes",
+      "rationale": [
+        "Passage 1 describes eight infants who experienced pale, hypotonic, still, and unreactive episodes during immersion in baths, with rapid recovery upon withdrawal and stimulation.",
+        "The initial differential diagnoses included seizure or gastroesophageal reflux, but these were deemed doubtful.",
+        "The hypothesis of an aquagenic urticaria equivalent was considered, supported by family history of dermographism or water/sun-induced maladies in all six infants tested.",
+        "All six infants had dermographism, and two tested showed increased blood histamine levels after a trial bath, consistent with an urticarial response.",
+        "The favorable evolution after avoiding baths and the persistence of symptoms related to water or sun exposure in some infants further supports this as a pediatric form of water-induced urticaria."
+      ],
+      "confidence": 0.95,
+      "citations": [
+        "Passage 1"
+      ]
+    }
+  },
+  {
+    "id": "real-5-fenced",
+    "input": "```json\n{\n  \"answer\": \"yes\",\n  \"rationale\": [\n    \"Passage 1 describes eight infants who experienced pale, hypotonic, still, and unreactive episodes during immersion in baths, with rapid recovery upon withdrawal and stimulation.\",\n    \"The initial differential diagnoses included seizure or gastroesophageal reflux, but these were deemed doubtful.\",\n    \"The hypothesis of an aquagenic urticaria equivalent was considered, supported by family history of dermographism or water/sun-induced maladies in all six infants tested.\",\n    \"All six infants had dermographism, and two tested showed increased blood histamine levels after a trial bath, consistent with an urticarial response.\",\n    \"The favorable evolution after avoiding baths and the persistence of symptoms related to water or sun exposure in some infants further supports this as a pediatric form of water-induced urticaria.\"\n  ],\n  \"confidence\": 0.95,\n  \"citations\": [\n    \"Passage 1\"\n  ]\n}\n```",
+    "expected": {
+      "answer": "yes",
+      "rationale": [
+        "Passage 1 describes eight infants who experienced pale, hypotonic, still, and unreactive episodes during immersion in baths, with rapid recovery upon withdrawal and stimulation.",
+        "The initial differential diagnoses included seizure or gastroesophageal reflux, but these were deemed doubtful.",
+        "The hypothesis of an aquagenic urticaria equivalent was considered, supported by family history of dermographism or water/sun-induced maladies in all six infants tested.",
+        "All six infants had dermographism, and two tested showed increased blood histamine levels after a trial bath, consistent with an urticarial response.",
+        "The favorable evolution after avoiding baths and the persistence of symptoms related to water or sun exposure in some infants further supports this as a pediatric form of water-induced urticaria."
+      ],
+      "confidence": 0.95,
+      "citations": [
+        "Passage 1"
+      ]
+    }
+  },
+  {
+    "id": "real-5-prose-around",
+    "input": "Here is my answer:\n{\n  \"answer\": \"yes\",\n  \"rationale\": [\n    \"Passage 1 describes eight infants who experienced pale, hypotonic, still, and unreactive episodes during immersion in baths, with rapid recovery upon withdrawal and stimulation.\",\n    \"The initial differential diagnoses included seizure or gastroesophageal reflux, but these were deemed doubtful.\",\n    \"The hypothesis of an aquagenic urticaria equivalent was considered, supported by family history of dermographism or water/sun-induced maladies in all six infants tested.\",\n    \"All six infants had dermographism, and two tested showed increased blood histamine levels after a trial bath, consistent with an urticarial response.\",\n    \"The favorable evolution after avoiding baths and the persistence of symptoms related to water or sun exposure in some infants further supports this as a pediatric form of water-induced urticaria.\"\n  ],\n  \"confidence\": 0.95,\n  \"citations\": [\n    \"Passage 1\"\n  ]\n}\nHope this helps.",
+    "expected": {
+      "answer": "yes",
+      "rationale": [
+        "Passage 1 describes eight infants who experienced pale, hypotonic, still, and unreactive episodes during immersion in baths, with rapid recovery upon withdrawal and stimulation.",
+        "The initial differential diagnoses included seizure or gastroesophageal reflux, but these were deemed doubtful.",
+        "The hypothesis of an aquagenic urticaria equivalent was considered, supported by family history of dermographism or water/sun-induced maladies in all six infants tested.",
+        "All six infants had dermographism, and two tested showed increased blood histamine levels after a trial bath, consistent with an urticarial response.",
+        "The favorable evolution after avoiding baths and the persistence of symptoms related to water or sun exposure in some infants further supports this as a pediatric form of water-induced urticaria."
+      ],
+      "confidence": 0.95,
+      "citations": [
+        "Passage 1"
+      ]
+    }
+  },
+  {
+    "id": "alt-key-diagnosis",
+    "input": "{\"diagnosis\": \"Sepsis\", \"rationale\": [\"Fever and hypotension\"]}",
+    "expected": {
+      "rationale": [
+        "Fever and hypotension"
+      ],
+      "answer": "Sepsis",
+      "confidence": 0.7,
+      "citations": []
+    }
+  },
+  {
+    "id": "alt-key-result",
+    "input": "{\"result\": \"yes\", \"rationale\": \"Supported by passage 2\"}",
+    "expected": {
+      "rationale": [
+        "Supported by passage 2"
+      ],
+      "answer": "yes",
+      "confidence": 0.7,
+      "citations": []
+    }
+  },
+  {
+    "id": "answer-list-of-dicts",
+    "input": "{\"answer\": [{\"drug\": \"Metformin\", \"dose\": \"500 mg\"}], \"rationale\": [\"r\"]}",
+    "expected": {
+      "answer": "Metformin 500 mg",
+      "rationale": [
+        "r"
+      ],
+      "confidence": 0.7,
+      "citations": []
+    }
+  },
+  {
+    "id": "answer-list-mixed",
+    "input": "{\"answer\": [\"A\", \"\", \"B\"], \"rationale\": [\"r\"]}",
+    "expected": {
+      "answer": "A B",
+      "rationale": [
+        "r"
+      ],
+      "confidence": 0.7,
+      "citations": []
+    }
+  },
+  {
+    "id": "answer-empty-list",
+    "input": "{\"answer\": [], \"rationale\": [\"r\"]}",
+    "expected": {
+      "answer": "See rationale.",
+      "rationale": [
+        "r"
+      ],
+      "confidence": 0.7,
+      "citations": []
+    }
+  },
+  {
+    "id": "answer-number",
+    "input": "{\"answer\": 3, \"rationale\": [\"r\"], \"confidence\": 0.9}",
+    "expected": {
+      "answer": "3",
+      "rationale": [
+        "r"
+      ],
+      "confidence": 0.9,
+      "citations": []
+    }
+  },
+  {
+    "id": "rationale-numbers",
+    "input": "{\"answer\": \"A\", \"rationale\": [1, 2.5, \"three\"]}",
+    "expected": {
+      "answer": "A",
+      "rationale": [
+        "1",
+        "2.5",
+        "three"
+      ],
+      "confidence": 0.7,
+      "citations": []
+    }
+  },
+  {
+    "id": "missing-optional",
+    "input": "{\"answer\": \"no\", \"rationale\": [\"Not supported\"]}",
+    "expected": {
+      "answer": "no",
+      "rationale": [
+        "Not supported"
+      ],
+      "confidence": 0.7,
+      "citations": []
+    }
+  },
+  {
+    "id": "nested-one-level",
+    "input": "{\"answer\": \"B\", \"rationale\": [\"x\"], \"meta\": {\"k\": 1}}",
+    "expected": {
+      "answer": "B",
+      "rationale": [
+        "x"
+      ],
+      "meta": {
+        "k": 1
+      },
+      "confidence": 0.7,
+      "citations": []
+    }
+  },
+  {
+    "id": "nested-two-levels",
+    "input": "{\"answer\": \"B\", \"rationale\": [\"x\"], \"meta\": {\"k\": {\"z\": 1}}}",
+    "expected": {
+      "answer": "{\"answer\": \"B\", \"rationale\": [\"x\"], \"meta\": {\"k\": {\"z\": 1}}}",
+      "rationale": [
+        "{\"answer\": \"B\", \"rationale\": [\"x\"], \"meta\": {\"k\": {\"z\": 1}}}"
+      ],
+      "confidence": 0.5,
+      "citations": []
+    }
+  },
+  {
+    "id": "missing-rationale",
+    "input": "{\"answer\": \"B\", \"confidence\": 0.9}",
+    "expected": {
+      "answer": "{\"answer\": \"B\", \"confidence\": 0",
+      "rationale": [
+        "{\"answer\": \"B\", \"confidence\": 0.9}"
+      ],
+      "confidence": 0.5,
+      "citations": []
+    }
+  },
+  {
+    "id": "trailing-comma",
+    "input": "{\"answer\": \"C\", \"rationale\": [\"a\",],}\nAnswer: C",
+    "expected": {
+      "answer": "C",
+      "rationale": [
+        "{\"answer\": \"C\", \"rationale\": [\"a\",],}\nAnswer: C"
+      ],
+      "confidence": 0.5,
+      "citations": []
+    }
+  },
+  {
+    "id": "two-objects",
+    "input": "{\"answer\": \"A\", \"rationale\": [\"first\"]} {\"answer\": \"B\", \"rationale\": [\"second\"]}",
+    "expected": {
+      "answer": "A",
+      "rationale": [
+        "first"
+      ],
+      "confidence": 0.7,
+      "citations": []
+    }
+  },
+  {
+    "id": "prose-answer-line",
+    "input": "Answer: D\nRationale: [\"because of X\", \"and Y\"]",
+    "expected": {
+      "answer": "D",
+      "rationale": [
+        "because of X",
+        "and Y"
+      ],
+      "confidence": 0.5,
+      "citations": []
+    }
+  },
+  {
+    "id": "prose-sentences",
+    "input": "The most likely diagnosis is pneumonia. The chest X-ray shows consolidation. Fever supports it.",
+    "expected": {
+      "answer": "The most likely diagnosis is pneumonia",
+      "rationale": [
+        "The chest X-ray shows consolidation",
+        "Fever supports it"
+      ],
+      "confidence": 0.5,
+      "citations": []
+    }
+  },
+  {
+    "id": "prose-short",
+    "input": "yes",
+    "expected": {
+      "answer": "yes",
+      "rationale": [
+        "yes"
+      ],
+      "confidence": 0.5,
+      "citations": []
+    }
+  },
+  {
+    "id": "empty",
+    "input": "",
+    "expected": {
+      "answer": "",
+      "rationale": [
+        ""
+      ],
+      "confidence": 0.5,
+      "citations": []
+    }
+  },
+  {
+    "id": "whitespace",
+    "input": "   \n  ",
+    "expected": {
+      "answer": "   \n  ",
+      "rationale": [
+        "   \n  "
+      ],
+      "confidence": 0.5,
+      "citations": []
+    }
+  },
+  {
+    "id": "unicode",
+    "input": "{\"answer\": \"β-blocker ≥ 50 mg\", \"rationale\": [\"Dosis für Erwachsene\"]}",
+    "expected": {
+      "answer": "β-blocker ≥ 50 mg",
+      "rationale": [
+        "Dosis für Erwachsene"
+      ],
+      "confidence": 0.7,
+      "citations": []
+    }
+  }
+]
