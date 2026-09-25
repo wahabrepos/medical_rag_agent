@@ -7,6 +7,8 @@ Each answered question is appended to eval/runs/<run>/predictions.jsonl straight
 away; running the same command again skips questions already answered. When the
 LLM provider's daily quota is exhausted the run stops with exit code 3 and can be
 resumed later; answers recorded as errors are dropped on resume and asked again.
+LLM spend is recorded in data/llm_spend.json for all runs; a run stops (exit code 4)
+before a question that could take total spend past 90% of --budget.
 The report compares accuracy and loop statistics with the research
 work's Self-MedRAG + Mistral-small predictions on the same questions.
 
@@ -30,6 +32,8 @@ from medrag_eval.metrics import Dataset, evaluate
 ROOT = Path(__file__).resolve().parents[2]
 REFERENCE_SYSTEM = "selfmedrag_mistral"
 EXIT_QUOTA = 3
+EXIT_BUDGET = 4
+LEDGER = ROOT / "data/llm_spend.json"
 
 
 def load_items(which: str, data_dir: Path) -> list[EvalItem]:
@@ -113,6 +117,12 @@ def main() -> int:
         help='NLI column counted as support: "neutral" reproduces the research work, '
         '"entailment" is the corrected verifier',
     )
+    ap.add_argument(
+        "--budget",
+        type=float,
+        default=3.0,
+        help="total LLM spend cap across all runs and providers (stops at 90%%)",
+    )
     ap.add_argument("--report-only", action="store_true")
     args = ap.parse_args()
 
@@ -123,6 +133,7 @@ def main() -> int:
     out_path = run_dir / "predictions.jsonl"
 
     if not args.report_only:
+        from medrag_agent.budget import BudgetExceededError, SpendLedger, cost
         from medrag_agent.errors import ProviderUnavailableError
         from medrag_agent.runtime import build_parity_agent
         from medrag_settings import get_settings
@@ -133,9 +144,22 @@ def main() -> int:
         agent = build_parity_agent(
             get_settings(), index_dir=args.index_dir, support_label=args.support_label
         )
+        ledger = SpendLedger(LEDGER, cap=args.budget)
+        gen = agent.generator
+        model = gen.config.model
+        # Worst case for one question: 3 iterations of a long prompt and a full completion.
+        worst_case = cost(model, 3 * 3_000, 3 * gen.config.max_tokens)
+        print(f"LLM spend so far {ledger.total:.4f} of {ledger.limit:.2f} allowed", flush=True)
         with out_path.open("a", encoding="utf-8") as fh:
             for n, item in enumerate(todo, 1):
-                calls_before = agent.generator.calls
+                try:
+                    ledger.check(worst_case)
+                except BudgetExceededError as exc:
+                    print(f"Stopping: {exc}", flush=True)
+                    print_report(report(run_dir, items))
+                    return EXIT_BUDGET
+                calls_before = gen.calls
+                tokens_before = (gen.prompt_tokens, gen.completion_tokens)
                 started = time.monotonic()
                 try:
                     state = agent.run(item.question, binary_answer=item.binary_answer)
@@ -143,6 +167,15 @@ def main() -> int:
                     print(f"LLM quota exhausted after {n - 1} questions: {exc}", flush=True)
                     print_report(report(run_dir, items))
                     return EXIT_QUOTA
+                prompt_tokens = gen.prompt_tokens - tokens_before[0]
+                completion_tokens = gen.completion_tokens - tokens_before[1]
+                spent = ledger.add(
+                    run=args.run,
+                    model=model,
+                    prompt_tokens=prompt_tokens,
+                    completion_tokens=completion_tokens,
+                    note=item.id,
+                )
                 history = state.get("history", [])
                 row = {
                     "id": item.id,
@@ -154,7 +187,10 @@ def main() -> int:
                     "confidence": history[-1].confidence if history else 0.0,
                     "stop_reason": state["stop_reason"],
                     "latency": round(time.monotonic() - started, 3),
-                    "llm_calls": agent.generator.calls - calls_before,
+                    "llm_calls": gen.calls - calls_before,
+                    "prompt_tokens": prompt_tokens,
+                    "completion_tokens": completion_tokens,
+                    "cost": round(spent, 6),
                     "model": agent.generator.config.model,
                     "support_label": args.support_label,
                     "history": [
@@ -166,7 +202,8 @@ def main() -> int:
                 fh.flush()
                 print(
                     f"[{n}/{len(todo)}] {item.id} -> {row['final_answer'][:40]!r} "
-                    f"(gold {item.answer}, it {row['iterations']}, {row['latency']:.0f}s)",
+                    f"(gold {item.answer}, it {row['iterations']}, {row['latency']:.0f}s, "
+                    f"spend {ledger.total:.4f})",
                     flush=True,
                 )
 
