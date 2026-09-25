@@ -65,7 +65,7 @@ What the migrated service uses.
 | Agent | LangGraph, checkpoints in PostgreSQL |
 | LLM | LiteLLM → Mistral `mistral-small-latest` (primary), Groq (fallback) |
 | Embeddings | `BAAI/bge-small-en-v1.5`, self-hosted on CPU (ONNX) |
-| Verifier | `cross-encoder/nli-deberta-v3-base`, CPU (ONNX int8) |
+| Verifier | `cross-encoder/nli-deberta-v3-base`, CPU (ONNX fp32) |
 | Retrieval | PostgreSQL + pgvector (HNSW) + BM25, fused with RRF |
 | Frontend | Next.js |
 | Infra | AWS (single VM + RDS PostgreSQL), OpenTofu, GitHub Actions, Docker |
@@ -193,6 +193,27 @@ chunks of about 350 tokens over whole abstracts).
 > evaluation will exclude those abstracts.
 
 
+
+### Inference service
+
+Embeddings and NLI run on CPU in one small service (no GPU needed):
+
+```bash
+uv run --env-file .env uvicorn medrag_inference.app:app --port 8001
+# GET /healthz · POST /embed {"texts": [...]} · POST /nli {"pairs": [[premise, hypothesis], ...]}
+uv run --env-file .env pytest -m model services/inference   # model checks (downloads weights)
+```
+
+- **NLI labels.** The model's outputs are `contradiction`, `entailment`, `neutral` (in that
+  order). The research work read the third column as entailment, so its "support score" was
+  really the probability of *neutral*. `/nli` returns all three probabilities; the parity build
+  keeps the research-work reading, and the corrected verifier (entailment) is evaluated
+  separately. On 16 golden questions the mean support is 1.00 with the research-work column
+  and 0.06 with entailment.
+- **fp32, not int8.** fp32 ONNX reproduces the research-work PyTorch scores exactly. No int8
+  variant (published exports or our own dynamic quantisation, full or partial) kept decisions
+  stable; see `services/inference/reports/nli_variants_x86_zen4.json`. fp32 needs about 4 s for
+  25 pairs on 2 Zen 4 threads; repeated pairs are served from an in-memory cache.
 
 ## License
 
