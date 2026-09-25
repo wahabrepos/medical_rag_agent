@@ -31,7 +31,7 @@ from medrag_core.loop import (
     LoopResult,
     StopReason,
 )
-from medrag_core.policy import Decision, LoopSettings, decide, refine_query
+from medrag_core.policy import Decision, LoopSettings, choose_final, decide, refine_query
 from medrag_core.verification import Verification
 
 Retriever = Callable[[str], Sequence[str]]
@@ -152,8 +152,12 @@ def build_graph(
             iteration += 1
             reason = StopReason.ERROR.value
         elif state.get("decision") in (Decision.ACCEPT.value, Decision.STALLED.value):
-            last = history[-1]
-            answer, rationale, support = last.answer, last.rationale, last.support_score
+            chosen = (
+                history[-1]
+                if state["decision"] == Decision.ACCEPT.value
+                else choose_final(history, stalled=True, settings=settings)
+            )
+            answer, rationale, support = chosen.answer, chosen.rationale, chosen.support_score
             iteration += 1
             reason = (
                 StopReason.ACCEPTED.value
@@ -163,7 +167,7 @@ def build_graph(
 
         if iteration == settings.max_iterations and not answer:
             if history:
-                best = max(history, key=lambda r: r.support_score)
+                best = choose_final(history, stalled=False, settings=settings)
                 answer, rationale, support = best.answer, best.rationale, best.support_score
             else:
                 answer, rationale, support = (

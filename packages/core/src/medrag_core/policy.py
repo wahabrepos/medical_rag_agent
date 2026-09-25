@@ -12,6 +12,16 @@ class RefinementStrategy(StrEnum):
     CONCATENATION = "concatenation"
 
 
+class FinalAnswerRule(StrEnum):
+    """Which iteration's answer is returned when the loop stops without acceptance."""
+
+    # Research work: a stalled loop returns the latest answer; running out of
+    # iterations returns the best-supported one.
+    RESEARCH_WORK = "research_work"
+    # Always the best-supported answer; ties go to the earliest iteration.
+    BEST_SUPPORTED = "best_supported"
+
+
 class Decision(StrEnum):
     ACCEPT = "accept"  # support score reached the threshold
     STALLED = "stalled"  # improvement over the previous iteration was too small
@@ -29,11 +39,36 @@ class LoopSettings:
     rationale_score_threshold: float = 0.7
     refinement_strategy: RefinementStrategy = RefinementStrategy.STRUCTURED
     max_unsupported_in_query: int = 3
+    final_answer_rule: FinalAnswerRule = FinalAnswerRule.RESEARCH_WORK
+    # Never return "insufficient evidence" (or an empty answer) when an earlier
+    # iteration gave a real answer.
+    prefer_committed_answers: bool = False
 
 
 class Scored(Protocol):
     @property
     def support_score(self) -> float: ...
+
+
+class Answered(Scored, Protocol):
+    @property
+    def answer(self) -> str: ...
+
+
+def is_uncommitted(answer: str) -> bool:
+    """An answer that declines to answer: empty or "insufficient evidence"."""
+    text = answer.strip().lower()
+    return not text or "insufficient evidence" in text
+
+
+def choose_final[R: Answered](history: Sequence[R], *, stalled: bool, settings: LoopSettings) -> R:
+    """The iteration whose answer is returned when the loop stalls or runs out."""
+    if settings.final_answer_rule is FinalAnswerRule.RESEARCH_WORK:
+        return history[-1] if stalled else max(history, key=lambda r: r.support_score)
+    pool: Sequence[R] = history
+    if settings.prefer_committed_answers:
+        pool = [r for r in history if not is_uncommitted(r.answer)] or history
+    return max(pool, key=lambda r: r.support_score)  # max keeps the earliest on ties
 
 
 def decide(history: Sequence[Scored], settings: LoopSettings) -> Decision:

@@ -9,7 +9,7 @@ import pytest
 from medrag_agent.errors import QuotaExhaustedError
 from medrag_agent.graph import build_graph, to_loop_result
 from medrag_core.loop import Generation, IterationRecord, StopReason, run_self_medrag
-from medrag_core.policy import LoopSettings, RefinementStrategy
+from medrag_core.policy import FinalAnswerRule, LoopSettings, RefinementStrategy
 from medrag_core.verification import Verification
 
 CORE_FIXTURES = Path(__file__).parents[2] / "core" / "tests" / "fixtures" / "research_work"
@@ -20,8 +20,9 @@ QUERY = "  What is the question?  "
 class Fakes:
     """The fakes the research-work Trainer was captured with (see eval/capture)."""
 
-    def __init__(self, script: list[Any], top_k: int = 5) -> None:
+    def __init__(self, script: list[Any], top_k: int = 5, refusals: set[int] | None = None) -> None:
         self.script = script
+        self.refusals = refusals or set()
         self.top_k = top_k
         self.queries: list[str] = []
         self.generations = 0
@@ -106,9 +107,12 @@ def test_graph_equals_core_loop(seed: int) -> None:
     settings = LoopSettings(
         early_stopping=rng.random() < 0.8,
         refinement_strategy=rng.choice(list(RefinementStrategy)),
+        final_answer_rule=rng.choice(list(FinalAnswerRule)),
+        prefer_committed_answers=rng.random() < 0.5,
     )
+    refusals = {n for n in (1, 2, 3) if rng.random() < 0.3}
 
-    graph_fakes, loop_fakes = Fakes(script), Fakes(script)
+    graph_fakes, loop_fakes = Fakes(script, refusals=refusals), Fakes(script, refusals=refusals)
     from_graph = run_graph(graph_fakes, settings)
     from_loop = run_self_medrag(
         QUERY,

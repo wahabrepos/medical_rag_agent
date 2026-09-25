@@ -11,7 +11,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from enum import StrEnum
 
-from medrag_core.policy import Decision, LoopSettings, decide, refine_query
+from medrag_core.policy import Decision, LoopSettings, choose_final, decide, refine_query
 from medrag_core.verification import Verification
 
 logger = logging.getLogger(__name__)
@@ -122,7 +122,12 @@ def run_self_medrag(
 
             decision = decide(history, settings)
             if decision is not Decision.CONTINUE:
-                answer, rationale, support = record.answer, record.rationale, record.support_score
+                chosen = (
+                    record
+                    if decision is Decision.ACCEPT
+                    else choose_final(history, stalled=True, settings=settings)
+                )
+                answer, rationale, support = chosen.answer, chosen.rationale, chosen.support_score
                 stop_reason = (
                     StopReason.ACCEPTED if decision is Decision.ACCEPT else StopReason.STALLED
                 )
@@ -148,7 +153,7 @@ def run_self_medrag(
     if iteration == settings.max_iterations and not answer:
         # Iterations exhausted without an accepted answer: return the best-supported one.
         if history:
-            best = max(history, key=lambda r: r.support_score)
+            best = choose_final(history, stalled=False, settings=settings)
             answer, rationale, support = best.answer, best.rationale, best.support_score
         else:
             answer, rationale, support = (
