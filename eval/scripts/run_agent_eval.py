@@ -6,7 +6,8 @@
 Each answered question is appended to eval/runs/<run>/predictions.jsonl straight
 away; running the same command again skips questions already answered. When the
 LLM provider's daily quota is exhausted the run stops with exit code 3 and can be
-resumed later. The report compares accuracy and loop statistics with the research
+resumed later; answers recorded as errors are dropped on resume and asked again.
+The report compares accuracy and loop statistics with the research
 work's Self-MedRAG + Mistral-small predictions on the same questions.
 
 Heavy on memory (embedder + NLI): on the Jetson, run it under a memory cap, e.g.
@@ -42,6 +43,16 @@ def read_predictions(path: Path) -> dict[str, dict[str, Any]]:
         return {}
     rows = [json.loads(line) for line in path.read_text("utf-8").splitlines() if line.strip()]
     return {row["id"]: row for row in rows}
+
+
+def drop_errors(path: Path) -> dict[str, dict[str, Any]]:
+    """Remove answers recorded as errors so they are asked again; returns the rest."""
+    rows = read_predictions(path)
+    kept = {k: v for k, v in rows.items() if v["stop_reason"] != "error"}
+    if len(kept) < len(rows):
+        path.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in kept.values()))
+        print(f"dropped {len(rows) - len(kept)} error answers; they will be asked again")
+    return kept
 
 
 def report(run_dir: Path, items: list[EvalItem]) -> dict[str, Any]:
@@ -95,6 +106,13 @@ def main() -> int:
     )
     ap.add_argument("--data-dir", type=Path, default=ROOT / "data/eval")
     ap.add_argument("--index-dir", type=Path, default=ROOT / "data/indexes")
+    ap.add_argument(
+        "--support-label",
+        choices=("neutral", "entailment"),
+        default="neutral",
+        help='NLI column counted as support: "neutral" reproduces the research work, '
+        '"entailment" is the corrected verifier',
+    )
     ap.add_argument("--report-only", action="store_true")
     args = ap.parse_args()
 
@@ -105,21 +123,23 @@ def main() -> int:
     out_path = run_dir / "predictions.jsonl"
 
     if not args.report_only:
-        from medrag_agent.llm import QuotaExhaustedError
+        from medrag_agent.errors import ProviderUnavailableError
         from medrag_agent.runtime import build_parity_agent
         from medrag_settings import get_settings
 
-        done = read_predictions(out_path)
+        done = drop_errors(out_path)
         todo = [i for i in items if i.id not in done][: args.limit]
         print(f"{len(done)} already answered, {len(todo)} to go", flush=True)
-        agent = build_parity_agent(get_settings(), index_dir=args.index_dir)
+        agent = build_parity_agent(
+            get_settings(), index_dir=args.index_dir, support_label=args.support_label
+        )
         with out_path.open("a", encoding="utf-8") as fh:
             for n, item in enumerate(todo, 1):
                 calls_before = agent.generator.calls
                 started = time.monotonic()
                 try:
                     state = agent.run(item.question, binary_answer=item.binary_answer)
-                except QuotaExhaustedError as exc:
+                except ProviderUnavailableError as exc:
                     print(f"LLM quota exhausted after {n - 1} questions: {exc}", flush=True)
                     print_report(report(run_dir, items))
                     return EXIT_QUOTA
@@ -136,6 +156,7 @@ def main() -> int:
                     "latency": round(time.monotonic() - started, 3),
                     "llm_calls": agent.generator.calls - calls_before,
                     "model": agent.generator.config.model,
+                    "support_label": args.support_label,
                     "history": [
                         {"query": h.query, "answer": h.answer, "support_score": h.support_score}
                         for h in history
