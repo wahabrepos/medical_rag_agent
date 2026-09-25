@@ -36,6 +36,9 @@ class Settings(BaseSettings):
     # Hugging Face token for model downloads.
     hf_token: SecretStr | None = None
 
+    # Inference service (embeddings + NLI on CPU). None = ONNX Runtime default.
+    inference_threads: int | None = None
+
     # Storage.
     database_url: SecretStr = Field(
         default=SecretStr("postgresql+psycopg://medrag:medrag@localhost:5432/medrag")

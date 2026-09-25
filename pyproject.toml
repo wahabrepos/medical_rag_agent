@@ -19,6 +19,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "httpx>=0.28",
     "mypy>=1.17",
     "pre-commit>=4.3",
     "pytest>=8.4",
@@ -96,9 +97,10 @@ module = ["datasets", "datasets.*", "onnxruntime", "onnxruntime.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
-addopts = "-ra --strict-markers --import-mode=importlib -m 'not integration'"
+addopts = "-ra --strict-markers --import-mode=importlib -m 'not integration and not model'"
 markers = [
     "integration: needs PostgreSQL + pgvector (set TEST_DATABASE_URL); run with -m integration",
+    "model: downloads model weights from Hugging Face; run with -m model",
 ]
 testpaths = [
     "packages/settings/tests",
