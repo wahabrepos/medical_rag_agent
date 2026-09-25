@@ -23,8 +23,8 @@ def test_defaults_without_env_file() -> None:
     settings = Settings(_env_file=None)  # type: ignore[call-arg]
 
     assert settings.app_env is AppEnv.LOCAL
-    assert settings.llm_primary_model == "mistral/mistral-small-latest"
-    assert settings.llm_fallback_model == "groq/openai/gpt-oss-120b"
+    assert settings.llm_primary_model == "groq/openai/gpt-oss-120b"
+    assert settings.llm_fallback_model == "mistral/mistral-small-2603"
     assert settings.mistral_api_key is None
 
 

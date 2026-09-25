@@ -27,11 +27,15 @@ class Settings(BaseSettings):
     app_env: AppEnv = AppEnv.LOCAL
     log_level: str = "INFO"
 
-    # LLM providers (primary Mistral, fallback Groq), as LiteLLM model names.
+    # LLM (LiteLLM model names). Groq gpt-oss-120b while Mistral-small is not on the
+    # free plan; the research work used mistral/mistral-small-latest.
     mistral_api_key: SecretStr | None = None
     groq_api_key: SecretStr | None = None
-    llm_primary_model: str = "mistral/mistral-small-latest"
-    llm_fallback_model: str = "groq/openai/gpt-oss-120b"
+    llm_primary_model: str = "groq/openai/gpt-oss-120b"
+    llm_fallback_model: str = "mistral/mistral-small-2603"
+    # Client-side throttle; defaults match Groq's free tier for gpt-oss-120b.
+    llm_requests_per_minute: int = 30
+    llm_tokens_per_minute: int = 8_000
 
     # Hugging Face token for model downloads.
     hf_token: SecretStr | None = None
