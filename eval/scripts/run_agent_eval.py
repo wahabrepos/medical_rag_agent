@@ -118,6 +118,17 @@ def main() -> int:
         '"entailment" is the corrected verifier',
     )
     ap.add_argument(
+        "--final-answer-rule",
+        choices=("research_work", "best_supported"),
+        default="research_work",
+        help="answer returned when the loop stalls or runs out of iterations",
+    )
+    ap.add_argument(
+        "--prefer-committed",
+        action="store_true",
+        help='never return "insufficient evidence" when an earlier iteration answered',
+    )
+    ap.add_argument(
         "--budget",
         type=float,
         default=3.0,
@@ -136,13 +147,18 @@ def main() -> int:
         from medrag_agent.budget import BudgetExceededError, SpendLedger, cost
         from medrag_agent.errors import ProviderUnavailableError
         from medrag_agent.runtime import build_parity_agent
+        from medrag_core.policy import FinalAnswerRule, LoopSettings
         from medrag_settings import get_settings
 
         done = drop_errors(out_path)
         todo = [i for i in items if i.id not in done][: args.limit]
         print(f"{len(done)} already answered, {len(todo)} to go", flush=True)
+        loop = LoopSettings(
+            final_answer_rule=FinalAnswerRule(args.final_answer_rule),
+            prefer_committed_answers=args.prefer_committed,
+        )
         agent = build_parity_agent(
-            get_settings(), index_dir=args.index_dir, support_label=args.support_label
+            get_settings(), index_dir=args.index_dir, support_label=args.support_label, loop=loop
         )
         ledger = SpendLedger(LEDGER, cap=args.budget)
         gen = agent.generator
@@ -193,6 +209,8 @@ def main() -> int:
                     "cost": round(spent, 6),
                     "model": agent.generator.config.model,
                     "support_label": args.support_label,
+                    "final_answer_rule": args.final_answer_rule,
+                    "prefer_committed": args.prefer_committed,
                     "history": [
                         {"query": h.query, "answer": h.answer, "support_score": h.support_score}
                         for h in history
