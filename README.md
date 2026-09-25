@@ -63,7 +63,7 @@ What the migrated service uses.
 |---|---|
 | API | FastAPI (SSE streaming) |
 | Agent | LangGraph, checkpoints in PostgreSQL |
-| LLM | LiteLLM → Mistral `mistral-small-latest` (primary), Groq (fallback) |
+| LLM | LiteLLM → Groq `openai/gpt-oss-120b` (Mistral-small is not on Mistral's free plan) |
 | Embeddings | `BAAI/bge-small-en-v1.5`, self-hosted on CPU (ONNX) |
 | Verifier | `cross-encoder/nli-deberta-v3-base`, CPU (ONNX fp32) |
 | Retrieval | PostgreSQL + pgvector (HNSW) + BM25, fused with RRF |
@@ -214,6 +214,38 @@ uv run --env-file .env pytest -m model services/inference   # model checks (down
   variant (published exports or our own dynamic quantisation, full or partial) kept decisions
   stable; see `services/inference/reports/nli_variants_x86_zen4.json`. fp32 needs about 4 s for
   25 pairs on 2 Zen 4 threads; repeated pairs are served from an in-memory cache.
+
+### Agent and evaluation
+
+The Self-MedRAG loop runs as a LangGraph graph (`packages/agent`): retrieve → generate →
+verify → decide, refining the query from unsupported statements. It is tested to behave
+exactly like the research-work loop.
+
+```bash
+uv run --env-file .env python eval/scripts/run_agent_eval.py --set golden --run v1-golden
+uv run --env-file .env python eval/scripts/run_agent_eval.py --set golden --run v1-golden --report-only
+```
+
+Runs are resumable (answers are appended to `eval/runs/<run>/predictions.jsonl`) and stop
+cleanly when the provider's daily quota is used up (exit code 3).
+
+**Generator.** The research work used Mistral `mistral-small-latest`, which Mistral's free plan
+no longer serves, so the first build uses Groq `openai/gpt-oss-120b` (free tier: 1,000
+requests/day, 8,000 tokens/minute). It is a reasoning model: it gets `reasoning_effort="low"`
+and 2,048 tokens of headroom, because with the research work's 400 tokens the hidden reasoning
+used up the budget and answers came back empty. Because the generator differs, accuracy is not
+directly comparable with the research work's 71.30% / 75.96%.
+
+**v1 baseline** (research-work pipeline with gpt-oss-120b, golden 150):
+
+| | MedQA (75) | PubMedQA (75) |
+|---|---|---|
+| Agent | 62.7% | 77.3% |
+| Research work, same questions | 69.3% | 76.0% |
+| Questions needing more than one iteration | 2.7% | 1.3% |
+
+16 of the 75 MedQA answers were "insufficient evidence" (the system prompt asks for this when
+the context does not support a claim); on the other 59 the agent was right 47 times.
 
 ## License
 
