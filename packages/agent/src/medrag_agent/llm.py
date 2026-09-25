@@ -22,6 +22,7 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field, replace
 from typing import Any
 
+from medrag_agent.errors import QuotaExhaustedError
 from medrag_core.loop import Generation
 from medrag_core.parsing import ParsedGeneration
 from medrag_core.prompts import ChatMessages, HistoryEntry, build_messages
@@ -31,10 +32,6 @@ logger = logging.getLogger(__name__)
 RESEARCH_WORK_MAX_TOKENS = 400
 REASONING_MAX_TOKENS = 2048
 CHARS_PER_TOKEN = 4  # rough estimate used only for throttling
-
-
-class QuotaExhaustedError(RuntimeError):
-    """The provider refused further requests for a long period (e.g. a daily cap)."""
 
 
 @dataclass(frozen=True)
@@ -48,8 +45,6 @@ class GeneratorConfig:
     tokens_per_minute: int = 8_000
     num_retries: int = 6
     timeout_seconds: float = 120.0
-    # A 429 whose retry-after exceeds this is treated as an exhausted quota.
-    max_wait_seconds: float = 300.0
 
 
 @dataclass(frozen=True)
@@ -143,7 +138,7 @@ class LlmGenerator:
         try:
             response = self._completion(**kwargs)
         except Exception as exc:
-            if _is_quota_error(exc, self.config.max_wait_seconds):
+            if is_rate_limit_error(exc):
                 raise QuotaExhaustedError(str(exc)) from exc
             raise
         self.calls += 1
@@ -197,16 +192,12 @@ def config_for_model(model: str, **overrides: Any) -> GeneratorConfig:
     return replace(base, **overrides)
 
 
-def _is_quota_error(exc: Exception, max_wait_seconds: float) -> bool:
-    """A rate-limit error whose retry-after is longer than we are willing to wait."""
-    status = getattr(exc, "status_code", None)
-    text = str(exc).lower()
-    if status != 429 and "rate limit" not in text and "429" not in text:
-        return False
-    response = getattr(exc, "response", None)
-    headers = getattr(response, "headers", None) or {}
-    retry_after = headers.get("retry-after") if hasattr(headers, "get") else None
-    try:
-        return retry_after is not None and float(retry_after) > max_wait_seconds
-    except ValueError:
-        return False
+def is_rate_limit_error(exc: Exception) -> bool:
+    """A 429 / rate-limit error. LiteLLM has already retried it, so the quota is used up.
+
+    Covers per-minute and per-day limits alike (Groq reports its daily token limit
+    with a short "try again in 4m" wait while the day's budget stays exhausted).
+    """
+    if getattr(exc, "status_code", None) == 429:
+        return True
+    return type(exc).__name__ == "RateLimitError" or "rate limit" in str(exc).lower()

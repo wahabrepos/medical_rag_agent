@@ -6,6 +6,10 @@
                           +---------------- refine <---------------------+
                           guard/decide --(stop)--> finalize -> END
 
+One deliberate difference: `ProviderUnavailableError` (quota or rate limit) is not
+recorded as an "Error during generation" answer; it propagates so the run stops
+and the question is asked again later.
+
 Every node uses the same rules as `medrag_core.loop.run_self_medrag` (thresholds,
 early stopping, refinement strategies, best-of-history, timeout and error
 handling); the graph is tested against the same research-work fixtures. Being a
@@ -19,6 +23,7 @@ from typing import Any, Literal, TypedDict
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
+from medrag_agent.errors import ProviderUnavailableError
 from medrag_core.loop import (
     ERROR_ANSWER,
     Generation,
@@ -78,6 +83,8 @@ def build_graph(
     def retrieve_node(state: AgentState) -> AgentState:
         try:
             return {"context": list(retrieve(state["current_query"]))}
+        except ProviderUnavailableError:
+            raise
         except Exception as exc:
             return {"error": str(exc)}
 
@@ -90,6 +97,8 @@ def build_graph(
                 binary_answer=state.get("binary_answer", False),
             )
             return {"generation": generation}
+        except ProviderUnavailableError:
+            raise
         except Exception as exc:
             return {"error": str(exc)}
 
@@ -97,6 +106,8 @@ def build_graph(
         try:
             generation = state["generation"]
             verification = verify(generation.rationale, state["context"])
+        except ProviderUnavailableError:
+            raise
         except Exception as exc:
             return {"error": str(exc)}
         record = IterationRecord(

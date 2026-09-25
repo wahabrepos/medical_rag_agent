@@ -3,10 +3,10 @@ from typing import Any
 
 import pytest
 
+from medrag_agent.errors import QuotaExhaustedError
 from medrag_agent.llm import (
     GeneratorConfig,
     LlmGenerator,
-    QuotaExhaustedError,
     RateLimiter,
     config_for_model,
 )
@@ -87,21 +87,36 @@ def test_rate_limiter_waits_for_the_window() -> None:
     assert now[0] >= 60.0
 
 
-class RateLimitedError(Exception):
-    def __init__(self, retry_after: str) -> None:
-        super().__init__("RateLimitError: 429 Too Many Requests")
+class RateLimitError(Exception):
+    """Shaped like litellm.RateLimitError."""
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
         self.status_code = 429
-        self.response = SimpleNamespace(headers={"retry-after": retry_after})
 
 
-@pytest.mark.parametrize(("retry_after", "quota"), [("3600", True), ("5", False)])
-def test_long_rate_limits_are_reported_as_quota(retry_after: str, quota: bool) -> None:
+GROQ_DAILY = (
+    "GroqException - Rate limit reached for model `openai/gpt-oss-120b` on tokens per day "
+    "(TPD): Limit 200000, Used 198858, Requested 1779. Please try again in 4m35s."
+)
+
+
+@pytest.mark.parametrize("message", [GROQ_DAILY, "Too many requests per minute"])
+def test_rate_limits_after_retries_are_reported_as_quota(message: str) -> None:
     def failing(**kwargs: Any) -> Any:
-        raise RateLimitedError(retry_after)
+        raise RateLimitError(message)
 
     gen = LlmGenerator(GeneratorConfig(), completion=failing, limiter=NoWait())
-    expected = QuotaExhaustedError if quota else RateLimitedError
-    with pytest.raises(expected):
+    with pytest.raises(QuotaExhaustedError):
+        gen("Q", [], [])
+
+
+def test_other_errors_are_not_quota() -> None:
+    def failing(**kwargs: Any) -> Any:
+        raise ValueError("bad request")
+
+    gen = LlmGenerator(GeneratorConfig(), completion=failing, limiter=NoWait())
+    with pytest.raises(ValueError, match="bad request"):
         gen("Q", [], [])
 
 

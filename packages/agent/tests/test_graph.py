@@ -6,6 +6,7 @@ from typing import Any
 
 import pytest
 
+from medrag_agent.errors import QuotaExhaustedError
 from medrag_agent.graph import build_graph, to_loop_result
 from medrag_core.loop import Generation, IterationRecord, StopReason, run_self_medrag
 from medrag_core.policy import LoopSettings, RefinementStrategy
@@ -144,3 +145,18 @@ def test_binary_flag_reaches_generator() -> None:
     graph.invoke({"question": "Is it?", "binary_answer": True})
 
     assert seen == [True]
+
+
+@pytest.mark.parametrize("stage", ["retrieve", "generate", "verify"])
+def test_provider_errors_stop_the_run_instead_of_becoming_answers(stage: str) -> None:
+    fakes = Fakes([(0.1, ["x"]), (0.2, ["x"]), (0.9, [])])
+
+    def quota(*args: Any, **kwargs: Any) -> Any:
+        raise QuotaExhaustedError("daily tokens used up")
+
+    parts = {"retrieve": fakes.retrieve, "generate": fakes.generate, "verify": fakes.verify}
+    parts[stage] = quota
+    graph = build_graph(**parts)
+
+    with pytest.raises(QuotaExhaustedError):
+        graph.invoke({"question": QUERY})
