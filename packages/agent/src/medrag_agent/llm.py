@@ -101,6 +101,8 @@ class LlmGenerator:
     completion: CompletionFn | None = None
     limiter: RateLimiter | None = None
     calls: int = field(default=0, init=False)
+    prompt_tokens: int = field(default=0, init=False)
+    completion_tokens: int = field(default=0, init=False)
     last_response: LlmResponse | None = field(default=None, init=False)
 
     def __post_init__(self) -> None:
@@ -141,7 +143,6 @@ class LlmGenerator:
             if is_rate_limit_error(exc):
                 raise QuotaExhaustedError(str(exc)) from exc
             raise
-        self.calls += 1
         choice = response.choices[0]
         usage = getattr(response, "usage", None)
         result = LlmResponse(
@@ -151,6 +152,9 @@ class LlmGenerator:
             completion_tokens=int(getattr(usage, "completion_tokens", 0) or 0),
             finish_reason=getattr(choice, "finish_reason", None),
         )
+        self.calls += 1
+        self.prompt_tokens += result.prompt_tokens
+        self.completion_tokens += result.completion_tokens
         if result.finish_reason == "length":
             logger.warning("generation hit max_tokens=%d", self.config.max_tokens)
         self.last_response = result
