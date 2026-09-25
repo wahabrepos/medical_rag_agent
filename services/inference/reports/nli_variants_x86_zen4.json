@@ -1,0 +1,226 @@
+{
+  "cpu": "x86_64",
+  "onnxruntime": "1.30.0",
+  "pairs": 250,
+  "variants": {
+    "fp32": {
+      "file": "/root/.cache/huggingface/hub/models--cross-encoder--nli-deberta-v3-base/snapshots/6c749ce3425cd33b46d187e45b92bbf96ee12ec7/onnx/model.onnx",
+      "size_mb": 738.6,
+      "threads_2": {
+        "pairs_per_second": 7.02,
+        "seconds_for_25_pairs": 4.12
+      },
+      "threads_all": {
+        "pairs_per_second": 7.08,
+        "seconds_for_25_pairs": 3.705
+      },
+      "max_abs_diff": 0.0,
+      "p98_abs_diff": 0.0,
+      "mean_abs_diff": 0.0,
+      "decision_agreement": {
+        "contradiction": 1.0,
+        "entailment": 1.0,
+        "neutral": 1.0
+      },
+      "support_scores_reproduced": "16/16",
+      "passes_accuracy_bar": true,
+      "meets_speed_budget_2_threads": false
+    },
+    "published_quint8_avx2": {
+      "file": "/root/.cache/huggingface/hub/models--cross-encoder--nli-deberta-v3-base/snapshots/6c749ce3425cd33b46d187e45b92bbf96ee12ec7/onnx/model_quint8_avx2.onnx",
+      "size_mb": 244.4,
+      "threads_2": {
+        "pairs_per_second": 9.45,
+        "seconds_for_25_pairs": 3.103
+      },
+      "threads_all": {
+        "pairs_per_second": 6.94,
+        "seconds_for_25_pairs": 3.716
+      },
+      "max_abs_diff": 0.9985,
+      "p98_abs_diff": 0.9936,
+      "mean_abs_diff": 0.22187,
+      "decision_agreement": {
+        "contradiction": 0.84,
+        "entailment": 0.876,
+        "neutral": 0.652
+      },
+      "support_scores_reproduced": "14/16",
+      "passes_accuracy_bar": false,
+      "meets_speed_budget_2_threads": false
+    },
+    "published_qint8_avx512": {
+      "file": "/root/.cache/huggingface/hub/models--cross-encoder--nli-deberta-v3-base/snapshots/6c749ce3425cd33b46d187e45b92bbf96ee12ec7/onnx/model_qint8_avx512.onnx",
+      "size_mb": 244.4,
+      "threads_2": {
+        "pairs_per_second": 13.86,
+        "seconds_for_25_pairs": 2.021
+      },
+      "threads_all": {
+        "pairs_per_second": 8.39,
+        "seconds_for_25_pairs": 2.727
+      },
+      "max_abs_diff": 0.9975,
+      "p98_abs_diff": 0.9888,
+      "mean_abs_diff": 0.2157,
+      "decision_agreement": {
+        "contradiction": 0.836,
+        "entailment": 0.872,
+        "neutral": 0.668
+      },
+      "support_scores_reproduced": "14/16",
+      "passes_accuracy_bar": false,
+      "meets_speed_budget_2_threads": false
+    },
+    "published_qint8_avx512_vnni": {
+      "file": "/root/.cache/huggingface/hub/models--cross-encoder--nli-deberta-v3-base/snapshots/6c749ce3425cd33b46d187e45b92bbf96ee12ec7/onnx/model_qint8_avx512_vnni.onnx",
+      "size_mb": 244.4,
+      "threads_2": {
+        "pairs_per_second": 14.0,
+        "seconds_for_25_pairs": 2.02
+      },
+      "threads_all": {
+        "pairs_per_second": 7.27,
+        "seconds_for_25_pairs": 2.89
+      },
+      "max_abs_diff": 0.9975,
+      "p98_abs_diff": 0.9888,
+      "mean_abs_diff": 0.2157,
+      "decision_agreement": {
+        "contradiction": 0.836,
+        "entailment": 0.872,
+        "neutral": 0.668
+      },
+      "support_scores_reproduced": "14/16",
+      "passes_accuracy_bar": false,
+      "meets_speed_budget_2_threads": false
+    },
+    "own_qint8_per_channel": {
+      "file": "quantised/own_qint8_per_channel.onnx",
+      "size_mb": 244.3,
+      "threads_2": {
+        "pairs_per_second": 14.03,
+        "seconds_for_25_pairs": 2.055
+      },
+      "threads_all": {
+        "pairs_per_second": 10.36,
+        "seconds_for_25_pairs": 2.984
+      },
+      "max_abs_diff": 0.9986,
+      "p98_abs_diff": 0.991,
+      "mean_abs_diff": 0.24761,
+      "decision_agreement": {
+        "contradiction": 0.82,
+        "entailment": 0.864,
+        "neutral": 0.62
+      },
+      "support_scores_reproduced": "13/16",
+      "passes_accuracy_bar": false,
+      "meets_speed_budget_2_threads": false
+    },
+    "own_qint8_per_channel_reduce_range": {
+      "file": "quantised/own_qint8_per_channel_reduce_range.onnx",
+      "size_mb": 244.3,
+      "threads_2": {
+        "pairs_per_second": 14.05,
+        "seconds_for_25_pairs": 2.072
+      },
+      "threads_all": {
+        "pairs_per_second": 9.62,
+        "seconds_for_25_pairs": 3.125
+      },
+      "max_abs_diff": 0.9985,
+      "p98_abs_diff": 0.9932,
+      "mean_abs_diff": 0.23606,
+      "decision_agreement": {
+        "contradiction": 0.792,
+        "entailment": 0.884,
+        "neutral": 0.636
+      },
+      "support_scores_reproduced": "12/16",
+      "passes_accuracy_bar": false,
+      "meets_speed_budget_2_threads": false
+    },
+    "own_qint8_per_tensor": {
+      "file": "quantised/own_qint8_per_tensor.onnx",
+      "size_mb": 243.9,
+      "threads_2": {
+        "pairs_per_second": 13.95,
+        "seconds_for_25_pairs": 2.047
+      },
+      "threads_all": {
+        "pairs_per_second": 9.09,
+        "seconds_for_25_pairs": 2.898
+      },
+      "max_abs_diff": 0.989,
+      "p98_abs_diff": 0.983,
+      "mean_abs_diff": 0.1577,
+      "decision_agreement": {
+        "contradiction": 0.812,
+        "entailment": 0.984,
+        "neutral": 0.772
+      },
+      "support_scores_reproduced": "16/16",
+      "passes_accuracy_bar": false,
+      "meets_speed_budget_2_threads": false
+    },
+    "own_qint8_per_tensor_reduce_range": {
+      "file": "quantised/own_qint8_per_tensor_reduce_range.onnx",
+      "size_mb": 243.9,
+      "threads_2": {
+        "pairs_per_second": 14.11,
+        "seconds_for_25_pairs": 2.027
+      },
+      "threads_all": {
+        "pairs_per_second": 9.05,
+        "seconds_for_25_pairs": 2.58
+      },
+      "max_abs_diff": 0.9878,
+      "p98_abs_diff": 0.9827,
+      "mean_abs_diff": 0.15431,
+      "decision_agreement": {
+        "contradiction": 0.812,
+        "entailment": 0.984,
+        "neutral": 0.772
+      },
+      "support_scores_reproduced": "16/16",
+      "passes_accuracy_bar": false,
+      "meets_speed_budget_2_threads": false
+    }
+  },
+  "best_int8": null,
+  "machine": "Vast.ai host, AMD Ryzen 9 7950X3D (Zen 4: AVX2, AVX-512, AVX-512 VNNI), 2026-09-25",
+  "additional_experiments": {
+    "own_matmul_only_per_channel": {
+      "size_mb": 539.5,
+      "seconds_for_25_pairs_2_threads": 2.055,
+      "p98_abs_diff": 0.9945,
+      "max_abs_diff": 0.9986,
+      "min_decision_agreement": 0.612,
+      "support_scores_reproduced": "12/16",
+      "passes_accuracy_bar": false
+    },
+    "own_ffn_only_per_channel (attention MatMuls kept fp32)": {
+      "size_mb": 567.5,
+      "seconds_for_25_pairs_2_threads": 2.72,
+      "p98_abs_diff": 0.9911,
+      "max_abs_diff": 0.9988,
+      "min_decision_agreement": 0.684,
+      "support_scores_reproduced": "14/16",
+      "passes_accuracy_bar": false
+    },
+    "fp32_model_O1 (graph-optimised)": {
+      "size_mb": 774.4,
+      "seconds_for_25_pairs_2_threads": 4.178,
+      "p98_abs_diff": 0.0,
+      "passes_accuracy_bar": true
+    },
+    "fp32_model_O2 (graph-optimised)": {
+      "size_mb": 774.3,
+      "seconds_for_25_pairs_2_threads": 4.327,
+      "p98_abs_diff": 0.0,
+      "passes_accuracy_bar": true
+    }
+  },
+  "conclusion": "No int8 variant (published or own dynamic quantisation, full or partial) meets the accuracy bar (p98 |diff| <= 0.02 and >= 98% decision agreement): DeBERTa-v3 does not survive dynamic int8 quantisation. fp32 ONNX matches the research-work PyTorch outputs exactly and is used. Graph-optimised fp32 exports give no speed-up. fp32 needs about 4.1 s for 25 pairs on 2 Zen 4 threads, so the 2 s budget is not met: typical iterations have 15-20 pairs (about 2.5-3.3 s), and repeated (passage, statement) pairs will be cached."
+}
