@@ -4,7 +4,12 @@ version = "0.1.0"
 description = "LangGraph agent wiring the Self-MedRAG loop."
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "langgraph>=0.6",
+    "litellm>=1.75",
     "medrag-core",
+    "medrag-db",
+    "medrag-inference",
+    "medrag-search",
     "medrag-settings",
 ]
 
@@ -14,4 +19,7 @@ build-backend = "uv_build"
 
 [tool.uv.sources]
 medrag-core = { workspace = true }
+medrag-db = { workspace = true }
+medrag-inference = { workspace = true }
+medrag-search = { workspace = true }
 medrag-settings = { workspace = true }
