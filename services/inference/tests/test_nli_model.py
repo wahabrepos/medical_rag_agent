@@ -38,8 +38,20 @@ def test_label_order_matches_model_config() -> None:
     assert LABELS[FIXTURE["research_work_column"]] == RESEARCH_WORK_SUPPORT_LABEL
 
 
+# CPU reproduces the research work's PyTorch scores almost exactly. GPU kernels differ
+# slightly (measured up to 0.005 on an RTX 3060), so a GPU is held to the ADR-0005 bar:
+# within 0.02 and the same support decisions.
+TOLERANCE = {"cpu": 1e-3, "cuda": 0.02}
+
+
 def test_matches_research_work_pytorch(nli: DebertaNli) -> None:
-    assert np.abs(nli.probabilities(PAIRS) - REFERENCE).max() < 1e-3
+    probs = nli.probabilities(PAIRS)
+    device = os.environ.get("MEDRAG_TEST_DEVICE", "cpu")
+
+    assert np.abs(probs - REFERENCE).max() < TOLERANCE[device]
+    for column in range(len(LABELS)):
+        same = (probs[:, column] >= THETA) == (REFERENCE[:, column] >= THETA)
+        assert same.all(), f"{LABELS[column]}: a support decision changed"
 
 
 def test_research_work_support_scores_are_reproduced(nli: DebertaNli) -> None:
