@@ -8,6 +8,8 @@ The NLI model itself is injected, so this module stays framework-free.
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 
+from medrag_core.evidence import normalize_statement
+
 VERIFICATION_THRESHOLD = 0.7
 
 NliScorer = Callable[[list[tuple[str, str]]], list[float]]
@@ -27,12 +29,17 @@ def verify_rationale(
     nli_scorer: NliScorer,
     *,
     threshold: float = VERIFICATION_THRESHOLD,
+    normalize: bool = False,
 ) -> Verification:
     """Score every (passage, statement) pair in one batch and aggregate per statement.
 
     An empty rationale counts as fully supported; with no passages, every statement
-    is unsupported (both as in the research work).
+    is unsupported (both as in the research work). With `normalize` (not in the
+    research work), references like "Passage 2 states that" are removed first and
+    unsupported statements are returned in that normalised form.
     """
+    if normalize:
+        rationale = [normalize_statement(s) for s in rationale]
     if not rationale:
         return Verification(support_score=1.0, unsupported=[], best_scores=[])
     if not passages:
