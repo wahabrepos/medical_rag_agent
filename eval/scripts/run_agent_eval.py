@@ -164,6 +164,11 @@ def main() -> int:
         help="use a remote inference service for NLI, e.g. http://localhost:8001 over a tunnel",
     )
     ap.add_argument(
+        "--normalize-statements",
+        action="store_true",
+        help='verifier checks the claim of "Passage N states that X" statements (X)',
+    )
+    ap.add_argument(
         "--leakage-free",
         action="store_true",
         help="PubMedQA: never retrieve the question's own source article",
@@ -213,6 +218,7 @@ def main() -> int:
             loop=loop,
             lenient_json=args.lenient_json,
             nli_url=args.nli_url,
+            normalize_statements=args.normalize_statements,
         )
         ledger = SpendLedger(LEDGER, cap=args.budget)
         gen = agent.generator
@@ -273,6 +279,7 @@ def main() -> int:
                     "prefer_committed": args.prefer_committed,
                     "mcq_commit": args.mcq_commit,
                     "lenient_json": args.lenient_json,
+                    "normalize_statements": args.normalize_statements,
                     "excluded_pmid": source_pmid.get(item.id),
                     "nli": getattr(agent.nli, "version", "local"),
                     "raw_outputs": gen.raw_outputs[raw_before:],

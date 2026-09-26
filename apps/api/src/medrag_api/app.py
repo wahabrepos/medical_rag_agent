@@ -89,6 +89,7 @@ def load_context() -> ApiContext:
         loop=PRODUCT_LOOP,
         lenient_json=True,
         nli_url=settings.nli_url,
+        normalize_statements=True,  # v3a: better-grounded PubMedQA answers, same cost
     )
     sessions = make_session_factory(make_engine(settings.database_url.get_secret_value()))
     service = AnswerService(

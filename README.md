@@ -258,6 +258,7 @@ Each change is measured against the v1 baseline on the same 150 questions:
 | v2b | v2a + keep the best-supported answer, never replace an answer with a refusal | 64.0% | 77.3% | 10 | ~100% |
 | v2c | v2b + multiple-choice questions must name an option | **80.0%** | 77.3% | 0 | ~100% |
 | v2d | v2c + read answer fields from invalid JSON (0 raw-JSON answers, was 6) | 77.3% | 77.3% | 0 | ~100% |
+| v3a | v2d + the verifier checks the claim of "Passage N states that X" statements | 80.0% | 78.7% | 0 | ~100% |
 | research work | Mistral-small, same questions | 69.3% | 76.0% | – | 0% |
 
 - With the corrected verifier the loop actually iterates, but the research-work rules then
@@ -268,6 +269,9 @@ Each change is measured against the v1 baseline on the same 150 questions:
   answers rely on the model's own knowledge. Low-support answers must be flagged to users.
 - Differences of a few points on 150 questions are within noise (v2c and v2d differ by two
   MedQA questions); a full-set run confirms them. v2d is the configuration for the full run.
+- v3a raises PubMedQA support from 0.26 to 0.39 and the share of grounded answers from 4.0% to
+  10.7% at the same cost; MedQA support stays near 0 (the corpus lacks that knowledge). The API
+  uses v3a.
 
 **Full evaluation of v2d** (all 1,000 MedQA and 890 PubMedQA questions; NLI on a rented GPU):
 
@@ -306,7 +310,7 @@ curl -X POST localhost:8000/v1/ask -H "Authorization: Bearer <key>" \
 
 Keys go in `API_KEYS` (bearer tokens); only `APP_ENV=local` runs without them. Each key is rate
 limited, and answering stops with 503 before total LLM spend could pass 90% of `LLM_BUDGET`.
-The service uses the best evaluated configuration (v2d).
+The service uses the best evaluated configuration (v3a).
 
 **Every answer says how well the literature supports it.** Rationale statements are checked
 against the retrieved passages with NLI (after removing references such as "Passage 2 states

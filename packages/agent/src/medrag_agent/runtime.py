@@ -59,6 +59,7 @@ class AgentComponents:
     support_label: str
     loop: LoopSettings | None
     lenient_json: bool
+    normalize_statements: bool = False
     limiter: RateLimiter = field(init=False)
 
     def __post_init__(self) -> None:
@@ -84,7 +85,13 @@ class AgentComponents:
 
         scorer = self.nli.scorer(self.support_label)
         try:
-            return verify_rationale(rationale, context, scorer, threshold=VERIFICATION_THRESHOLD)
+            return verify_rationale(
+                rationale,
+                context,
+                scorer,
+                threshold=VERIFICATION_THRESHOLD,
+                normalize=self.normalize_statements,
+            )
         except InferenceUnavailableError as exc:
             # A lost tunnel or remote service stops the run; the question is asked again.
             raise ProviderUnavailableError(str(exc)) from exc
@@ -106,6 +113,7 @@ def build_components(
     loop: LoopSettings | None = None,
     lenient_json: bool = False,
     nli_url: str | None = None,
+    normalize_statements: bool = False,
 ) -> AgentComponents:
     sessions = make_session_factory(make_engine(settings.database_url.get_secret_value()))
     embedder = BgeEmbedder(threads=settings.inference_threads)
@@ -129,6 +137,7 @@ def build_components(
         support_label=support_label,
         loop=loop,
         lenient_json=lenient_json,
+        normalize_statements=normalize_statements,
     )
 
 
