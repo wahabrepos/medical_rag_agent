@@ -259,6 +259,7 @@ Each change is measured against the v1 baseline on the same 150 questions:
 | v2c | v2b + multiple-choice questions must name an option | **80.0%** | 77.3% | 0 | ~100% |
 | v2d | v2c + read answer fields from invalid JSON (0 raw-JSON answers, was 6) | 77.3% | 77.3% | 0 | ~100% |
 | v3a | v2d + the verifier checks the claim of "Passage N states that X" statements | 80.0% | 78.7% | 0 | ~100% |
+| v3b | v3a + a one-sentence answer claim is verified too; contradictions veto support | 77.3% | 77.3% | 0 | ~100% |
 | research work | Mistral-small, same questions | 69.3% | 76.0% | – | 0% |
 
 - With the corrected verifier the loop actually iterates, but the research-work rules then
@@ -272,6 +273,9 @@ Each change is measured against the v1 baseline on the same 150 questions:
 - v3a raises PubMedQA support from 0.26 to 0.39 and the share of grounded answers from 4.0% to
   10.7% at the same cost; MedQA support stays near 0 (the corpus lacks that knowledge). The API
   uses v3a.
+- v3b (answer check) does not help: answer claims are rarely entailed by an abstract, so
+  PubMedQA support halves (0.39 -> 0.18) and grounded answers fall from 10.7% to 5.3%, with no
+  accuracy gain. It stays available (`--answer-check`) but is off.
 
 **Full evaluation of v2d** (all 1,000 MedQA and 890 PubMedQA questions; NLI on a rented GPU):
 
