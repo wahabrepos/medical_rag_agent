@@ -129,6 +129,11 @@ def main() -> int:
         help='never return "insufficient evidence" when an earlier iteration answered',
     )
     ap.add_argument(
+        "--mcq-commit",
+        action="store_true",
+        help="MedQA prompts require an option letter instead of allowing a refusal",
+    )
+    ap.add_argument(
         "--budget",
         type=float,
         default=3.0,
@@ -175,10 +180,15 @@ def main() -> int:
                     print_report(report(run_dir, items))
                     return EXIT_BUDGET
                 calls_before = gen.calls
+                raw_before = len(gen.raw_outputs)
                 tokens_before = (gen.prompt_tokens, gen.completion_tokens)
                 started = time.monotonic()
                 try:
-                    state = agent.run(item.question, binary_answer=item.binary_answer)
+                    state = agent.run(
+                        item.question,
+                        binary_answer=item.binary_answer,
+                        multiple_choice=args.mcq_commit and item.dataset is Dataset.MEDQA,
+                    )
                 except ProviderUnavailableError as exc:
                     print(f"LLM quota exhausted after {n - 1} questions: {exc}", flush=True)
                     print_report(report(run_dir, items))
@@ -211,6 +221,8 @@ def main() -> int:
                     "support_label": args.support_label,
                     "final_answer_rule": args.final_answer_rule,
                     "prefer_committed": args.prefer_committed,
+                    "mcq_commit": args.mcq_commit,
+                    "raw_outputs": gen.raw_outputs[raw_before:],
                     "history": [
                         {"query": h.query, "answer": h.answer, "support_score": h.support_score}
                         for h in history
