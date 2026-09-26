@@ -281,6 +281,14 @@ MedQA improves by 13.6 points (about ±2 points of uncertainty at this size); Pu
 par (−1.1 points, within noise). MedQA support stays low (0.03), so those answers rely largely
 on the model's own knowledge. PubMedQA is still open-book: the gold abstracts are retrievable.
 
+**PubMedQA without its own abstract.** Each PubMedQA question asks about the conclusion of one
+specific study, and the corpus contains that study's abstract (retrieved in the top 5 for 73 of
+75 golden questions). With the question's own article excluded from retrieval
+(`--leakage-free`), accuracy on the golden PubMedQA questions drops from 77.3% to 42.7%, which
+is the always-"no" baseline: the agent answered "no" 73 times, with support falling from 0.26
+to 0.05. PubMedQA therefore measures finding and reading the right abstract, in the research
+work and here, not open-domain medical reasoning; MedQA is the better measure of that.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
