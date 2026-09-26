@@ -42,6 +42,7 @@ class GeneratorConfig:
     reasoning_effort: str | None = None  # sent only when set (reasoning models)
     expected_completion_tokens: int = 400  # used only to estimate throttling
     lenient_json: bool = False  # read fields from invalid JSON (not in the research work)
+    answer_claim: bool = False  # ask for a one-sentence answer claim (answer check)
     requests_per_minute: int = 30
     tokens_per_minute: int = 8_000
     num_retries: int = 6
@@ -174,7 +175,12 @@ class LlmGenerator:
         multiple_choice: bool = False,
     ) -> Generation:
         messages = build_messages(
-            query, context, history, binary_answer=binary_answer, multiple_choice=multiple_choice
+            query,
+            context,
+            history,
+            binary_answer=binary_answer,
+            multiple_choice=multiple_choice,
+            answer_claim=self.config.answer_claim,
         )
         parsed = ParsedGeneration.from_text(
             self.complete(messages).text, lenient=self.config.lenient_json
@@ -184,6 +190,7 @@ class LlmGenerator:
             rationale=parsed.rationale,
             confidence=parsed.confidence,
             citations=parsed.citations,
+            claim=parsed.claim if self.config.answer_claim else None,
         )
 
 

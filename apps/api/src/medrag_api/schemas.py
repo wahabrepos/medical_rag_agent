@@ -42,6 +42,7 @@ class Citation(BaseModel):
 
 
 class StatementEvidenceOut(BaseModel):
+    kind: str = Field(default="rationale", description='"claim" (the answer itself) or "rationale"')
     text: str
     support: float = Field(description="best entailment probability over the passages")
     supported: bool

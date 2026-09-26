@@ -22,7 +22,12 @@ from medrag_agent.errors import ProviderUnavailableError
 from medrag_agent.graph import AgentState, build_graph
 from medrag_agent.llm import LlmGenerator, RateLimiter, config_for_model
 from medrag_core.policy import FinalAnswerRule, LoopSettings
-from medrag_core.verification import VERIFICATION_THRESHOLD, Verification, verify_rationale
+from medrag_core.verification import (
+    VERIFICATION_THRESHOLD,
+    Verification,
+    verify_rationale,
+    verify_with_contradictions,
+)
 from medrag_db.session import make_engine, make_session_factory
 from medrag_inference import RESEARCH_WORK_SUPPORT_LABEL, BgeEmbedder, DebertaNli
 from medrag_inference.nli import LabelScorer
@@ -60,6 +65,8 @@ class AgentComponents:
     loop: LoopSettings | None
     lenient_json: bool
     normalize_statements: bool = False
+    # v3b: answer claim + contradiction veto (entailment support only).
+    answer_check: bool = False
     limiter: RateLimiter = field(init=False)
 
     def __post_init__(self) -> None:
@@ -75,6 +82,7 @@ class AgentComponents:
                 requests_per_minute=self.settings.llm_requests_per_minute,
                 tokens_per_minute=self.settings.llm_tokens_per_minute,
                 lenient_json=self.lenient_json,
+                answer_claim=self.answer_check,
             ),
             api_key=api_key_for(model, self.settings),
             limiter=self.limiter,
@@ -85,6 +93,14 @@ class AgentComponents:
 
         scorer = self.nli.scorer(self.support_label)
         try:
+            if self.answer_check:
+                return verify_with_contradictions(
+                    rationale,
+                    context,
+                    lambda pairs: self.nli.probabilities(pairs).tolist(),
+                    threshold=VERIFICATION_THRESHOLD,
+                    normalize=self.normalize_statements,
+                )
             return verify_rationale(
                 rationale,
                 context,
@@ -114,6 +130,7 @@ def build_components(
     lenient_json: bool = False,
     nli_url: str | None = None,
     normalize_statements: bool = False,
+    answer_check: bool = False,
 ) -> AgentComponents:
     sessions = make_session_factory(make_engine(settings.database_url.get_secret_value()))
     embedder = BgeEmbedder(threads=settings.inference_threads)
@@ -138,6 +155,7 @@ def build_components(
         loop=loop,
         lenient_json=lenient_json,
         normalize_statements=normalize_statements,
+        answer_check=answer_check,
     )
 
 

@@ -169,6 +169,11 @@ def main() -> int:
         help='verifier checks the claim of "Passage N states that X" statements (X)',
     )
     ap.add_argument(
+        "--answer-check",
+        action="store_true",
+        help="ask for an answer claim, verify it too, and let contradictions veto support",
+    )
+    ap.add_argument(
         "--leakage-free",
         action="store_true",
         help="PubMedQA: never retrieve the question's own source article",
@@ -219,6 +224,7 @@ def main() -> int:
             lenient_json=args.lenient_json,
             nli_url=args.nli_url,
             normalize_statements=args.normalize_statements,
+            answer_check=args.answer_check,
         )
         ledger = SpendLedger(LEDGER, cap=args.budget)
         gen = agent.generator
@@ -280,6 +286,8 @@ def main() -> int:
                     "mcq_commit": args.mcq_commit,
                     "lenient_json": args.lenient_json,
                     "normalize_statements": args.normalize_statements,
+                    "answer_check": args.answer_check,
+                    "claims": state.get("iteration_claims", []),
                     "excluded_pmid": source_pmid.get(item.id),
                     "nli": getattr(agent.nli, "version", "local"),
                     "raw_outputs": gen.raw_outputs[raw_before:],

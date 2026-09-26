@@ -53,6 +53,7 @@ class AgentState(TypedDict, total=False):
     context: list[str]
     passages: list[Any]  # what retrieve returned for the current iteration
     iteration_passages: list[list[Any]]  # per completed iteration, parallel to history
+    iteration_claims: list[str | None]  # answer claim per completed iteration
     final_iteration: int | None  # iteration whose answer was returned (1-based)
     generation: Generation
     verification: Verification
@@ -81,6 +82,7 @@ def build_graph(
             "started_at": clock(),
             "history": [],
             "iteration_passages": [],
+            "iteration_claims": [],
         }
 
     def guard(state: AgentState) -> AgentState:
@@ -121,7 +123,13 @@ def build_graph(
     def verify_node(state: AgentState) -> AgentState:
         try:
             generation = state["generation"]
-            verification = verify(generation.rationale, state["context"])
+            # With an answer claim, the answer itself is verified along with its reasoning.
+            statements = (
+                [generation.claim, *generation.rationale]
+                if generation.claim
+                else generation.rationale
+            )
+            verification = verify(statements, state["context"])
         except ProviderUnavailableError:
             raise
         except Exception as exc:
@@ -141,6 +149,7 @@ def build_graph(
             "verification": verification,
             "history": history,
             "iteration_passages": [*state.get("iteration_passages", []), state.get("passages", [])],
+            "iteration_claims": [*state.get("iteration_claims", []), generation.claim],
             "decision": decide(history, settings).value,
         }
 

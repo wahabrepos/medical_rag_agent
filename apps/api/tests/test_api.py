@@ -228,3 +228,30 @@ def test_health_and_validation(make_client: Callable[..., TestClient]) -> None:
     assert client.get("/healthz").json() == {"status": "ok"}
     assert client.get("/readyz").json()["status"] == "ready"
     assert client.post("/v1/ask", json={"question": "x"}, headers=AUTH).status_code == 422
+
+
+def test_answer_claim_is_assessed_first(make_client: Callable[..., TestClient]) -> None:
+    text = json.dumps({"answer": "A", "rationale": ["other claim"], "claim": "contradicted claim"})
+    components = FakeComponents(text)
+    original = components.new_generator
+
+    def with_claim() -> LlmGenerator:
+        generator = original()
+        generator.config = GeneratorConfig(answer_claim=True)
+        return generator
+
+    components.new_generator = with_claim  # type: ignore[method-assign]
+    body = (
+        make_client(components)
+        .post("/v1/ask", json={"question": "What treats X?"}, headers=AUTH)
+        .json()
+    )
+
+    first = body["evidence"]["statements"][0]
+    assert (first["kind"], first["text"], first["contradicted"]) == (
+        "claim",
+        "contradicted claim",
+        True,
+    )
+    assert body["evidence"]["status"] == "contradicted"
+    assert body["evidence"]["statements"][1]["kind"] == "rationale"

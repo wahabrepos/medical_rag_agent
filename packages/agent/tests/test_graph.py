@@ -223,3 +223,24 @@ def test_final_iteration_points_to_the_chosen_answer() -> None:
         retrieve=fakes.retrieve, generate=fakes.generate, verify=fakes.verify, settings=settings
     ).invoke({"question": "Q"})
     assert (state["final_iteration"], state["answer"]) == (1, "answer-1")
+
+
+def test_answer_claim_is_verified_first() -> None:
+    seen: list[list[str]] = []
+    fakes = Fakes([(0.9, [])])
+
+    def generate(*args: Any, **kwargs: Any) -> Generation:
+        g = fakes.generate(*args, **kwargs)
+        return Generation(g.answer, g.rationale, g.confidence, g.citations, claim="X works.")
+
+    def verify(rationale: list[str], context: list[str]) -> Verification:
+        seen.append(rationale)
+        return fakes.verify(rationale, context)
+
+    state = build_graph(retrieve=fakes.retrieve, generate=generate, verify=verify).invoke(
+        {"question": "Q"}
+    )
+
+    assert seen == [["X works.", "stmt-1-a", "stmt-1-b"]]
+    assert state["iteration_claims"] == ["X works."]
+    assert state["rationale"] == ["stmt-1-a", "stmt-1-b"]  # the answer's rationale is unchanged

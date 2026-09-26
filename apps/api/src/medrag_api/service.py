@@ -105,8 +105,12 @@ class AnswerService:
             state["iteration_passages"][final_iteration - 1] if final_iteration else []
         )
         texts = [p.text for p in passages]
+        # With an answer claim, the answer itself is assessed first, then its reasoning.
+        claims = state.get("iteration_claims", [])
+        claim = claims[final_iteration - 1] if final_iteration and claims else None
+        rationale = state.get("rationale", [])
         assessment = assess_evidence(
-            state.get("rationale", []),
+            [claim, *rationale] if claim else rationale,
             texts,
             lambda pairs: self.components.nli.probabilities(pairs),
         )
@@ -152,6 +156,7 @@ class AnswerService:
                 message=EVIDENCE_MESSAGES[assessment.status],
                 statements=[
                     StatementEvidenceOut(
+                        kind="claim" if claim and i == 0 else "rationale",
                         text=s.statement,
                         support=round(s.support, 4),
                         supported=s.supported,
@@ -159,7 +164,7 @@ class AnswerService:
                         supporting_pmid=pmid(s.supporting_passage),
                         contradicting_pmid=pmid(s.contradicting_passage),
                     )
-                    for s in assessment.statements
+                    for i, s in enumerate(assessment.statements)
                 ],
             ),
             citations=citations,
