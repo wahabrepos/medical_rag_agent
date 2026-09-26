@@ -976,14 +976,22 @@ name = "medrag-api"
 version = "0.1.0"
 source = { editable = "apps/api" }
 dependencies = [
+    { name = "fastapi" },
     { name = "medrag-agent" },
+    { name = "medrag-core" },
+    { name = "medrag-db" },
     { name = "medrag-settings" },
+    { name = "uvicorn" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "fastapi", specifier = ">=0.116" },
     { name = "medrag-agent", editable = "packages/agent" },
+    { name = "medrag-core", editable = "packages/core" },
+    { name = "medrag-db", editable = "packages/db" },
     { name = "medrag-settings", editable = "packages/settings" },
+    { name = "uvicorn", specifier = ">=0.35" },
 ]
 
 [[package]]

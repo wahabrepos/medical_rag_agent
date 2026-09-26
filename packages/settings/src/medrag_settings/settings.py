@@ -44,6 +44,14 @@ class Settings(BaseSettings):
     inference_threads: int | None = None
     inference_device: str = "cpu"  # "cuda" needs onnxruntime-gpu
 
+    # Public API (apps/api).
+    api_keys: SecretStr | None = None  # comma-separated bearer keys; none = open in APP_ENV=local
+    api_requests_per_minute: int = 20  # per key
+    allow_uncertain: bool = True  # yes/no answers without supporting literature -> "uncertain"
+    nli_url: str | None = None  # remote inference service for NLI; unset = in-process
+    llm_budget: float = 3.0  # total LLM spend cap shared with evaluations (stops at 90%)
+    llm_spend_ledger: str = "data/llm_spend.json"
+
     # Storage.
     database_url: SecretStr = Field(
         default=SecretStr("postgresql+psycopg://medrag:medrag@localhost:5432/medrag")
