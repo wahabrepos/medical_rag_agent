@@ -44,3 +44,13 @@ def test_prompt_matches_research_work(case: dict[str, Any]) -> None:
     assert prompt == case["prompt"]
     assert messages.system == case["messages"]["system"]
     assert messages.user == case["messages"]["user"]
+
+
+def test_multiple_choice_instruction_is_optional_and_last() -> None:
+    plain = build_messages("Q?", ["p"], [])
+    mcq = build_messages("Q?", ["p"], [], multiple_choice=True)
+
+    assert "multiple-choice" not in plain.user
+    assert mcq.user.startswith(plain.user)
+    assert mcq.user.endswith('say so in the "rationale" field.')
+    assert mcq.system == plain.system
