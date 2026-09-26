@@ -40,6 +40,10 @@ CORRECT_SUPPORT_LABEL = "entailment"
 
 MODEL_FILE = "onnx/model.onnx"
 DEFAULT_CACHE_SIZE = 20_000
+# Upper bound on padded tokens per batch. DeBERTa's disentangled attention needs
+# several (batch x heads x length x length) buffers at once; 16 pairs of 512 tokens
+# spiked a 3 GB process over its limit on the Jetson.
+MAX_BATCH_TOKENS = 4096
 
 
 class DebertaNli:
@@ -72,6 +76,9 @@ class DebertaNli:
         options = ort.SessionOptions()
         if threads:
             options.intra_op_num_threads = threads
+        # The CPU arena grows to the largest batch ever seen and never shrinks; on small
+        # machines that pushed long evaluation runs past their memory limit.
+        options.enable_cpu_mem_arena = False
         providers = (
             ["CUDAExecutionProvider", "CPUExecutionProvider"]
             if device == "cuda"
@@ -132,8 +139,7 @@ class DebertaNli:
         out = np.empty((len(pairs), len(LABELS)), dtype=np.float32)
         encodings = self.tokenizer.encode_batch([(p, h) for p, h in pairs])
         order = sorted(range(len(pairs)), key=lambda i: len(encodings[i].ids))
-        for start in range(0, len(order), batch_size):
-            idx = order[start : start + batch_size]
+        for idx in _batches(order, [len(e.ids) for e in encodings], batch_size):
             width = max(len(encodings[i].ids) for i in idx)
             ids = np.zeros((len(idx), width), dtype=np.int64)
             mask = np.zeros((len(idx), width), dtype=np.int64)
@@ -155,6 +161,24 @@ class DebertaNli:
     def scorer(self, label: str = CORRECT_SUPPORT_LABEL) -> "LabelScorer":
         """An NliScorer (see medrag_core.verification) returning one label's probability."""
         return LabelScorer(self, label)
+
+
+def _batches(
+    order: list[int], lengths: list[int], batch_size: int, max_tokens: int = MAX_BATCH_TOKENS
+) -> list[list[int]]:
+    """Group length-sorted items so no batch exceeds batch_size items or max_tokens
+    padded tokens (a single over-long item still forms its own batch)."""
+    batches: list[list[int]] = []
+    current: list[int] = []
+    for i in order:
+        width = max([lengths[j] for j in current] + [lengths[i]])
+        if current and (len(current) + 1 > batch_size or (len(current) + 1) * width > max_tokens):
+            batches.append(current)
+            current = []
+        current.append(i)
+    if current:
+        batches.append(current)
+    return batches
 
 
 def _pair_key(premise: str, hypothesis: str) -> str:

@@ -71,3 +71,16 @@ def test_nli_returns_labelled_probabilities(client: TestClient, nli: FakeNli) ->
 )
 def test_invalid_requests_are_rejected(client: TestClient, path: str, payload: object) -> None:
     assert client.post(path, json=payload).status_code == 422
+
+
+def test_nli_batches_respect_token_budget() -> None:
+    from medrag_inference.nli import _batches
+
+    lengths = [10] * 20 + [512] * 10
+    order = sorted(range(len(lengths)), key=lambda i: lengths[i])
+    batches = _batches(order, lengths, batch_size=16, max_tokens=4096)
+
+    assert sorted(i for b in batches for i in b) == list(range(30))
+    assert all(len(b) <= 16 for b in batches)
+    assert all(len(b) * max(lengths[i] for i in b) <= 4096 for b in batches)
+    assert [len(b) for b in batches] == [16, 8, 6]  # 4 short + 4 long = 8 x 512 tokens
