@@ -214,6 +214,15 @@ uv run --env-file .env pytest -m model services/inference   # model checks (down
   variant (published exports or our own dynamic quantisation, full or partial) kept decisions
   stable; see `services/inference/reports/nli_variants_x86_zen4.json`. fp32 needs about 4 s for
   25 pairs on 2 Zen 4 threads; repeated pairs are served from an in-memory cache.
+- **Claim verifier for grounding: MiniCheck (`VERIFIER=minicheck`).** DeBERTa NLI stays for
+  research-work parity, but it cannot tell users whether an answer is grounded: on 220
+  hand-labelled statement-passage pairs its "supported" was right 79% of the time, and every
+  sampled "contradiction" was an unrelated passage. `lytang/MiniCheck-RoBERTa-Large` (MIT) ranks
+  support far better (average precision 0.956 vs 0.876) and held 100% precision at its default
+  threshold 0.5 on 130 held-out pairs (`eval/grounding/`). It is exported to ONNX once
+  (`services/inference/scripts/export_minicheck.py`, needs torch) and served on a GPU host;
+  `/healthz` reports the verifier and its support threshold. Labels were made by an LLM, not
+  clinicians.
 
 ### Agent and evaluation
 
@@ -261,6 +270,10 @@ Each change is measured against the v1 baseline on the same 150 questions:
 | v3a | v2d + the verifier checks the claim of "Passage N states that X" statements | 80.0% | 78.7% | 0 | ~100% |
 | v3b | v3a + a one-sentence answer claim is verified too; contradictions veto support | 77.3% | 77.3% | 0 | ~100% |
 | v3c | v3a + live PubMed search (2 of 5 passages) | 78.7% | 80.0% | 0 | ~100% |
+| v3d | v3a with the MiniCheck verifier in the loop | 78.7% | 74.7% | 0 | ~95% |
+| v3e | v3d + claims with verbatim quotes | 77.3% | 77.3% | 0 | ~75% |
+| v3f | v3e + the answer claim needs a quote too | 76.0% | 76.0% | 0 | ~95% |
+| v3g | v3e + MedRAG textbooks as background knowledge | 74.7% | 76.0% | 0 | ~65% |
 | research work | Mistral-small, same questions | 69.3% | 76.0% | – | 0% |
 
 - With the corrected verifier the loop actually iterates, but the research-work rules then
@@ -280,6 +293,48 @@ Each change is measured against the v1 baseline on the same 150 questions:
 - v3c (live PubMed, `--live-pubmed`) is within noise of v3a on accuracy and grounds a few more
   PubMedQA answers (14.7% vs 10.7%); it is available but off by default. Its real benefit,
   questions the corpus does not cover, cannot show on these questions.
+- v3d-v3g are the Step 7b grounding runs; accuracy differences of 1-3 questions are within
+  noise (gpt-oss answers vary between runs). What they change is grounding, below.
+
+### Step 7b: can users trust an answer?
+
+The product must not present an answer as grounded when it is not. Re-scoring stored runs
+(`eval/scripts/analyze_grounding.py`, no LLM calls) showed that the evidence statuses of
+Step 7 were mostly noise, so the answer pipeline was rebuilt around an **evidence gate**:
+
+- **Verifier:** MiniCheck instead of DeBERTa NLI (see Inference service).
+- **Quoted claims** (`EVIDENCE_QUOTES`): the rationale must be factual claims, each with the
+  passage and a verbatim quote. A claim is backed only if the quote really is in a retrieved
+  passage, is not a statement of the study's aim or hypothesis, and the verifier finds the
+  passage supports the claim.
+- **Question grounding:** a statement that restates the question (a vignette's findings) is
+  grounded in the question and labelled so; diagnoses and other inferences need a source.
+- **Gate** (`ANSWER_POLICY=evidence_gated`): the answer is shown only when every statement is
+  grounded and at least one by a source; otherwise "insufficient evidence", the studies found,
+  and the model's answer only on request (`include_unverified`), labelled as unverified.
+
+Golden 150 (evaluation runs record what the gate would show; `eval/scripts/apply_question_grounding.py`
+re-applies the final rules to earlier runs):
+
+| Run | Questions answered by the gate (MedQA · PubMedQA) | Accuracy of those | Accuracy of withheld |
+|---|---|---|---|
+| v3e quotes (product configuration) | 1% · **44%** | 100% · **91%** | 77% · 67% |
+| v3f quotes + quoted answer claim | 0% · 1% | – · 100% | 76% · 76% |
+| v3g quotes + textbooks | 20% · 47% | **67%** · 83% | 77% · 70% |
+
+- On literature questions (PubMedQA style) the gate answers 44% of questions, 91% of them
+  correctly; the withheld ones would have been right only 67% of the time.
+- **Grounded statements do not make a clinical answer correct.** With 18 medical textbooks as
+  background knowledge (MedRAG, research evaluation only: no licence for products), MedQA
+  answers whose every statement was quoted and verified were *less* often right (67%) than
+  the withheld ones (77%): true textbook facts that do not decide between the options. A
+  stricter threshold does not fix it. Textbooks are therefore not used, and clinical-vignette
+  questions are, correctly, almost never answered by the gate (1%).
+- What the product can claim: every statement it shows is quoted from a retrieved study and
+  verified, or restates the user's question. It cannot claim the conclusion drawn from them is
+  always right; the remaining errors are wrong inferences from true statements. The labels
+  behind the verifier choice were made by an LLM; clinical review of shown answers is still
+  needed before real use.
 
 **Full evaluation of v2d** (all 1,000 MedQA and 890 PubMedQA questions; NLI on a rented GPU):
 
@@ -318,25 +373,28 @@ curl -X POST localhost:8000/v1/ask -H "Authorization: Bearer <key>" \
 
 Keys go in `API_KEYS` (bearer tokens); only `APP_ENV=local` runs without them. Each key is rate
 limited, and answering stops with 503 before total LLM spend could pass 90% of `LLM_BUDGET`.
-The service uses the best evaluated configuration (v3a).
+The service uses the evaluated configuration (v3e with the Step 7b evidence gate).
 
-**Every answer says how well the literature supports it.** Rationale statements are checked
-against the retrieved passages with NLI (after removing references such as "Passage 2 states
-that", which NLI would otherwise judge as claims about documents), and the answer gets one of:
+**Every answer says how well the literature supports it, and ungrounded answers are not
+shown.** With the product settings (`VERIFIER=minicheck` on the inference service,
+`EVIDENCE_QUOTES=true`, `ANSWER_POLICY=evidence_gated`; `/readyz` reports whether this
+evaluated setup is active), each statement carries its support score, the verbatim quote and
+the source (PubMed ID or, for background knowledge, the book) or `from_question`, and the
+answer gets an evidence status:
 
-| Evidence status | Meaning | Full-run share / accuracy (MedQA · PubMedQA) |
-|---|---|---|
-| `supported` | at least 70% of statements entailed by a cited passage | 0.8% / 100% · 9.3% / 86.7% |
-| `partially_supported` | some statements entailed | 4.4% / 88.6% · 37.1% / 79.7% |
-| `not_supported` | none entailed: the answer relies on the model's knowledge | 94.8% / 84.6% · 53.6% / 69.4% |
-| `contradicted` | a passage contradicts a statement more than any supports it | – |
-| `no_evidence` | nothing retrieved or no rationale | – |
+| Evidence status | Meaning |
+|---|---|
+| `supported` | at least 70% of statements grounded |
+| `partially_supported` | some statements grounded |
+| `not_supported` | none grounded |
+| `contradicted` | a passage contradicts a statement (DeBERTa NLI only; MiniCheck has no contradiction class) |
+| `no_evidence` | nothing retrieved or no rationale |
 
-(Shares and accuracies are from the v2d full run's support scores, measured before statement
-normalisation was added.) For yes/no questions without supporting literature the API answers
-`"uncertain"` and keeps the model's lean in `model_answer` and `note` (`ALLOW_UNCERTAIN`);
-benchmarks keep the model's answer. Each statement carries its support score and the PubMed ID
-that supports or contradicts it, and every answer lists its citations and a disclaimer.
+The `answer` field is the model's answer only when the gate passes (every statement grounded,
+at least one by a source); otherwise it is `"insufficient evidence"`, `model_answer` is withheld
+unless the request sets `include_unverified`, and `note` explains why. `ANSWER_POLICY` can be set
+to `uncertain_yes_no` (the Step 7 behaviour) or `show_all` (benchmarks). Every answer lists its
+citations and a disclaimer.
 
 ## License
 
