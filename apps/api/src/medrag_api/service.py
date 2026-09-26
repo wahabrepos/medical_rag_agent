@@ -21,8 +21,8 @@ from medrag_api.schemas import (
     StatementEvidenceOut,
 )
 from medrag_core.evidence import (
-    UNCERTAIN,
     AnswerFormat,
+    AnswerPolicy,
     EvidenceStatus,
     assess_evidence,
     present_answer,
@@ -50,7 +50,7 @@ class AnswerService:
     components: Components
     repository: RunRepository
     ledger: SpendLedger
-    allow_uncertain: bool = True
+    policy: AnswerPolicy = AnswerPolicy.EVIDENCE_GATED
     clock: Callable[[], float] = time.monotonic
 
     def stream(self, request: AskRequest) -> Iterator[Event]:
@@ -120,17 +120,16 @@ class AnswerService:
             return passages[index].pmid if index is not None else None
 
         model_answer = state.get("answer", "")
-        answer = present_answer(
-            model_answer,
-            assessment.status,
-            request.answer_format,
-            allow_uncertain=self.allow_uncertain,
-        )
-        note = (
-            f'No retrieved study supports an answer; the model leans "{model_answer}".'
-            if answer == UNCERTAIN and model_answer != UNCERTAIN
-            else None
-        )
+        answer = present_answer(model_answer, assessment, request.answer_format, policy=self.policy)
+        withheld = answer != model_answer
+        note = None
+        if withheld:
+            note = (
+                "No answer is shown because the retrieved studies do not support every part "
+                "of it; the studies found are listed below."
+            )
+            if request.include_unverified:
+                note += f' Unverified model answer (not backed by these studies): "{model_answer}".'
         seen: set[int] = set()
         citations = []
         for p in passages:
@@ -149,7 +148,7 @@ class AnswerService:
             question=request.question,
             answer_format=request.answer_format,
             answer=answer,
-            model_answer=model_answer,
+            model_answer=None if withheld and not request.include_unverified else model_answer,
             note=note,
             evidence=EvidenceOut(
                 status=assessment.status,

@@ -1,9 +1,13 @@
 import pytest
 
 from medrag_core.evidence import (
+    INSUFFICIENT_EVIDENCE,
     UNCERTAIN,
     AnswerFormat,
+    AnswerPolicy,
+    EvidenceAssessment,
     EvidenceStatus,
+    StatementEvidence,
     assess_evidence,
     present_answer,
 )
@@ -49,25 +53,63 @@ def test_no_evidence(rationale: list[str], passages: list[str]) -> None:
     assert assess_evidence(rationale, passages, table({})).status is EvidenceStatus.NO_EVIDENCE
 
 
+def assessment(*supported: bool, status: EvidenceStatus | None = None) -> EvidenceAssessment:
+    statements = [
+        StatementEvidence(f"s{i}", 0.9 if ok else 0.1, 0 if ok else None, 0.0, None)
+        for i, ok in enumerate(supported)
+    ]
+    fraction = sum(supported) / len(supported) if supported else 0.0
+    if status is None:
+        status = (
+            EvidenceStatus.NO_EVIDENCE
+            if not supported
+            else EvidenceStatus.SUPPORTED
+            if fraction >= 0.7
+            else EvidenceStatus.PARTIALLY_SUPPORTED
+            if fraction > 0
+            else EvidenceStatus.NOT_SUPPORTED
+        )
+    return EvidenceAssessment(status, fraction, statements)
+
+
 @pytest.mark.parametrize(
-    ("status", "fmt", "expected"),
+    ("evidence", "expected"),
     [
-        (EvidenceStatus.NOT_SUPPORTED, AnswerFormat.YES_NO, UNCERTAIN),
-        (EvidenceStatus.NO_EVIDENCE, AnswerFormat.YES_NO, UNCERTAIN),
-        (EvidenceStatus.PARTIALLY_SUPPORTED, AnswerFormat.YES_NO, "no"),
-        (EvidenceStatus.NOT_SUPPORTED, AnswerFormat.MULTIPLE_CHOICE, "no"),
-        (EvidenceStatus.NOT_SUPPORTED, AnswerFormat.FREE, "no"),
+        (assessment(True, True), "B"),
+        (assessment(True, True, True, False), INSUFFICIENT_EVIDENCE),  # "supported" at 75%
+        (assessment(True, False), INSUFFICIENT_EVIDENCE),
+        (assessment(False), INSUFFICIENT_EVIDENCE),
+        (assessment(), INSUFFICIENT_EVIDENCE),
     ],
 )
-def test_present_answer(status: EvidenceStatus, fmt: AnswerFormat, expected: str) -> None:
-    assert present_answer("no", status, fmt) == expected
+def test_gated_answers_need_every_statement_supported(
+    evidence: EvidenceAssessment, expected: str
+) -> None:
+    for fmt in AnswerFormat:
+        assert present_answer("B", evidence, fmt) == expected
 
 
-def test_uncertain_can_be_switched_off() -> None:
-    answer = present_answer(
-        "no", EvidenceStatus.NOT_SUPPORTED, AnswerFormat.YES_NO, allow_uncertain=False
+@pytest.mark.parametrize(
+    ("evidence", "fmt", "expected"),
+    [
+        (assessment(False), AnswerFormat.YES_NO, UNCERTAIN),
+        (assessment(), AnswerFormat.YES_NO, UNCERTAIN),
+        (assessment(True, False), AnswerFormat.YES_NO, "no"),
+        (assessment(False), AnswerFormat.MULTIPLE_CHOICE, "no"),
+        (assessment(False), AnswerFormat.FREE, "no"),
+    ],
+)
+def test_uncertain_yes_no_policy(
+    evidence: EvidenceAssessment, fmt: AnswerFormat, expected: str
+) -> None:
+    assert present_answer("no", evidence, fmt, policy=AnswerPolicy.UNCERTAIN_YES_NO) == expected
+
+
+def test_show_all_keeps_the_model_answer() -> None:
+    assert (
+        present_answer("no", assessment(False), AnswerFormat.YES_NO, policy=AnswerPolicy.SHOW_ALL)
+        == "no"
     )
-    assert answer == "no"
 
 
 @pytest.mark.parametrize(

@@ -32,6 +32,10 @@ class AskRequest(BaseModel):
         default=AnswerFormat.FREE,
         description="yes_no and multiple_choice (options in the question) constrain the answer",
     )
+    include_unverified: bool = Field(
+        default=False,
+        description="also return the model's answer when the literature does not support it",
+    )
 
 
 class Citation(BaseModel):
@@ -62,8 +66,13 @@ class AskResponse(BaseModel):
     run_id: uuid.UUID
     question: str
     answer_format: AnswerFormat
-    answer: str = Field(description='shown to users; "uncertain" when unsupported yes/no')
-    model_answer: str = Field(description="the model's own answer")
+    answer: str = Field(
+        description='shown to users; "insufficient evidence" unless the literature supports it'
+    )
+    model_answer: str | None = Field(
+        description="the model's own answer; withheld when it is not shown as `answer`, "
+        "unless include_unverified was requested"
+    )
     note: str | None = None
     evidence: EvidenceOut
     citations: list[Citation]

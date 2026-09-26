@@ -10,8 +10,9 @@ and the answer gets one status:
 - contradicted: a passage contradicts a statement more than any passage supports it
 - no_evidence: nothing was retrieved or there is no rationale to check
 
-For yes/no questions the product may replace an unsupported answer with
-"uncertain" (see `present_answer`); benchmarks keep the model's answer.
+What users see depends on the answer policy (see `present_answer`): the product
+shows an answer only when the literature supports all of it; benchmarks keep the
+model's answer.
 """
 
 import re
@@ -43,6 +44,17 @@ class AnswerFormat(StrEnum):
 
 
 UNCERTAIN = "uncertain"
+INSUFFICIENT_EVIDENCE = "insufficient evidence"
+
+
+class AnswerPolicy(StrEnum):
+    # Show an answer only when every checked statement is supported by a passage.
+    EVIDENCE_GATED = "evidence_gated"
+    # v3a behaviour: unsupported yes/no answers become "uncertain", others are shown.
+    UNCERTAIN_YES_NO = "uncertain_yes_no"
+    # Always the model's answer (benchmarks).
+    SHOW_ALL = "show_all"
+
 
 _PASSAGE_REF = r"(?:passages?|\[passage)\s*\d+\]?(?:\s*(?:,|and|&)\s*\d+\]?)*"
 _VERBS = (
@@ -129,32 +141,53 @@ def assess_evidence(
             )
         )
 
-    fraction = sum(s.supported for s in result) / len(result)
-    if any(s.contradicted for s in result):
-        status = EvidenceStatus.CONTRADICTED
-    elif fraction >= SUPPORTED_SHARE:
-        status = EvidenceStatus.SUPPORTED
-    elif fraction > 0:
-        status = EvidenceStatus.PARTIALLY_SUPPORTED
-    else:
-        status = EvidenceStatus.NOT_SUPPORTED
-    return EvidenceAssessment(status, fraction, result)
+    return EvidenceAssessment(_status(result), _fraction(result), result)
+
+
+def _fraction(statements: Sequence[StatementEvidence]) -> float:
+    return sum(s.supported for s in statements) / len(statements)
+
+
+def _status(statements: Sequence[StatementEvidence]) -> EvidenceStatus:
+    fraction = _fraction(statements)
+    if any(s.contradicted for s in statements):
+        return EvidenceStatus.CONTRADICTED
+    if fraction >= SUPPORTED_SHARE:
+        return EvidenceStatus.SUPPORTED
+    if fraction > 0:
+        return EvidenceStatus.PARTIALLY_SUPPORTED
+    return EvidenceStatus.NOT_SUPPORTED
 
 
 def present_answer(
     answer: str,
-    status: EvidenceStatus,
+    assessment: EvidenceAssessment,
     answer_format: AnswerFormat,
     *,
-    allow_uncertain: bool = True,
+    policy: AnswerPolicy = AnswerPolicy.EVIDENCE_GATED,
 ) -> str:
     """The answer shown to users.
 
+    Gated (the product default): only an answer whose every checked statement is
+    supported is shown; anything else is "insufficient evidence". On the full
+    evaluation run such answers were 94% correct on PubMedQA, against 72% for the
+    rest, so an unsupported answer is not evidence of anything.
+
     For yes/no questions without supporting literature the model's yes/no is not
-    evidence of anything (on PubMedQA without the source abstract the model answered
-    "no" 73 times out of 75), so the product says "uncertain" instead.
+    evidence of anything either (on PubMedQA without the source abstract the model
+    answered "no" 73 times out of 75); the UNCERTAIN_YES_NO policy says "uncertain".
     """
-    unsupported = status in (EvidenceStatus.NOT_SUPPORTED, EvidenceStatus.NO_EVIDENCE)
-    if allow_uncertain and answer_format is AnswerFormat.YES_NO and unsupported:
-        return UNCERTAIN
-    return answer
+    match policy:
+        case AnswerPolicy.SHOW_ALL:
+            return answer
+        case AnswerPolicy.EVIDENCE_GATED:
+            grounded = assessment.statements and all(s.supported for s in assessment.statements)
+            return answer if grounded else INSUFFICIENT_EVIDENCE
+        case AnswerPolicy.UNCERTAIN_YES_NO:
+            unsupported = assessment.status in (
+                EvidenceStatus.NOT_SUPPORTED,
+                EvidenceStatus.NO_EVIDENCE,
+            )
+            if answer_format is AnswerFormat.YES_NO and unsupported:
+                return UNCERTAIN
+            return answer

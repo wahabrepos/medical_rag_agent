@@ -15,6 +15,7 @@ from medrag_agent.llm import GeneratorConfig, LlmGenerator, RateLimiter
 from medrag_api.app import ApiContext, create_app
 from medrag_api.repository import InMemoryRunRepository
 from medrag_api.service import AnswerService
+from medrag_core.evidence import AnswerPolicy
 from medrag_core.policy import FinalAnswerRule, LoopSettings
 from medrag_core.verification import Verification
 
@@ -104,11 +105,13 @@ def make_client(tmp_path: Path) -> Iterator[Callable[..., TestClient]]:
         cap: float = 3.0,
         open_access: bool = False,
         per_minute: int = 100,
+        policy: AnswerPolicy = AnswerPolicy.EVIDENCE_GATED,
     ) -> TestClient:
         service = AnswerService(
             components=components,
             repository=InMemoryRunRepository(),
             ledger=SpendLedger(tmp_path / "spend.json", cap=cap),
+            policy=policy,
         )
         ctx = ApiContext(
             service, api_keys={KEY}, open_access=open_access, requests_per_minute=per_minute
@@ -127,31 +130,59 @@ AUTH = {"Authorization": f"Bearer {KEY}"}
 
 
 def test_answer_with_evidence_and_citations(make_client: Callable[..., TestClient]) -> None:
-    client = make_client(FakeComponents(answer("B", "supported claim", "other claim")))
+    client = make_client(FakeComponents(answer("B", "supported claim")))
 
     body = client.post("/v1/ask", json={"question": "Which drug?"}, headers=AUTH).json()
 
     assert body["answer"] == body["model_answer"] == "B"
-    assert body["evidence"]["status"] == "partially_supported"
-    first, second = body["evidence"]["statements"]
-    assert (first["supported"], first["supporting_pmid"]) == (True, 111)
-    assert (second["supported"], second["supporting_pmid"]) == (False, None)
+    assert body["note"] is None
+    assert body["evidence"]["status"] == "supported"
+    (statement,) = body["evidence"]["statements"]
+    assert (statement["supported"], statement["supporting_pmid"]) == (True, 111)
     assert [c["pmid"] for c in body["citations"]] == [111, 222]
     assert body["citations"][0]["url"] == "https://pubmed.ncbi.nlm.nih.gov/111/"
     assert body["cost"] > 0
     assert "not medical advice" in body["disclaimer"]
 
 
-def test_unsupported_yes_no_becomes_uncertain(make_client: Callable[..., TestClient]) -> None:
+def test_partly_supported_answers_are_withheld(make_client: Callable[..., TestClient]) -> None:
+    client = make_client(FakeComponents(answer("B", "supported claim", "other claim")))
+
+    body = client.post("/v1/ask", json={"question": "Which drug?"}, headers=AUTH).json()
+
+    assert body["evidence"]["status"] == "partially_supported"
+    assert (body["answer"], body["model_answer"]) == ("insufficient evidence", None)
+    assert "do not support every part" in body["note"]
+    assert "B" not in body["note"]
+    first, second = body["evidence"]["statements"]
+    assert (first["supported"], second["supported"]) == (True, False)
+    assert [c["pmid"] for c in body["citations"]] == [111, 222]  # related studies still listed
+
+
+def test_unverified_answer_only_on_request(make_client: Callable[..., TestClient]) -> None:
     client = make_client(FakeComponents(answer("no", "other claim")))
+
+    body = client.post(
+        "/v1/ask",
+        json={"question": "Does X help?", "answer_format": "yes_no", "include_unverified": True},
+        headers=AUTH,
+    ).json()
+
+    assert (body["answer"], body["model_answer"]) == ("insufficient evidence", "no")
+    assert 'Unverified model answer (not backed by these studies): "no"' in body["note"]
+
+
+def test_uncertain_yes_no_policy(make_client: Callable[..., TestClient]) -> None:
+    client = make_client(
+        FakeComponents(answer("no", "other claim")), policy=AnswerPolicy.UNCERTAIN_YES_NO
+    )
 
     body = client.post(
         "/v1/ask", json={"question": "Does X help?", "answer_format": "yes_no"}, headers=AUTH
     ).json()
 
     assert body["evidence"]["status"] == "not_supported"
-    assert (body["answer"], body["model_answer"]) == ("uncertain", "no")
-    assert "leans" in body["note"]
+    assert (body["answer"], body["model_answer"]) == ("uncertain", None)
 
 
 def test_contradicted_answers_are_flagged(make_client: Callable[..., TestClient]) -> None:

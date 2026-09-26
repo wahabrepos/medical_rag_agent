@@ -79,6 +79,7 @@ def load_context() -> ApiContext:
     from medrag_agent.budget import SpendLedger
     from medrag_agent.runtime import PRODUCT_LOOP, build_components
     from medrag_api.repository import SqlRunRepository
+    from medrag_core.evidence import AnswerPolicy
     from medrag_db.session import make_engine, make_session_factory
     from medrag_settings import AppEnv, get_settings
 
@@ -96,7 +97,7 @@ def load_context() -> ApiContext:
         components=components,
         repository=SqlRunRepository(sessions),
         ledger=SpendLedger(Path(settings.llm_spend_ledger), cap=settings.llm_budget),
-        allow_uncertain=settings.allow_uncertain,
+        policy=AnswerPolicy(settings.answer_policy),
     )
     keys = settings.api_keys.get_secret_value() if settings.api_keys else ""
 
