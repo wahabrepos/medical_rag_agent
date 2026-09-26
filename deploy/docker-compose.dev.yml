@@ -5,6 +5,7 @@ name: medrag-dev
 services:
   postgres:
     image: pgvector/pgvector:0.8.1-pg17
+    restart: unless-stopped  # come back after a reboot (long evaluation runs)
     environment:
       POSTGRES_USER: medrag
       POSTGRES_PASSWORD: medrag  # local development only
