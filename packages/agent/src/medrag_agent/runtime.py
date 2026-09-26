@@ -29,9 +29,15 @@ class ParityAgent:
     retriever: HybridRetriever
     nli: DebertaNli
 
-    def run(self, question: str, *, binary_answer: bool) -> AgentState:
+    def run(
+        self, question: str, *, binary_answer: bool, multiple_choice: bool = False
+    ) -> AgentState:
         state: AgentState = self.graph.invoke(
-            {"question": question, "binary_answer": binary_answer}
+            {
+                "question": question,
+                "binary_answer": binary_answer,
+                "multiple_choice": multiple_choice,
+            }
         )
         return state
 

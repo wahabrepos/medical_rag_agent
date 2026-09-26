@@ -42,6 +42,7 @@ Verifier = Callable[[list[str], list[str]], Verification]
 class AgentState(TypedDict, total=False):
     question: str  # as given; refinement starts from it unstripped (research-work rule)
     binary_answer: bool  # PubMedQA: the yes/no constraint is added to the prompt
+    multiple_choice: bool  # optional: require an option letter (not in the research work)
     current_query: str
     iteration: int  # completed iterations
     started_at: float
@@ -95,6 +96,7 @@ def build_graph(
                 state["context"],
                 list(state["history"]),
                 binary_answer=state.get("binary_answer", False),
+                multiple_choice=state.get("multiple_choice", False),
             )
             return {"generation": generation}
         except ProviderUnavailableError:

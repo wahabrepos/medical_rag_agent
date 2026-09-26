@@ -57,6 +57,7 @@ def test_sends_research_work_call_and_parses_answer() -> None:
     assert call["api_key"] == "k"
     assert (result.answer, result.rationale, result.confidence) == ("B", ["one", "two"], 0.8)
     assert gen.calls == 1
+    assert gen.raw_outputs == [JSON_ANSWER]
 
 
 def test_temperature_is_sent_only_when_configured() -> None:

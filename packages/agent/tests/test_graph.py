@@ -39,6 +39,7 @@ class Fakes:
         history: list[IterationRecord],
         *,
         binary_answer: bool = False,
+        multiple_choice: bool = False,
     ) -> Generation:
         self.generations += 1
         n = self.generations
@@ -137,18 +138,21 @@ def test_timeout_stops_before_retrieving() -> None:
     assert fakes.queries == []
 
 
-def test_binary_flag_reaches_generator() -> None:
+def test_answer_format_flags_reach_generator() -> None:
     seen: list[bool] = []
     fakes = Fakes([(0.9, [])])
 
-    def generate(*args: Any, binary_answer: bool = False) -> Generation:
-        seen.append(binary_answer)
+    def generate(
+        *args: Any, binary_answer: bool = False, multiple_choice: bool = False
+    ) -> Generation:
+        seen.append((binary_answer, multiple_choice))
         return fakes.generate(*args)
 
     graph = build_graph(retrieve=fakes.retrieve, generate=generate, verify=fakes.verify)
     graph.invoke({"question": "Is it?", "binary_answer": True})
+    graph.invoke({"question": "Which?", "multiple_choice": True})
 
-    assert seen == [True]
+    assert seen == [(True, False), (False, True)]
 
 
 @pytest.mark.parametrize("stage", ["retrieve", "generate", "verify"])

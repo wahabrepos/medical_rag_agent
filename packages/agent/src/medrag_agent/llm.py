@@ -103,6 +103,8 @@ class LlmGenerator:
     calls: int = field(default=0, init=False)
     prompt_tokens: int = field(default=0, init=False)
     completion_tokens: int = field(default=0, init=False)
+    # Raw text of every call, for diagnosing parser fallbacks.
+    raw_outputs: list[str] = field(default_factory=list, init=False)
     last_response: LlmResponse | None = field(default=None, init=False)
 
     def __post_init__(self) -> None:
@@ -155,6 +157,7 @@ class LlmGenerator:
         self.calls += 1
         self.prompt_tokens += result.prompt_tokens
         self.completion_tokens += result.completion_tokens
+        self.raw_outputs.append(result.text)
         if result.finish_reason == "length":
             logger.warning("generation hit max_tokens=%d", self.config.max_tokens)
         self.last_response = result
@@ -167,8 +170,11 @@ class LlmGenerator:
         history: Sequence[HistoryEntry],
         *,
         binary_answer: bool = False,
+        multiple_choice: bool = False,
     ) -> Generation:
-        messages = build_messages(query, context, history, binary_answer=binary_answer)
+        messages = build_messages(
+            query, context, history, binary_answer=binary_answer, multiple_choice=multiple_choice
+        )
         parsed = ParsedGeneration.from_text(self.complete(messages).text)
         return Generation(
             answer=parsed.answer,
