@@ -2,6 +2,7 @@
 
 from medrag_search.bm25 import BM25Index
 from medrag_search.dense import dense_search
+from medrag_search.live import LiveAugmentedRetriever
 from medrag_search.pubmed import LiteratureSearchError, PubMedClient
 from medrag_search.retriever import HybridRetriever, Passage, RetrievalResult
 
@@ -9,6 +10,7 @@ __all__ = [
     "BM25Index",
     "HybridRetriever",
     "LiteratureSearchError",
+    "LiveAugmentedRetriever",
     "Passage",
     "PubMedClient",
     "RetrievalResult",
