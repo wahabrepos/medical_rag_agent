@@ -39,9 +39,10 @@ class AskRequest(BaseModel):
 
 
 class Citation(BaseModel):
-    pmid: int
+    source: str = Field(default="pubmed", description='"pubmed" or a knowledge source')
+    pmid: int | None
     title: str
-    url: str
+    url: str | None
     passage: str
 
 

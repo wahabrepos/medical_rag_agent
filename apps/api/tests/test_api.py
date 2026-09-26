@@ -18,6 +18,7 @@ from medrag_api.service import AnswerService
 from medrag_core.evidence import AnswerPolicy
 from medrag_core.policy import FinalAnswerRule, LoopSettings
 from medrag_core.verification import Verification
+from medrag_search.knowledge import KnowledgePassage
 
 KEY = "test-key"
 
@@ -54,10 +55,16 @@ class FakeNli:
 
 
 class FakeComponents:
-    def __init__(self, answer_json: str, fail: Exception | None = None) -> None:
+    def __init__(
+        self,
+        answer_json: str,
+        fail: Exception | None = None,
+        passages: list[Passage] | None = None,
+    ) -> None:
         self.nli = FakeNli()
         self.answer_json = answer_json
         self.fail = fail
+        self.passages = passages if passages is not None else list(PASSAGES)
 
     def completion(self, **kwargs: Any) -> Any:
         if self.fail:
@@ -84,7 +91,7 @@ class FakeComponents:
             return Verification(support_score=0.9, unsupported=[], best_scores=[0.9])
 
         return build_graph(
-            retrieve=lambda q: list(PASSAGES),
+            retrieve=lambda q: list(self.passages),
             generate=generator,
             verify=verify,
             settings=LoopSettings(final_answer_rule=FinalAnswerRule.BEST_SUPPORTED),
@@ -287,3 +294,17 @@ def test_answer_claim_is_assessed_first(make_client: Callable[..., TestClient]) 
     )
     assert body["evidence"]["status"] == "contradicted"
     assert body["evidence"]["statements"][1]["kind"] == "rationale"
+
+
+def test_textbook_citations_have_no_pubmed_link(make_client: Callable[..., TestClient]) -> None:
+    book = KnowledgePassage(
+        -(10**10), -2, 0, "InternalMed_Harrison: Aspirin", PASSAGES[0].text, book="Harrison"
+    )
+    client = make_client(FakeComponents(answer("B", "supported claim"), passages=[book]))
+
+    body = client.post("/v1/ask", json={"question": "Which drug?"}, headers=AUTH).json()
+
+    assert body["answer"] == "B"
+    (citation,) = body["citations"]
+    assert (citation["source"], citation["pmid"], citation["url"]) == ("textbook", None, None)
+    assert body["evidence"]["statements"][0]["supporting_pmid"] is None

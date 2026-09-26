@@ -30,7 +30,14 @@ from medrag_core.verification import (
 from medrag_db.session import make_engine, make_session_factory
 from medrag_inference import RESEARCH_WORK_SUPPORT_LABEL, BgeEmbedder
 from medrag_inference.nli import LabelScorer, load_verifier
-from medrag_search import BM25Index, HybridRetriever, LiveAugmentedRetriever, PubMedClient
+from medrag_search import (
+    BM25Index,
+    HybridRetriever,
+    KnowledgeAugmentedRetriever,
+    KnowledgeIndex,
+    LiveAugmentedRetriever,
+    PubMedClient,
+)
 from medrag_settings import Settings
 
 PARITY_PROFILE = "parity"
@@ -147,6 +154,7 @@ def build_components(
     answer_check: bool = False,
     live_pubmed: bool = False,
     evidence_quotes: bool = False,
+    knowledge_dir: Path | None = None,
 ) -> AgentComponents:
     sessions = make_session_factory(make_engine(settings.database_url.get_secret_value()))
     embedder = BgeEmbedder(threads=settings.inference_threads)
@@ -161,6 +169,11 @@ def build_components(
         key = settings.ncbi_api_key.get_secret_value() if settings.ncbi_api_key else None
         retriever = LiveAugmentedRetriever(
             local, PubMedClient(email=settings.ncbi_email, api_key=key)
+        )
+    knowledge = knowledge_dir or (Path(settings.knowledge_dir) if settings.knowledge_dir else None)
+    if knowledge:
+        retriever = KnowledgeAugmentedRetriever(
+            retriever, KnowledgeIndex.load(knowledge, embedder.embed_query), embedder.embed
         )
     nli: NliModel
     if nli_url:

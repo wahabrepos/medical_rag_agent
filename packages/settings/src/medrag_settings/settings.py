@@ -64,6 +64,9 @@ class Settings(BaseSettings):
     # Live PubMed search (NCBI E-utilities). NCBI asks callers to identify themselves;
     # an API key raises the limit from 3 to 10 requests per second.
     live_pubmed: bool = False
+    # Background-knowledge corpus from files (medrag_search.knowledge). The MedRAG
+    # textbooks are for research evaluation only (no licence for products).
+    knowledge_dir: str | None = None
     ncbi_email: str | None = None
     ncbi_api_key: SecretStr | None = None
 

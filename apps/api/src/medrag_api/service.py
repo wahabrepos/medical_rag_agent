@@ -106,7 +106,7 @@ class AnswerService:
         assessment, passages, claim = final.assessment, final.passages, final.has_claim
 
         def pmid(index: int | None) -> int | None:
-            return passages[index].pmid if index is not None else None
+            return (passages[index].pmid or None) if index is not None else None
 
         model_answer = state.get("answer", "")
         answer = present_answer(model_answer, assessment, request.answer_format, policy=self.policy)
@@ -122,16 +122,20 @@ class AnswerService:
         seen: set[int] = set()
         citations = []
         for p in passages:
-            if p.pmid not in seen:
-                seen.add(p.pmid)
-                citations.append(
-                    Citation(
-                        pmid=p.pmid,
-                        title=p.title,
-                        url=PUBMED_URL.format(pmid=p.pmid),
-                        passage=p.text,
-                    )
+            source = getattr(p, "source", "pubmed")
+            key = p.pmid if source == "pubmed" else p.chunk_id
+            if key in seen:
+                continue
+            seen.add(key)
+            citations.append(
+                Citation(
+                    source=source,
+                    pmid=p.pmid if source == "pubmed" else None,
+                    title=p.title,
+                    url=PUBMED_URL.format(pmid=p.pmid) if source == "pubmed" else None,
+                    passage=p.text,
                 )
+            )
         return AskResponse(
             run_id=uuid.uuid4(),
             question=request.question,

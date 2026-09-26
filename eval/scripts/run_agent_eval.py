@@ -197,6 +197,12 @@ def main() -> int:
         help="ask for claims with verbatim quotes; only quoted, verified claims count",
     )
     ap.add_argument(
+        "--knowledge-dir",
+        type=Path,
+        default=None,
+        help="add a file-based knowledge corpus (e.g. data/knowledge/textbooks)",
+    )
+    ap.add_argument(
         "--leakage-free",
         action="store_true",
         help="PubMedQA: never retrieve the question's own source article",
@@ -253,6 +259,7 @@ def main() -> int:
             answer_check=args.answer_check,
             live_pubmed=args.live_pubmed,
             evidence_quotes=args.evidence_quotes,
+            knowledge_dir=args.knowledge_dir,
         )
         ledger = SpendLedger(LEDGER, cap=args.budget)
         gen = agent.generator
@@ -326,7 +333,16 @@ def main() -> int:
                     "claims": state.get("iteration_claims", []),
                     "live_pubmed": args.live_pubmed,
                     "live_pmids": [
-                        [p.pmid for p in ps if getattr(p, "chunk_id", 0) < 0]
+                        [
+                            p.pmid
+                            for p in ps
+                            if getattr(p, "chunk_id", 0) < 0 and not hasattr(p, "book")
+                        ]
+                        for ps in state.get("iteration_passages", [])
+                    ],
+                    "knowledge_dir": str(args.knowledge_dir) if args.knowledge_dir else None,
+                    "knowledge_books": [
+                        [p.book for p in ps if hasattr(p, "book")]
                         for ps in state.get("iteration_passages", [])
                     ],
                     "excluded_pmid": source_pmid.get(item.id),
