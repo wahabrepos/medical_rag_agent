@@ -42,8 +42,9 @@ MODEL_FILE = "onnx/model.onnx"
 DEFAULT_CACHE_SIZE = 20_000
 # Upper bound on padded tokens per batch. DeBERTa's disentangled attention needs
 # several (batch x heads x length x length) buffers at once; 16 pairs of 512 tokens
-# spiked a 3 GB process over its limit on the Jetson.
-MAX_BATCH_TOKENS = 4096
+# spiked a 3 GB process over its limit on the Jetson, and with full-length live
+# PubMed abstracts (nearly every pair at 512 tokens) 4,096 still did.
+MAX_BATCH_TOKENS = 2048
 
 
 class DebertaNli:
