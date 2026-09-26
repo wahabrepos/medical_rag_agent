@@ -42,6 +42,7 @@ class Settings(BaseSettings):
 
     # Inference service (embeddings + NLI on CPU). None = ONNX Runtime default.
     inference_threads: int | None = None
+    inference_device: str = "cpu"  # "cuda" needs onnxruntime-gpu
 
     # Storage.
     database_url: SecretStr = Field(

@@ -19,6 +19,7 @@ import threading
 from collections import OrderedDict
 from collections.abc import Sequence
 from pathlib import Path
+from typing import Protocol
 
 import numpy as np
 import numpy.typing as npt
@@ -53,6 +54,7 @@ class DebertaNli:
         threads: int | None = None,
         max_length: int = MAX_LENGTH,
         cache_size: int = DEFAULT_CACHE_SIZE,
+        device: str = "cpu",
     ) -> None:
         token = os.environ.get("HF_TOKEN") or None
         self.model_file = MODEL_FILE
@@ -70,9 +72,14 @@ class DebertaNli:
         options = ort.SessionOptions()
         if threads:
             options.intra_op_num_threads = threads
-        self.session = ort.InferenceSession(
-            model_path, sess_options=options, providers=["CPUExecutionProvider"]
+        providers = (
+            ["CUDAExecutionProvider", "CPUExecutionProvider"]
+            if device == "cuda"
+            else ["CPUExecutionProvider"]
         )
+        self.session = ort.InferenceSession(model_path, sess_options=options, providers=providers)
+        if device == "cuda" and "CUDAExecutionProvider" not in self.session.get_providers():
+            raise RuntimeError("CUDA requested but onnxruntime has no CUDA provider")
         self._input_names = {i.name for i in self.session.get_inputs()}
         self._cache: OrderedDict[str, npt.NDArray[np.float32]] = OrderedDict()
         self._cache_size = cache_size
@@ -154,10 +161,16 @@ def _pair_key(premise: str, hypothesis: str) -> str:
     return hashlib.sha256(f"{premise}\x00{hypothesis}".encode()).hexdigest()
 
 
+class ProbabilityModel(Protocol):
+    def probabilities(
+        self, pairs: Sequence[tuple[str, str]], *, batch_size: int = ...
+    ) -> npt.NDArray[np.float32]: ...
+
+
 class LabelScorer:
     """Callable adapter: pairs -> probability of one label per pair."""
 
-    def __init__(self, nli: DebertaNli, label: str) -> None:
+    def __init__(self, nli: ProbabilityModel, label: str) -> None:
         if label not in LABELS:
             raise ValueError(f"unknown NLI label {label!r}; expected one of {LABELS}")
         self.nli = nli

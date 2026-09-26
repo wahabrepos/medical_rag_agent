@@ -1,6 +1,7 @@
 """NLI against the research work's PyTorch outputs (downloads the model; run with -m model)."""
 
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -28,7 +29,8 @@ THETA = FIXTURE["verification_threshold"]
 
 @pytest.fixture(scope="module")
 def nli() -> DebertaNli:
-    return DebertaNli()
+    # MEDRAG_TEST_DEVICE=cuda checks a GPU host (deploy/vast/setup_inference.sh).
+    return DebertaNli(device=os.environ.get("MEDRAG_TEST_DEVICE", "cpu"))
 
 
 def test_label_order_matches_model_config() -> None:

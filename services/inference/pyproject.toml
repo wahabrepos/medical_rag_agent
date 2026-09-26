@@ -5,6 +5,7 @@ description = "CPU inference service: BGE embeddings and DeBERTa NLI."
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "fastapi>=0.116",
+    "httpx>=0.28",
     "huggingface-hub>=0.34",
     "medrag-settings",
     "numpy>=2.2",

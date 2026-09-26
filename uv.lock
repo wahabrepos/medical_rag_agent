@@ -1027,6 +1027,7 @@ version = "0.1.0"
 source = { editable = "services/inference" }
 dependencies = [
     { name = "fastapi" },
+    { name = "httpx" },
     { name = "huggingface-hub" },
     { name = "medrag-settings" },
     { name = "numpy" },
@@ -1038,6 +1039,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "fastapi", specifier = ">=0.116" },
+    { name = "httpx", specifier = ">=0.28" },
     { name = "huggingface-hub", specifier = ">=0.34" },
     { name = "medrag-settings", editable = "packages/settings" },
     { name = "numpy", specifier = ">=2.2" },

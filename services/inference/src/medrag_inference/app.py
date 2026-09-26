@@ -81,8 +81,12 @@ def load_models() -> Models:
     from medrag_inference.nli import DebertaNli
     from medrag_settings import get_settings
 
-    threads = get_settings().inference_threads
-    return Models(embedder=BgeEmbedder(threads=threads), nli=DebertaNli(threads=threads))
+    settings = get_settings()
+    threads = settings.inference_threads
+    return Models(
+        embedder=BgeEmbedder(threads=threads),
+        nli=DebertaNli(threads=threads, device=settings.inference_device),
+    )
 
 
 def create_app(loader: Callable[[], Models] = load_models) -> FastAPI:
