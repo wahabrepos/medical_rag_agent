@@ -257,6 +257,7 @@ Each change is measured against the v1 baseline on the same 150 questions:
 | v2a | corrected verifier (NLI *entailment*) | 32.0% | 78.7% | 49 | ~100% |
 | v2b | v2a + keep the best-supported answer, never replace an answer with a refusal | 64.0% | 77.3% | 10 | ~100% |
 | v2c | v2b + multiple-choice questions must name an option | **80.0%** | 77.3% | 0 | ~100% |
+| v2d | v2c + read answer fields from invalid JSON (0 raw-JSON answers, was 6) | 77.3% | 77.3% | 0 | ~100% |
 | research work | Mistral-small, same questions | 69.3% | 76.0% | – | 0% |
 
 - With the corrected verifier the loop actually iterates, but the research-work rules then
@@ -265,7 +266,8 @@ Each change is measured against the v1 baseline on the same 150 questions:
 - The multiple-choice constraint removes the refusals (v2c). Support stays low on MedQA
   (about 0.03): the PubMedQA-based corpus rarely backs USMLE-style reasoning, so many MedQA
   answers rely on the model's own knowledge. Low-support answers must be flagged to users.
-- Differences of a few points on 150 questions are within noise; a full-set run confirms them.
+- Differences of a few points on 150 questions are within noise (v2c and v2d differ by two
+  MedQA questions); a full-set run confirms them. v2d is the configuration for the full run.
 
 ## License
 
