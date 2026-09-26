@@ -269,6 +269,18 @@ Each change is measured against the v1 baseline on the same 150 questions:
 - Differences of a few points on 150 questions are within noise (v2c and v2d differ by two
   MedQA questions); a full-set run confirms them. v2d is the configuration for the full run.
 
+**Full evaluation of v2d** (all 1,000 MedQA and 890 PubMedQA questions; NLI on a rented GPU):
+
+| | Agent (v2d, gpt-oss-120b) | Research work (Self-MedRAG + Mistral-small) |
+|---|---|---|
+| MedQA | **84.9%** | 71.3% |
+| PubMedQA | 74.8% | 76.0% |
+| Questions needing more than one iteration | 99.3% / 93.9% | about 1% |
+
+MedQA improves by 13.6 points (about ±2 points of uncertainty at this size); PubMedQA is on
+par (−1.1 points, within noise). MedQA support stays low (0.03), so those answers rely largely
+on the model's own knowledge. PubMedQA is still open-book: the gold abstracts are retrievable.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
