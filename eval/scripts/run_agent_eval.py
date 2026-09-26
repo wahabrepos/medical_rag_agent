@@ -27,7 +27,7 @@ from pathlib import Path
 from typing import Any
 
 from medrag_eval.datasets import EvalItem, load_full_set, load_golden, load_reference_predictions
-from medrag_eval.metrics import Dataset, evaluate, grounded_metrics
+from medrag_eval.metrics import Dataset, evaluate, gated_metrics, grounded_metrics
 
 ROOT = Path(__file__).resolve().parents[2]
 REFERENCE_SYSTEM = "selfmedrag_mistral"
@@ -89,6 +89,8 @@ def report(run_dir: Path, items: list[EvalItem]) -> dict[str, Any]:
             "support_label": ",".join(sorted(support_labels)),
             # Meaningful only with the entailment verifier; see medrag_eval.metrics.
             "grounded": grounded_metrics([predictions[i.id] for i in done], truth, ds),
+            # What the evidence-gated product shows (runs from Step 7b on).
+            "gated": gated_metrics([predictions[i.id] for i in done], truth, ds),
             "of": sum(1 for i in items if i.dataset is ds),
             "agent": new,
             "research_work_same_questions": old,
@@ -119,6 +121,17 @@ def print_report(result: dict[str, Any]) -> None:
             f"{g['grounded_share']:.1%} of answers"
             + (f", accuracy {grounded_acc:.4f}" if grounded_acc is not None else "")
         )
+        gated = ds.get("gated")
+        if gated:
+            print(
+                f"{'':9} evidence-gated: shown {gated['shown_share']:.1%}"
+                + (f", accuracy {gated['shown_accuracy']:.4f}" if "shown_accuracy" in gated else "")
+                + (
+                    f" (withheld answers {gated['hidden_accuracy']:.4f})"
+                    if "hidden_accuracy" in gated
+                    else ""
+                )
+            )
 
 
 def main() -> int:
@@ -179,6 +192,11 @@ def main() -> int:
         help="replace the two lowest local passages with live PubMed abstracts",
     )
     ap.add_argument(
+        "--evidence-quotes",
+        action="store_true",
+        help="ask for claims with verbatim quotes; only quoted, verified claims count",
+    )
+    ap.add_argument(
         "--leakage-free",
         action="store_true",
         help="PubMedQA: never retrieve the question's own source article",
@@ -208,10 +226,12 @@ def main() -> int:
     out_path = run_dir / "predictions.jsonl"
 
     if not args.report_only:
+        from medrag_agent.assessment import assess_final
         from medrag_agent.budget import BudgetExceededError, SpendLedger, cost
         from medrag_agent.errors import ProviderUnavailableError
         from medrag_agent.runtime import build_parity_agent
         from medrag_core.policy import FinalAnswerRule, LoopSettings
+        from medrag_inference.client import InferenceUnavailableError
         from medrag_settings import get_settings
 
         done = drop_errors(out_path)
@@ -231,6 +251,7 @@ def main() -> int:
             normalize_statements=args.normalize_statements,
             answer_check=args.answer_check,
             live_pubmed=args.live_pubmed,
+            evidence_quotes=args.evidence_quotes,
         )
         ledger = SpendLedger(LEDGER, cap=args.budget)
         gen = agent.generator
@@ -257,7 +278,8 @@ def main() -> int:
                         multiple_choice=args.mcq_commit and item.dataset is Dataset.MEDQA,
                         exclude_pmids=[source_pmid[item.id]] if item.id in source_pmid else None,
                     )
-                except ProviderUnavailableError as exc:
+                    final = assess_final(state, agent.nli, quoted=args.evidence_quotes)
+                except (ProviderUnavailableError, InferenceUnavailableError) as exc:
                     print(
                         f"Provider unavailable (LLM quota or inference service) after {n - 1} "
                         f"questions: {exc}",
@@ -275,6 +297,9 @@ def main() -> int:
                     note=item.id,
                 )
                 history = state.get("history", [])
+                assessment = final.assessment
+                quotes = state.get("iteration_evidence", [])
+                final_iteration = state.get("final_iteration")
                 row = {
                     "id": item.id,
                     "dataset": item.dataset.value,
@@ -305,6 +330,29 @@ def main() -> int:
                     ],
                     "excluded_pmid": source_pmid.get(item.id),
                     "nli": getattr(agent.nli, "version", "local"),
+                    "verifier_threshold": agent.nli.support_threshold,
+                    "evidence_quotes": args.evidence_quotes,
+                    "evidence_status": assessment.status.value,
+                    "supported_fraction": assessment.supported_fraction,
+                    # Shown by the evidence-gated product: every statement supported.
+                    "gated_shown": bool(assessment.statements)
+                    and all(st.supported for st in assessment.statements),
+                    "statements": [
+                        {
+                            "text": st.statement,
+                            "support": round(st.support, 4),
+                            "quote": st.quote,
+                        }
+                        for st in assessment.statements
+                    ],
+                    "quotes": [
+                        {"claim": q.claim, "passage": q.passage, "quote": q.quote}
+                        for q in (
+                            quotes[final_iteration - 1]
+                            if final_iteration and len(quotes) >= final_iteration
+                            else ()
+                        )
+                    ],
                     "raw_outputs": gen.raw_outputs[raw_before:],
                     "history": [
                         {"query": h.query, "answer": h.answer, "support_score": h.support_score}

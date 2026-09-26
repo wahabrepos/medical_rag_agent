@@ -156,3 +156,30 @@ def grounded_metrics(
         y_true = [normalize_ground_truth(g, dataset) for _, g in grounded]
         out["grounded_accuracy"] = accuracy(y_true, y_pred)
     return out
+
+
+def gated_metrics(
+    predictions: Sequence[Mapping[str, Any]],
+    ground_truth: Sequence[str],
+    dataset: Dataset,
+) -> dict[str, float] | None:
+    """What the evidence-gated product would show: the share of answers shown (every
+    statement supported, `gated_shown`), their accuracy and the accuracy of the rest.
+    None for runs recorded before the gate existed."""
+    if not predictions or any("gated_shown" not in p for p in predictions):
+        return None
+    shown = [(p, g) for p, g in zip(predictions, ground_truth, strict=True) if p["gated_shown"]]
+    hidden = [
+        (p, g) for p, g in zip(predictions, ground_truth, strict=True) if not p["gated_shown"]
+    ]
+
+    def acc(pairs: list[tuple[Mapping[str, Any], str]]) -> float:
+        y_pred = [normalize_prediction(p.get("final_answer", ""), dataset) for p, _ in pairs]
+        return accuracy([normalize_ground_truth(g, dataset) for _, g in pairs], y_pred)
+
+    out = {"shown_share": len(shown) / len(predictions), "shown_count": float(len(shown))}
+    if shown:
+        out["shown_accuracy"] = acc(shown)
+    if hidden:
+        out["hidden_accuracy"] = acc(hidden)
+    return out

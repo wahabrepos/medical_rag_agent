@@ -123,3 +123,24 @@ def test_grounded_accuracy_absent_when_nothing_is_grounded() -> None:
     )
     assert "grounded_accuracy" not in got
     assert got["grounded_share"] == 0.0
+
+
+def test_gated_metrics() -> None:
+    from medrag_eval.metrics import gated_metrics
+
+    preds = [
+        {"final_answer": "A", "gated_shown": True},
+        {"final_answer": "B", "gated_shown": True},
+        {"final_answer": "C", "gated_shown": False},
+        {"final_answer": "D", "gated_shown": False},
+    ]
+
+    got = gated_metrics(preds, ["A", "C", "C", "C"], Dataset.MEDQA)
+
+    assert got == {
+        "shown_share": 0.5,
+        "shown_count": 2.0,
+        "shown_accuracy": 0.5,
+        "hidden_accuracy": 0.5,
+    }
+    assert gated_metrics([{"final_answer": "A"}], ["A"], Dataset.MEDQA) is None
