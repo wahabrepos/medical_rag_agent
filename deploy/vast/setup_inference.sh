@@ -4,11 +4,13 @@
 # (see deploy/vast/README.md). No API keys or .env are needed or copied.
 set -euo pipefail
 cd ~/medrag
-command -v uv >/dev/null || curl -LsSf https://astral.sh/uv/install.sh | sh
 export PATH="$HOME/.local/bin:$PATH"
+command -v uv >/dev/null || curl -LsSf https://astral.sh/uv/install.sh | sh
 
-uv venv -q --python 3.12 .venv
-uv pip install -q -p .venv/bin/python \
+uv venv -q --clear --python 3.12 .venv  # safe to re-run
+# --no-sources: the workspace root is not copied, so workspace dependencies are
+# satisfied by the packages installed in this same command.
+uv pip install -q -p .venv/bin/python --no-sources \
   -e packages/settings -e packages/core -e services/inference pytest
 # GPU build of ONNX Runtime, with CUDA and cuDNN from pip.
 uv pip uninstall -q -p .venv/bin/python onnxruntime

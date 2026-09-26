@@ -24,6 +24,7 @@ is the slow part of a run; on a GPU it is almost free.
      --nli-url http://localhost:8001 <experiment options>
    ```
 
-   If the tunnel drops, the run stops cleanly; reopen the tunnel and run the same
-   command again to resume.
+   If local port 8001 is taken, use another one (e.g. `-L 18001:localhost:8001` and
+   `--nli-url http://localhost:18001`). If the tunnel drops, the run stops cleanly;
+   reopen the tunnel and run the same command again to resume.
 4. Destroy the instance when the run is finished.
