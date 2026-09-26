@@ -42,6 +42,15 @@ def load_items(which: str, data_dir: Path) -> list[EvalItem]:
     return [item for ds in Dataset for item in load_full_set(ds, data_dir)]
 
 
+def load_source_pmids(data_dir: Path) -> dict[str, int]:
+    """PubMedQA question id -> PubMed id of its source article (from fetch_eval_sets.py)."""
+    path = data_dir / "pubmedqa.jsonl"
+    if not path.exists():
+        sys.exit(f"{path} missing: run eval/scripts/fetch_eval_sets.py first")
+    rows = [json.loads(line) for line in path.read_text("utf-8").splitlines() if line.strip()]
+    return {row["id"]: int(row["pubid"]) for row in rows if row.get("pubid")}
+
+
 def read_predictions(path: Path) -> dict[str, dict[str, Any]]:
     if not path.exists():
         return {}
@@ -144,6 +153,17 @@ def main() -> int:
         help="use a remote inference service for NLI, e.g. http://localhost:8001 over a tunnel",
     )
     ap.add_argument(
+        "--leakage-free",
+        action="store_true",
+        help="PubMedQA: never retrieve the question's own source article",
+    )
+    ap.add_argument(
+        "--only",
+        choices=("medqa", "pubmedqa"),
+        default=None,
+        help="evaluate only one dataset",
+    )
+    ap.add_argument(
         "--budget",
         type=float,
         default=3.0,
@@ -154,6 +174,9 @@ def main() -> int:
 
     logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(message)s")
     items = load_items(args.set, args.data_dir)
+    if args.only:
+        items = [i for i in items if i.dataset.value == args.only]
+    source_pmid = load_source_pmids(args.data_dir) if args.leakage_free else {}
     run_dir = ROOT / "eval/runs" / args.run
     run_dir.mkdir(parents=True, exist_ok=True)
     out_path = run_dir / "predictions.jsonl"
@@ -203,6 +226,7 @@ def main() -> int:
                         item.question,
                         binary_answer=item.binary_answer,
                         multiple_choice=args.mcq_commit and item.dataset is Dataset.MEDQA,
+                        exclude_pmids=[source_pmid[item.id]] if item.id in source_pmid else None,
                     )
                 except ProviderUnavailableError as exc:
                     print(f"LLM quota exhausted after {n - 1} questions: {exc}", flush=True)
@@ -238,6 +262,7 @@ def main() -> int:
                     "prefer_committed": args.prefer_committed,
                     "mcq_commit": args.mcq_commit,
                     "lenient_json": args.lenient_json,
+                    "excluded_pmid": source_pmid.get(item.id),
                     "nli": getattr(agent.nli, "version", "local"),
                     "raw_outputs": gen.raw_outputs[raw_before:],
                     "history": [

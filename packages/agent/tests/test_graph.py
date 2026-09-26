@@ -168,3 +168,18 @@ def test_provider_errors_stop_the_run_instead_of_becoming_answers(stage: str) ->
 
     with pytest.raises(QuotaExhaustedError):
         graph.invoke({"question": QUERY})
+
+
+def test_exclusions_reach_the_retriever() -> None:
+    seen: list[Any] = []
+    fakes = Fakes([(0.9, [])])
+
+    def retrieve(query: str, **kwargs: Any) -> list[str]:
+        seen.append(kwargs)
+        return fakes.retrieve(query)
+
+    graph = build_graph(retrieve=retrieve, generate=fakes.generate, verify=fakes.verify)
+    graph.invoke({"question": "Q", "exclude_pmids": [42]})
+    graph.invoke({"question": "Q"})
+
+    assert seen == [{"exclude_pmids": [42]}, {}]

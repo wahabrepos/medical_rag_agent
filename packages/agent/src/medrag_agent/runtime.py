@@ -31,15 +31,21 @@ class ParityAgent:
     nli: object
 
     def run(
-        self, question: str, *, binary_answer: bool, multiple_choice: bool = False
+        self,
+        question: str,
+        *,
+        binary_answer: bool,
+        multiple_choice: bool = False,
+        exclude_pmids: list[int] | None = None,
     ) -> AgentState:
-        state: AgentState = self.graph.invoke(
-            {
-                "question": question,
-                "binary_answer": binary_answer,
-                "multiple_choice": multiple_choice,
-            }
-        )
+        request: AgentState = {
+            "question": question,
+            "binary_answer": binary_answer,
+            "multiple_choice": multiple_choice,
+        }
+        if exclude_pmids:
+            request["exclude_pmids"] = exclude_pmids
+        state: AgentState = self.graph.invoke(request)
         return state
 
 

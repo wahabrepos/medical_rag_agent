@@ -34,7 +34,7 @@ from medrag_core.loop import (
 from medrag_core.policy import Decision, LoopSettings, choose_final, decide, refine_query
 from medrag_core.verification import Verification
 
-Retriever = Callable[[str], Sequence[str]]
+Retriever = Callable[..., Sequence[str]]  # (query, *, exclude_pmids=...) -> passages
 GeneratorFn = Callable[..., Generation]
 Verifier = Callable[[list[str], list[str]], Verification]
 
@@ -43,6 +43,7 @@ class AgentState(TypedDict, total=False):
     question: str  # as given; refinement starts from it unstripped (research-work rule)
     binary_answer: bool  # PubMedQA: the yes/no constraint is added to the prompt
     multiple_choice: bool  # optional: require an option letter (not in the research work)
+    exclude_pmids: list[int]  # articles retrieval must skip (leakage-free evaluation)
     current_query: str
     iteration: int  # completed iterations
     started_at: float
@@ -83,7 +84,13 @@ def build_graph(
 
     def retrieve_node(state: AgentState) -> AgentState:
         try:
-            return {"context": list(retrieve(state["current_query"]))}
+            exclude = state.get("exclude_pmids")
+            passages = (
+                retrieve(state["current_query"], exclude_pmids=exclude)
+                if exclude
+                else retrieve(state["current_query"])
+            )
+            return {"context": list(passages)}
         except ProviderUnavailableError:
             raise
         except Exception as exc:
