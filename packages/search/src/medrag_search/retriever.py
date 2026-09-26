@@ -104,6 +104,10 @@ class HybridRetriever:
             passages = self._load(session, fused)
         return RetrievalResult(bm25_ids, dense_ids, fused, passages)
 
+    @property
+    def bm25(self) -> BM25Index:
+        return self._bm25
+
     def passages(self, query: str, *, exclude_pmids: Collection[int] = ()) -> list[Passage]:
         """Passages with their PubMed metadata (for citations)."""
         return self.search(query, exclude_pmids=exclude_pmids).passages

@@ -145,6 +145,26 @@ class BM25Index:
         """External ids of the n best documents for a raw query string."""
         return [int(self.doc_ids[i]) for i in self.top_positions(tokenize(query), n)]
 
+    def keywords(
+        self, text: str, n: int = 8, *, min_length: int = 4, known_only: bool = True
+    ) -> list[str]:
+        """The n most informative tokens of `text` (highest IDF first).
+
+        By default only words the corpus contains are used: unseen words in clinical
+        vignettes are mostly everyday language or ages ("comes", "63-year-old"),
+        which make a literature search fail. Tokens containing digits are skipped.
+        """
+        unseen = float(self.idf.max()) + 1.0 if len(self.idf) else 1.0
+        ranked: dict[str, float] = {}
+        for token in tokenize(text):
+            if len(token) < min_length or any(c.isdigit() for c in token) or token in ranked:
+                continue
+            term = self.vocab.get(token)
+            if term is None and known_only:
+                continue
+            ranked[token] = float(self.idf[term]) if term is not None else unseen
+        return sorted(ranked, key=lambda t: ranked[t], reverse=True)[:n]
+
     def save(self, path: Path) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         meta = {
