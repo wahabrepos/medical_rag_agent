@@ -8,7 +8,7 @@ The agent retrieves PubMed evidence with hybrid search, generates a JSON answer 
 
 ## Status
 
-Early development. The workspace, tooling and the research-work reference data are in place. The core Self-MedRAG logic (prompts, JSON parsing, BM25 tokenizer, RRF fusion, NLI verification and the loop's stop rules) is ported to `packages/core`, and the data layer (PostgreSQL + pgvector schema, corpus ingestion, hybrid retrieval) reproduces the research-work retrieval: on 200 reference questions the fused top-5 overlap is 0.996 and BM25 scores are bit-identical. The first milestone is a **parity build** that reproduces the research-work results before any behaviour changes:
+Early development. The workspace, tooling and the research-work reference data are in place, and a first API serves the agent. The core Self-MedRAG logic (prompts, JSON parsing, BM25 tokenizer, RRF fusion, NLI verification and the loop's stop rules) is ported to `packages/core`, and the data layer (PostgreSQL + pgvector schema, corpus ingestion, hybrid retrieval) reproduces the research-work retrieval: on 200 reference questions the fused top-5 overlap is 0.996 and BM25 scores are bit-identical. The first milestone is a **parity build** that reproduces the research-work results before any behaviour changes:
 
 | System (research work) | MedQA | PubMedQA |
 |---|---|---|
@@ -288,6 +288,43 @@ specific study, and the corpus contains that study's abstract (retrieved in the 
 is the always-"no" baseline: the agent answered "no" 73 times, with support falling from 0.26
 to 0.05. PubMedQA therefore measures finding and reading the right abstract, in the research
 work and here, not open-domain medical reasoning; MedQA is the better measure of that.
+
+### API
+
+```bash
+uv run --env-file .env uvicorn medrag_api.app:app --port 8000
+curl -X POST localhost:8000/v1/ask -H "Authorization: Bearer <key>" \
+  -d '{"question": "Is metformin first-line for type 2 diabetes?", "answer_format": "yes_no"}'
+```
+
+| Endpoint | Purpose |
+|---|---|
+| `POST /v1/ask` | Answer as JSON |
+| `POST /v1/ask/stream` | Progress events (`retrieved`, `generated`, `verified`, `refining`), then `answer` (SSE) |
+| `GET /v1/runs/{id}` · `POST /v1/runs/{id}/feedback` | Stored answers and user feedback (+1 / −1) |
+| `GET /healthz` · `GET /readyz` | Liveness; readiness of database, NLI, LLM key and budget |
+
+Keys go in `API_KEYS` (bearer tokens); only `APP_ENV=local` runs without them. Each key is rate
+limited, and answering stops with 503 before total LLM spend could pass 90% of `LLM_BUDGET`.
+The service uses the best evaluated configuration (v2d).
+
+**Every answer says how well the literature supports it.** Rationale statements are checked
+against the retrieved passages with NLI (after removing references such as "Passage 2 states
+that", which NLI would otherwise judge as claims about documents), and the answer gets one of:
+
+| Evidence status | Meaning | Full-run share / accuracy (MedQA · PubMedQA) |
+|---|---|---|
+| `supported` | at least 70% of statements entailed by a cited passage | 0.8% / 100% · 9.3% / 86.7% |
+| `partially_supported` | some statements entailed | 4.4% / 88.6% · 37.1% / 79.7% |
+| `not_supported` | none entailed: the answer relies on the model's knowledge | 94.8% / 84.6% · 53.6% / 69.4% |
+| `contradicted` | a passage contradicts a statement more than any supports it | – |
+| `no_evidence` | nothing retrieved or no rationale | – |
+
+(Shares and accuracies are from the v2d full run's support scores, measured before statement
+normalisation was added.) For yes/no questions without supporting literature the API answers
+`"uncertain"` and keeps the model's lean in `model_answer` and `note` (`ALLOW_UNCERTAIN`);
+benchmarks keep the model's answer. Each statement carries its support score and the PubMed ID
+that supports or contradicts it, and every answer lists its citations and a disclaimer.
 
 ## License
 
