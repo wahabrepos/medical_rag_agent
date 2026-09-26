@@ -104,6 +104,10 @@ class HybridRetriever:
             passages = self._load(session, fused)
         return RetrievalResult(bm25_ids, dense_ids, fused, passages)
 
+    def passages(self, query: str, *, exclude_pmids: Collection[int] = ()) -> list[Passage]:
+        """Passages with their PubMed metadata (for citations)."""
+        return self.search(query, exclude_pmids=exclude_pmids).passages
+
     def __call__(self, query: str, *, exclude_pmids: Collection[int] = ()) -> list[str]:
         """Passage texts, the shape the Self-MedRAG loop expects."""
         return self.search(query, exclude_pmids=exclude_pmids).texts

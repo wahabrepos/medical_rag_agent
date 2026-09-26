@@ -183,3 +183,43 @@ def test_exclusions_reach_the_retriever() -> None:
     graph.invoke({"question": "Q"})
 
     assert seen == [{"exclude_pmids": [42]}, {}]
+
+
+def test_passage_objects_are_kept_per_iteration() -> None:
+    from dataclasses import dataclass as _dc
+
+    @_dc(frozen=True)
+    class P:
+        pmid: int
+        text: str
+
+    fakes = Fakes([(0.2, ["x"]), (0.9, [])])
+    calls: list[str] = []
+
+    def retrieve(query: str) -> list[P]:
+        calls.append(query)
+        n = len(calls)
+        return [P(100 + n, f"passage {n}")]
+
+    graph = build_graph(retrieve=retrieve, generate=fakes.generate, verify=fakes.verify)
+    state = graph.invoke({"question": "Q"})
+
+    assert state["history"][0].context == ["passage 1"]  # texts go to generator and NLI
+    assert [[p.pmid for p in ps] for ps in state["iteration_passages"]] == [[101], [102]]
+    assert state["final_iteration"] == 2
+
+
+def test_final_iteration_points_to_the_chosen_answer() -> None:
+    settings = LoopSettings(final_answer_rule=FinalAnswerRule.BEST_SUPPORTED)
+    fakes = Fakes([(0.4, ["x"]), (0.41, ["x"])])  # stalls; iteration 2 has the best support
+    state = build_graph(
+        retrieve=fakes.retrieve, generate=fakes.generate, verify=fakes.verify, settings=settings
+    ).invoke({"question": "Q"})
+    assert state["final_iteration"] == 2
+    assert state["answer"] == "answer-2"
+
+    fakes = Fakes([(0.5, ["x"]), (0.2, ["x"])])
+    state = build_graph(
+        retrieve=fakes.retrieve, generate=fakes.generate, verify=fakes.verify, settings=settings
+    ).invoke({"question": "Q"})
+    assert (state["final_iteration"], state["answer"]) == (1, "answer-1")

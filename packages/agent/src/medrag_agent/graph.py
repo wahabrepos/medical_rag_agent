@@ -34,7 +34,9 @@ from medrag_core.loop import (
 from medrag_core.policy import Decision, LoopSettings, choose_final, decide, refine_query
 from medrag_core.verification import Verification
 
-Retriever = Callable[..., Sequence[str]]  # (query, *, exclude_pmids=...) -> passages
+# (query, *, exclude_pmids=...) -> passages: plain texts, or objects with a `.text`
+# attribute (e.g. medrag_search.Passage, kept for citations).
+Retriever = Callable[..., Sequence[Any]]
 GeneratorFn = Callable[..., Generation]
 Verifier = Callable[[list[str], list[str]], Verification]
 
@@ -49,6 +51,9 @@ class AgentState(TypedDict, total=False):
     started_at: float
     history: list[IterationRecord]
     context: list[str]
+    passages: list[Any]  # what retrieve returned for the current iteration
+    iteration_passages: list[list[Any]]  # per completed iteration, parallel to history
+    final_iteration: int | None  # iteration whose answer was returned (1-based)
     generation: Generation
     verification: Verification
     decision: str
@@ -75,6 +80,7 @@ def build_graph(
             "iteration": 0,
             "started_at": clock(),
             "history": [],
+            "iteration_passages": [],
         }
 
     def guard(state: AgentState) -> AgentState:
@@ -85,12 +91,13 @@ def build_graph(
     def retrieve_node(state: AgentState) -> AgentState:
         try:
             exclude = state.get("exclude_pmids")
-            passages = (
+            passages = list(
                 retrieve(state["current_query"], exclude_pmids=exclude)
                 if exclude
                 else retrieve(state["current_query"])
             )
-            return {"context": list(passages)}
+            context = [p if isinstance(p, str) else p.text for p in passages]
+            return {"context": context, "passages": passages}
         except ProviderUnavailableError:
             raise
         except Exception as exc:
@@ -133,6 +140,7 @@ def build_graph(
         return {
             "verification": verification,
             "history": history,
+            "iteration_passages": [*state.get("iteration_passages", []), state.get("passages", [])],
             "decision": decide(history, settings).value,
         }
 
@@ -151,11 +159,13 @@ def build_graph(
         iteration = state.get("iteration", 0)
         answer, rationale, support = "", [], 0.0
         reason = state.get("stop_reason")
+        chosen_record: IterationRecord | None = None
 
         if state.get("error") is not None:
             if iteration > 0:
                 last = history[-1]
                 answer, rationale, support = last.answer, last.rationale, last.support_score
+                chosen_record = last
             else:
                 answer, rationale, support = ERROR_ANSWER, [state["error"]], 0.0
             iteration += 1
@@ -167,6 +177,7 @@ def build_graph(
                 else choose_final(history, stalled=True, settings=settings)
             )
             answer, rationale, support = chosen.answer, chosen.rationale, chosen.support_score
+            chosen_record = chosen
             iteration += 1
             reason = (
                 StopReason.ACCEPTED.value
@@ -178,6 +189,7 @@ def build_graph(
             if history:
                 best = choose_final(history, stalled=False, settings=settings)
                 answer, rationale, support = best.answer, best.rationale, best.support_score
+                chosen_record = best
             else:
                 answer, rationale, support = (
                     "Unable to generate answer",
@@ -192,6 +204,7 @@ def build_graph(
             "support_score": support,
             "iteration": iteration,
             "stop_reason": reason or StopReason.MAX_ITERATIONS.value,
+            "final_iteration": chosen_record.iteration if chosen_record else None,
         }
 
     def after_guard(state: AgentState) -> Literal["retrieve", "finalize"]:
