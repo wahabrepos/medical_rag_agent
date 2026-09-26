@@ -11,6 +11,8 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
+from medrag_core.evidence import QuotedClaim
+
 DEFAULT_CONFIDENCE = 0.7
 FALLBACK_CONFIDENCE = 0.5
 
@@ -161,6 +163,7 @@ class ParsedGeneration:
     """True when the output was not valid JSON with both an answer and a rationale."""
     claim: str | None
     raw: dict[str, Any] = field(repr=False)
+    evidence: tuple[QuotedClaim, ...] = ()
 
     @classmethod
     def from_text(cls, text: str, *, lenient: bool = False) -> "ParsedGeneration":
@@ -182,4 +185,25 @@ class ParsedGeneration:
             used_fallback=used_fallback,
             claim=str(raw["claim"]).strip() or None if raw.get("claim") else None,
             raw=raw,
+            evidence=_quoted_claims(raw.get("evidence")),
         )
+
+
+def _quoted_claims(value: Any) -> tuple[QuotedClaim, ...]:
+    """The "evidence" entries of the JSON answer; malformed entries are skipped."""
+    if not isinstance(value, list):
+        return ()
+    out = []
+    for item in value:
+        if not isinstance(item, dict):
+            continue
+        claim, quote, passage = item.get("claim"), item.get("quote"), item.get("passage")
+        if not isinstance(claim, str) or not isinstance(quote, str):
+            continue
+        if isinstance(passage, str):
+            digits = re.findall(r"\d+", passage)
+            passage = int(digits[0]) if digits else None
+        if isinstance(passage, bool) or not isinstance(passage, int):
+            passage = None
+        out.append(QuotedClaim(claim.strip(), passage, quote.strip()))
+    return tuple(out)

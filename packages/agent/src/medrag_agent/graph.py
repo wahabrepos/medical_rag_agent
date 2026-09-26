@@ -24,6 +24,7 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
 from medrag_agent.errors import ProviderUnavailableError
+from medrag_core.evidence import QuotedClaim
 from medrag_core.loop import (
     ERROR_ANSWER,
     Generation,
@@ -54,6 +55,7 @@ class AgentState(TypedDict, total=False):
     passages: list[Any]  # what retrieve returned for the current iteration
     iteration_passages: list[list[Any]]  # per completed iteration, parallel to history
     iteration_claims: list[str | None]  # answer claim per completed iteration
+    iteration_evidence: list[tuple[QuotedClaim, ...]]  # quoted claims per iteration
     final_iteration: int | None  # iteration whose answer was returned (1-based)
     generation: Generation
     verification: Verification
@@ -83,6 +85,7 @@ def build_graph(
             "history": [],
             "iteration_passages": [],
             "iteration_claims": [],
+            "iteration_evidence": [],
         }
 
     def guard(state: AgentState) -> AgentState:
@@ -150,6 +153,7 @@ def build_graph(
             "history": history,
             "iteration_passages": [*state.get("iteration_passages", []), state.get("passages", [])],
             "iteration_claims": [*state.get("iteration_claims", []), generation.claim],
+            "iteration_evidence": [*state.get("iteration_evidence", []), generation.evidence],
             "decision": decide(history, settings).value,
         }
 

@@ -5,10 +5,11 @@
 
 import time
 import uuid
-from collections.abc import Callable, Iterator, Sequence
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from typing import Any, Protocol
 
+from medrag_agent.assessment import assess_final
 from medrag_agent.budget import SpendLedger, cost
 from medrag_agent.llm import LlmGenerator
 from medrag_api.repository import RunRepository
@@ -24,7 +25,6 @@ from medrag_core.evidence import (
     AnswerFormat,
     AnswerPolicy,
     EvidenceStatus,
-    assess_evidence,
     present_answer,
 )
 
@@ -100,21 +100,10 @@ class AnswerService:
     def _response(
         self, request: AskRequest, state: dict[str, Any], model: str, latency: float, spent: float
     ) -> AskResponse:
-        final_iteration = state.get("final_iteration")
-        passages: Sequence[Any] = (
-            state["iteration_passages"][final_iteration - 1] if final_iteration else []
+        final = assess_final(
+            state, self.components.nli, quoted=getattr(self.components, "evidence_quotes", False)
         )
-        texts = [p.text for p in passages]
-        # With an answer claim, the answer itself is assessed first, then its reasoning.
-        claims = state.get("iteration_claims", [])
-        claim = claims[final_iteration - 1] if final_iteration and claims else None
-        rationale = state.get("rationale", [])
-        assessment = assess_evidence(
-            [claim, *rationale] if claim else rationale,
-            texts,
-            lambda pairs: self.components.nli.probabilities(pairs),
-            threshold=self.components.nli.support_threshold,
-        )
+        assessment, passages, claim = final.assessment, final.passages, final.has_claim
 
         def pmid(index: int | None) -> int | None:
             return passages[index].pmid if index is not None else None
@@ -163,6 +152,7 @@ class AnswerService:
                         contradicted=s.contradicted,
                         supporting_pmid=pmid(s.supporting_passage),
                         contradicting_pmid=pmid(s.contradicting_passage),
+                        quote=s.quote,
                     )
                     for i, s in enumerate(assessment.statements)
                 ],

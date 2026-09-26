@@ -63,3 +63,21 @@ def test_answer_claim_instruction_is_optional() -> None:
     assert '"claim"' not in plain.user
     assert with_claim.user.startswith(plain.user)
     assert '"claim" field' in with_claim.user
+
+
+def test_evidence_quotes_instruction_is_optional() -> None:
+    plain = build_messages("Q?", ["p"], [])
+    quoted = build_messages("Q?", ["p"], [], evidence_quotes=True)
+
+    assert '"evidence"' not in plain.user
+    assert quoted.user.startswith(plain.user)
+    assert '"evidence" list' in quoted.user
+    assert "word for word" in quoted.user
+
+
+def test_answer_claim_needs_a_quote_when_both_options_are_on() -> None:
+    both = build_messages("Q?", ["p"], [], answer_claim=True, evidence_quotes=True)
+    quotes_only = build_messages("Q?", ["p"], [], evidence_quotes=True)
+
+    assert both.user.endswith("when a passage supports it.")
+    assert '"claim" field needs an evidence entry' not in quotes_only.user

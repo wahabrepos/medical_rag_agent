@@ -96,3 +96,28 @@ def test_claim_is_read_from_json_and_lenient_json() -> None:
     assert ParsedGeneration.from_text(valid).claim == "Aspirin lowers risk."
     assert ParsedGeneration.from_text(broken, lenient=True).claim == "It works."
     assert ParsedGeneration.from_text('{"answer": "no", "rationale": ["r"]}').claim is None
+
+
+def test_evidence_entries_are_read_and_malformed_ones_skipped() -> None:
+    text = json.dumps(
+        {
+            "answer": "yes",
+            "rationale": ["Metformin lowers HbA1c."],
+            "evidence": [
+                {"claim": "Metformin lowers HbA1c.", "passage": 2, "quote": "HbA1c fell."},
+                {"claim": "Second claim.", "passage": "Passage 3", "quote": "Q3."},
+                {"claim": "No passage.", "quote": "Q."},
+                {"claim": "Missing quote.", "passage": 1},
+                "not an object",
+            ],
+        }
+    )
+
+    parsed = ParsedGeneration.from_text(text)
+
+    assert [(e.claim, e.passage, e.quote) for e in parsed.evidence] == [
+        ("Metformin lowers HbA1c.", 2, "HbA1c fell."),
+        ("Second claim.", 3, "Q3."),
+        ("No passage.", None, "Q."),
+    ]
+    assert ParsedGeneration.from_text('{"answer": "no", "rationale": ["x"]}').evidence == ()

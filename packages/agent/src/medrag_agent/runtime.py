@@ -75,6 +75,8 @@ class AgentComponents:
     normalize_statements: bool = False
     # v3b: answer claim + contradiction veto (entailment support only).
     answer_check: bool = False
+    # 7b: claims with verbatim quotes; only quoted, verified claims count as supported.
+    evidence_quotes: bool = False
     limiter: RateLimiter = field(init=False)
 
     def __post_init__(self) -> None:
@@ -94,6 +96,7 @@ class AgentComponents:
                 tokens_per_minute=self.settings.llm_tokens_per_minute,
                 lenient_json=self.lenient_json,
                 answer_claim=self.answer_check,
+                evidence_quotes=self.evidence_quotes,
             ),
             api_key=api_key_for(model, self.settings),
             limiter=self.limiter,
@@ -143,6 +146,7 @@ def build_components(
     normalize_statements: bool = False,
     answer_check: bool = False,
     live_pubmed: bool = False,
+    evidence_quotes: bool = False,
 ) -> AgentComponents:
     sessions = make_session_factory(make_engine(settings.database_url.get_secret_value()))
     embedder = BgeEmbedder(threads=settings.inference_threads)
@@ -174,6 +178,7 @@ def build_components(
         lenient_json=lenient_json,
         normalize_statements=normalize_statements,
         answer_check=answer_check,
+        evidence_quotes=evidence_quotes,
     )
 
 

@@ -43,6 +43,7 @@ class GeneratorConfig:
     expected_completion_tokens: int = 400  # used only to estimate throttling
     lenient_json: bool = False  # read fields from invalid JSON (not in the research work)
     answer_claim: bool = False  # ask for a one-sentence answer claim (answer check)
+    evidence_quotes: bool = False  # ask for claims with verbatim supporting quotes
     requests_per_minute: int = 30
     tokens_per_minute: int = 8_000
     num_retries: int = 6
@@ -181,6 +182,7 @@ class LlmGenerator:
             binary_answer=binary_answer,
             multiple_choice=multiple_choice,
             answer_claim=self.config.answer_claim,
+            evidence_quotes=self.config.evidence_quotes,
         )
         parsed = ParsedGeneration.from_text(
             self.complete(messages).text, lenient=self.config.lenient_json
@@ -191,6 +193,7 @@ class LlmGenerator:
             confidence=parsed.confidence,
             citations=parsed.citations,
             claim=parsed.claim if self.config.answer_claim else None,
+            evidence=parsed.evidence if self.config.evidence_quotes else (),
         )
 
 

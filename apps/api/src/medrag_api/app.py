@@ -91,6 +91,7 @@ def load_context() -> ApiContext:
         lenient_json=True,
         nli_url=settings.nli_url,
         normalize_statements=True,  # v3a: better-grounded PubMedQA answers, same cost
+        evidence_quotes=settings.evidence_quotes,  # 7b: claims tied to verbatim quotes
     )
     sessions = make_session_factory(make_engine(settings.database_url.get_secret_value()))
     service = AnswerService(
@@ -109,6 +110,12 @@ def load_context() -> ApiContext:
             session.execute(text("select 1"))
         checks["database"] = "ok"
         checks["nli"] = getattr(components.nli, "version", "in-process")
+        # Grounded answers are only claimed with the evaluated setup (Step 7b, ADR-0010).
+        checks["grounding"] = (
+            "minicheck + quotes"
+            if "MiniCheck" in checks["nli"] and settings.evidence_quotes
+            else "not the evaluated grounding setup (see README: VERIFIER, EVIDENCE_QUOTES)"
+        )
         if components.new_generator().api_key is None:
             raise RuntimeError("no API key for the LLM provider")
         checks["llm"] = settings.llm_primary_model

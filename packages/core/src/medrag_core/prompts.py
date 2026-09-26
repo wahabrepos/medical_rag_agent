@@ -62,6 +62,26 @@ ANSWER_CLAIM_INSTRUCTION = (
     "answer as a factual claim, without mentioning passages or options by letter."
 )
 
+# Optional (not in the research work): claims tied to verbatim quotes, so every
+# statement shown to users can be traced to a sentence of a retrieved study. Many
+# rationale lines were remarks about the passages ("the passages do not report ...")
+# that no study can support.
+EVIDENCE_QUOTES_INSTRUCTION = (
+    '\n\nEVIDENCE RULES: Write the "rationale" as short factual medical claims only; '
+    'never describe the passages themselves (no "Passage 2 states ...", no "the passages '
+    'do not ..."). Also include an "evidence" list in your JSON with one entry for each '
+    'rationale claim that a passage supports: {"claim": "<the claim, exactly as in the '
+    'rationale>", "passage": <passage number>, "quote": "<the sentence from that passage '
+    'that supports the claim, copied word for word>"}. Claims based on general medical '
+    "knowledge rather than a passage get no evidence entry."
+)
+
+# With both options, the answer claim needs its own quote to count as supported.
+ANSWER_CLAIM_EVIDENCE = (
+    ' The "claim" field needs an evidence entry too, with the same text, when a passage '
+    "supports it."
+)
+
 # Only the most recent attempts are shown to the generator.
 MAX_HISTORY_IN_PROMPT = 2
 
@@ -111,6 +131,7 @@ def build_user_prompt(
     binary_answer: bool = False,
     multiple_choice: bool = False,
     answer_claim: bool = False,
+    evidence_quotes: bool = False,
     template: str = USER_PROMPT_TEMPLATE,
 ) -> str:
     """The user turn before stripping: template, then the answer-format constraint if any."""
@@ -125,6 +146,10 @@ def build_user_prompt(
         prompt += MULTIPLE_CHOICE_INSTRUCTION
     if answer_claim:
         prompt += ANSWER_CLAIM_INSTRUCTION
+    if evidence_quotes:
+        prompt += EVIDENCE_QUOTES_INSTRUCTION
+        if answer_claim:
+            prompt += ANSWER_CLAIM_EVIDENCE
     return prompt
 
 
@@ -136,6 +161,7 @@ def build_prompt(
     binary_answer: bool = False,
     multiple_choice: bool = False,
     answer_claim: bool = False,
+    evidence_quotes: bool = False,
     system_prompt: str = SYSTEM_PROMPT,
     template: str = USER_PROMPT_TEMPLATE,
 ) -> str:
@@ -147,6 +173,7 @@ def build_prompt(
         binary_answer=binary_answer,
         multiple_choice=multiple_choice,
         answer_claim=answer_claim,
+        evidence_quotes=evidence_quotes,
         template=template,
     )
     return f"{system_prompt}\n\n{user}"
@@ -160,6 +187,7 @@ def build_messages(
     binary_answer: bool = False,
     multiple_choice: bool = False,
     answer_claim: bool = False,
+    evidence_quotes: bool = False,
     system_prompt: str = SYSTEM_PROMPT,
     template: str = USER_PROMPT_TEMPLATE,
 ) -> ChatMessages:
@@ -171,6 +199,7 @@ def build_messages(
         binary_answer=binary_answer,
         multiple_choice=multiple_choice,
         answer_claim=answer_claim,
+        evidence_quotes=evidence_quotes,
         template=template,
     )
     return ChatMessages(system=system_prompt.strip(), user=user.strip())

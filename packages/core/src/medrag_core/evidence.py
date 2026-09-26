@@ -82,12 +82,23 @@ def normalize_statement(statement: str) -> str:
 
 
 @dataclass(frozen=True)
+class QuotedClaim:
+    """A claim with the passage (1-based, as numbered in the prompt) and the verbatim
+    sentence the model says supports it."""
+
+    claim: str
+    passage: int | None
+    quote: str
+
+
+@dataclass(frozen=True)
 class StatementEvidence:
     statement: str
     support: float  # best entailment probability over the passages
     supporting_passage: int | None  # index of that passage if support >= threshold
     contradiction: float  # best contradiction probability
     contradicting_passage: int | None  # index if contradiction >= threshold
+    quote: str | None = None  # verbatim quote from the supporting passage (quoted mode)
 
     @property
     def supported(self) -> bool:
@@ -116,7 +127,7 @@ def assess_evidence(
     """Assess each statement; with `normalize`, passage references are removed first
     (the original statement text is kept in the result). `threshold` is the pair-level
     probability that counts as support or contradiction; it depends on the verifier."""
-    statements = [s for s in rationale if s.strip()]
+    statements = base_statements(rationale)
     if not statements or not passages:
         return EvidenceAssessment(EvidenceStatus.NO_EVIDENCE, 0.0, [])
 
@@ -157,6 +168,125 @@ def _status(statements: Sequence[StatementEvidence]) -> EvidenceStatus:
     if fraction > 0:
         return EvidenceStatus.PARTIALLY_SUPPORTED
     return EvidenceStatus.NOT_SUPPORTED
+
+
+MIN_QUOTE_CHARS = 20
+_QUOTE_CHARS = str.maketrans(
+    {
+        "\u2018": "'",
+        "\u2019": "'",
+        "\u201c": '"',
+        "\u201d": '"',
+        "\u2010": "-",
+        "\u2011": "-",
+        "\u2012": "-",
+        "\u2013": "-",
+        "\u2014": "-",
+        "\u2212": "-",
+        "\u00a0": " ",
+    }
+)
+
+
+def _squash(text: str) -> str:
+    return " ".join(text.translate(_QUOTE_CHARS).lower().split())
+
+
+# Sentences stating what a study set out to do are not findings: "the aim was to
+# examine whether elderly patients have different needs" supports nothing about
+# their needs, yet verifiers score such pairs as supported.
+_AIM = re.compile(
+    r"\b(?:aims?|objectives?|purpose|goals?)\b[^.]{0,40}\b(?:is|was|were|are)\s+to\b"
+    r"|\baimed\s+to\b"
+    r"|\bwe\s+(?:hypothesi[sz]ed|sought|aimed|set\s+out)\b"
+    r"|\b(?:to\s+(?:determine|assess|evaluate|investigate|examine|compare|test|explore))"
+    r"\s+(?:whether|if)\b",
+    re.IGNORECASE,
+)
+
+
+def states_aim(quote: str) -> bool:
+    """Whether a quote describes a study's aim or hypothesis rather than a result."""
+    return _AIM.search(quote) is not None
+
+
+def quote_in_passage(quote: str, passage: str) -> bool:
+    """Whether `quote` is copied from `passage`, ignoring case, whitespace, typographic
+    quotes and dashes; "..." may join parts that appear in order."""
+    target = _squash(passage)
+    parts = [_squash(p).strip(" .,;:\"'") for p in re.split(r"\.\.\.|\u2026|\[\.\.\.\]", quote)]
+    parts = [p for p in parts if p]
+    if not parts or sum(len(p) for p in parts) < MIN_QUOTE_CHARS:
+        return False
+    position = 0
+    for part in parts:
+        found = target.find(part, position)
+        if found < 0:
+            return False
+        position = found + len(part)
+    return True
+
+
+def assess_quoted_claims(
+    rationale: Sequence[str],
+    quotes: Sequence[QuotedClaim],
+    passages: Sequence[str],
+    probabilities: ProbabilityFn,
+    *,
+    threshold: float = EVIDENCE_THRESHOLD,
+    normalize: bool = True,
+) -> EvidenceAssessment:
+    """Like `assess_evidence`, but a statement counts as supported only when the model
+    quoted a sentence that really is in a retrieved passage, the quote reports a
+    result (not a study aim or hypothesis), and the verifier finds that passage
+    supports the statement. Statements without a valid quote are unsupported,
+    whatever the verifier says about other passages."""
+    base = assess_evidence(
+        rationale, passages, probabilities, threshold=threshold, normalize=normalize
+    )
+    if base.status is EvidenceStatus.NO_EVIDENCE:
+        return base
+    by_claim: dict[str, list[QuotedClaim]] = {}
+    for q in quotes:
+        by_claim.setdefault(_squash(normalize_statement(q.claim)), []).append(q)
+    claims = [normalize_statement(s) if normalize else s for s in base_statements(rationale)]
+    candidates: list[tuple[int, int, str]] = []  # (statement, passage index, quote)
+    for i, claim in enumerate(claims):
+        for q in by_claim.get(_squash(normalize_statement(claim)), []):
+            cited = q.passage - 1 if q.passage and 0 < q.passage <= len(passages) else None
+            order = [cited] if cited is not None else []
+            order += [j for j in range(len(passages)) if j != cited]
+            if states_aim(q.quote):
+                continue
+            for j in order:
+                if quote_in_passage(q.quote, passages[j]):
+                    candidates.append((i, j, q.quote))
+                    break
+    rows = probabilities([(passages[j], claims[i]) for i, j, _ in candidates]) if candidates else []
+    best: dict[int, tuple[float, int, str]] = {}
+    for (i, j, quote), row in zip(candidates, rows, strict=True):
+        support = float(row[ENTAILMENT])
+        if i not in best or support > best[i][0]:
+            best[i] = (support, j, quote)
+    result = []
+    for i, s in enumerate(base.statements):
+        support, j, quote = best.get(i, (0.0, -1, ""))
+        ok = support >= threshold
+        result.append(
+            StatementEvidence(
+                statement=s.statement,
+                support=support,
+                supporting_passage=j if ok else None,
+                contradiction=s.contradiction,
+                contradicting_passage=s.contradicting_passage,
+                quote=quote if ok else None,
+            )
+        )
+    return EvidenceAssessment(_status(result), _fraction(result), result)
+
+
+def base_statements(rationale: Sequence[str]) -> list[str]:
+    return [s for s in rationale if s.strip()]
 
 
 def present_answer(

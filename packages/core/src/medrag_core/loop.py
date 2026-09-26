@@ -11,6 +11,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from enum import StrEnum
 
+from medrag_core.evidence import QuotedClaim
 from medrag_core.policy import Decision, LoopSettings, choose_final, decide, refine_query
 from medrag_core.verification import Verification
 
@@ -26,6 +27,7 @@ class Generation:
     confidence: float
     citations: list[str]
     claim: str | None = None  # optional one-sentence answer claim (answer check)
+    evidence: tuple[QuotedClaim, ...] = ()  # optional claims with verbatim quotes
 
 
 @dataclass(frozen=True)

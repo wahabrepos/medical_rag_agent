@@ -7,9 +7,13 @@ from medrag_core.evidence import (
     AnswerPolicy,
     EvidenceAssessment,
     EvidenceStatus,
+    QuotedClaim,
     StatementEvidence,
     assess_evidence,
+    assess_quoted_claims,
     present_answer,
+    quote_in_passage,
+    states_aim,
 )
 
 
@@ -142,3 +146,87 @@ def test_assessment_checks_the_claim_but_reports_the_original() -> None:
     assert result.statements[0].statement == "Passage 1 shows that aspirin helps."
     raw = assess_evidence(["Passage 1 shows that aspirin helps."], ["p1"], probs, normalize=False)
     assert raw.status is EvidenceStatus.NOT_SUPPORTED
+
+
+EN_DASH = chr(0x2013)  # as PubMed writes ranges
+PASSAGE = (
+    f"Metformin lowered HbA1c by 1.1% (95% CI 0.9{EN_DASH}1.3) in adults with type 2 diabetes. "
+    "No serious adverse events were reported."
+)
+
+
+@pytest.mark.parametrize(
+    ("quote", "found"),
+    [
+        ("Metformin lowered HbA1c by 1.1% (95% CI 0.9-1.3)", True),  # dash normalised
+        ("metformin   LOWERED hba1c by 1.1%", True),  # case and spaces
+        ("Metformin lowered HbA1c ... no serious adverse events were reported.", True),
+        ("No serious adverse events ... Metformin lowered HbA1c", False),  # wrong order
+        ("Metformin raised HbA1c by 1.1%", False),
+        ("Metformin", False),  # too short to count as a quote
+    ],
+)
+def test_quote_in_passage(quote: str, found: bool) -> None:
+    assert quote_in_passage(quote, PASSAGE) is found
+
+
+def quoted_table(support: float):  # type: ignore[no-untyped-def]
+    return table({(PASSAGE, "Metformin lowers HbA1c."): (0.0, support, 1 - support)})
+
+
+def test_quoted_claim_needs_a_real_quote_and_verifier_support() -> None:
+    claim = "Metformin lowers HbA1c."
+    real = QuotedClaim(claim, 2, "Metformin lowered HbA1c by 1.1%")
+    invented = QuotedClaim(claim, 2, "Metformin lowered HbA1c in every trial")
+    passages = ["Unrelated passage about asthma.", PASSAGE]
+
+    ok = assess_quoted_claims([claim], [real], passages, quoted_table(0.9))
+    (statement,) = ok.statements
+    assert ok.status is EvidenceStatus.SUPPORTED
+    assert (statement.supporting_passage, statement.quote) == (1, real.quote)
+
+    # The verifier alone would support it, but the quote is not in any passage.
+    fake = assess_quoted_claims([claim], [invented], passages, quoted_table(0.9))
+    assert fake.status is EvidenceStatus.NOT_SUPPORTED
+    assert assess_evidence([claim], passages, quoted_table(0.9)).status is EvidenceStatus.SUPPORTED
+
+    # A real quote the verifier does not accept, or no quote at all, is unsupported.
+    weak = assess_quoted_claims([claim], [real], passages, quoted_table(0.2))
+    none = assess_quoted_claims([claim], [], passages, quoted_table(0.9))
+    assert weak.status is none.status is EvidenceStatus.NOT_SUPPORTED
+
+
+def test_quote_found_in_another_passage_than_cited() -> None:
+    claim = "Metformin lowers HbA1c."
+    quote = QuotedClaim(claim, 1, "Metformin lowered HbA1c by 1.1%")  # cites passage 1
+
+    result = assess_quoted_claims([claim], [quote], ["Asthma.", PASSAGE], quoted_table(0.9))
+
+    assert result.statements[0].supporting_passage == 1  # found in passage 2 (index 1)
+
+
+@pytest.mark.parametrize(
+    ("quote", "aim"),
+    [
+        ("The aim of the present study is to examine whether elderly patients differ.", True),
+        ("The purpose of this study was to verify the efficacy of quilting sutures.", True),
+        ("We hypothesized that enhanced migration may be crucial.", True),
+        ("This study was designed to determine whether preclerkship exams predict failure.", True),
+        ("Our objective was to compare two techniques.", True),
+        ("Seroma occurred in 2% of patients with quilting sutures versus 20% without.", False),
+        ("Treatment aims were met in most patients (82%).", False),
+        ("Metformin lowered HbA1c by 1.1% compared with placebo.", False),
+    ],
+)
+def test_states_aim(quote: str, aim: bool) -> None:
+    assert states_aim(quote) is aim
+
+
+def test_aim_quotes_do_not_count_as_evidence() -> None:
+    passage = "The aim of this study was to determine whether metformin lowers HbA1c."
+    claim = "Metformin lowers HbA1c."
+    probs = table({(passage, claim): (0.0, 0.95, 0.05)})
+
+    result = assess_quoted_claims([claim], [QuotedClaim(claim, 1, passage)], [passage], probs)
+
+    assert result.status is EvidenceStatus.NOT_SUPPORTED

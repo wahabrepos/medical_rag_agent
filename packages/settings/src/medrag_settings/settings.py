@@ -55,6 +55,8 @@ class Settings(BaseSettings):
     # evidence_gated: answers only when the literature supports every statement;
     # uncertain_yes_no: the earlier behaviour; show_all: always the model's answer.
     answer_policy: Literal["evidence_gated", "uncertain_yes_no", "show_all"] = "evidence_gated"
+    # Ask for claims with verbatim quotes; only quoted, verified claims count as supported.
+    evidence_quotes: bool = True
     nli_url: str | None = None  # remote inference service for NLI; unset = in-process
     llm_budget: float = 3.0  # total LLM spend cap shared with evaluations (stops at 90%)
     llm_spend_ledger: str = "data/llm_spend.json"
