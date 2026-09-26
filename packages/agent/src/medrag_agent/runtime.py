@@ -31,7 +31,7 @@ from medrag_core.verification import (
 from medrag_db.session import make_engine, make_session_factory
 from medrag_inference import RESEARCH_WORK_SUPPORT_LABEL, BgeEmbedder, DebertaNli
 from medrag_inference.nli import LabelScorer
-from medrag_search import BM25Index, HybridRetriever
+from medrag_search import BM25Index, HybridRetriever, LiveAugmentedRetriever, PubMedClient
 from medrag_settings import Settings
 
 PARITY_PROFILE = "parity"
@@ -40,6 +40,12 @@ PARITY_PROFILE = "parity"
 PRODUCT_LOOP = LoopSettings(
     final_answer_rule=FinalAnswerRule.BEST_SUPPORTED, prefer_committed_answers=True
 )
+
+
+class PassageRetriever(Protocol):
+    def passages(self, query: str, *, exclude_pmids: Sequence[int] = ...) -> list[Any]: ...
+
+    def __call__(self, query: str, *, exclude_pmids: Sequence[int] = ...) -> list[str]: ...
 
 
 class NliModel(Protocol):
@@ -59,7 +65,7 @@ def api_key_for(model: str, settings: Settings) -> str | None:
 @dataclass
 class AgentComponents:
     settings: Settings
-    retriever: HybridRetriever
+    retriever: PassageRetriever
     nli: NliModel
     support_label: str
     loop: LoopSettings | None
@@ -131,15 +137,22 @@ def build_components(
     nli_url: str | None = None,
     normalize_statements: bool = False,
     answer_check: bool = False,
+    live_pubmed: bool = False,
 ) -> AgentComponents:
     sessions = make_session_factory(make_engine(settings.database_url.get_secret_value()))
     embedder = BgeEmbedder(threads=settings.inference_threads)
-    retriever = HybridRetriever(
+    local = HybridRetriever(
         sessions,
         BM25Index.load(index_dir / f"bm25_{PARITY_PROFILE}.npz"),
         embedder.embed_query,
         profile=PARITY_PROFILE,
     )
+    retriever: PassageRetriever = local
+    if live_pubmed:
+        key = settings.ncbi_api_key.get_secret_value() if settings.ncbi_api_key else None
+        retriever = LiveAugmentedRetriever(
+            local, PubMedClient(email=settings.ncbi_email, api_key=key)
+        )
     nli: NliModel
     if nli_url:
         from medrag_inference.client import RemoteNli
@@ -172,7 +185,7 @@ class ParityAgent:
         return self.components.nli
 
     @property
-    def retriever(self) -> HybridRetriever:
+    def retriever(self) -> PassageRetriever:
         return self.components.retriever
 
     def run(

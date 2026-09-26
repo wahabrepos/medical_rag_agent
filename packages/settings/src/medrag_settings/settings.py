@@ -52,6 +52,12 @@ class Settings(BaseSettings):
     llm_budget: float = 3.0  # total LLM spend cap shared with evaluations (stops at 90%)
     llm_spend_ledger: str = "data/llm_spend.json"
 
+    # Live PubMed search (NCBI E-utilities). NCBI asks callers to identify themselves;
+    # an API key raises the limit from 3 to 10 requests per second.
+    live_pubmed: bool = False
+    ncbi_email: str | None = None
+    ncbi_api_key: SecretStr | None = None
+
     # Storage.
     database_url: SecretStr = Field(
         default=SecretStr("postgresql+psycopg://medrag:medrag@localhost:5432/medrag")

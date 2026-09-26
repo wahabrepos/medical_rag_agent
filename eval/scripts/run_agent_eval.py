@@ -174,6 +174,11 @@ def main() -> int:
         help="ask for an answer claim, verify it too, and let contradictions veto support",
     )
     ap.add_argument(
+        "--live-pubmed",
+        action="store_true",
+        help="replace the two lowest local passages with live PubMed abstracts",
+    )
+    ap.add_argument(
         "--leakage-free",
         action="store_true",
         help="PubMedQA: never retrieve the question's own source article",
@@ -225,6 +230,7 @@ def main() -> int:
             nli_url=args.nli_url,
             normalize_statements=args.normalize_statements,
             answer_check=args.answer_check,
+            live_pubmed=args.live_pubmed,
         )
         ledger = SpendLedger(LEDGER, cap=args.budget)
         gen = agent.generator
@@ -252,7 +258,11 @@ def main() -> int:
                         exclude_pmids=[source_pmid[item.id]] if item.id in source_pmid else None,
                     )
                 except ProviderUnavailableError as exc:
-                    print(f"LLM quota exhausted after {n - 1} questions: {exc}", flush=True)
+                    print(
+                        f"Provider unavailable (LLM quota or inference service) after {n - 1} "
+                        f"questions: {exc}",
+                        flush=True,
+                    )
                     print_report(report(run_dir, items))
                     return EXIT_QUOTA
                 prompt_tokens = gen.prompt_tokens - tokens_before[0]
@@ -288,6 +298,11 @@ def main() -> int:
                     "normalize_statements": args.normalize_statements,
                     "answer_check": args.answer_check,
                     "claims": state.get("iteration_claims", []),
+                    "live_pubmed": args.live_pubmed,
+                    "live_pmids": [
+                        [p.pmid for p in ps if getattr(p, "chunk_id", 0) < 0]
+                        for ps in state.get("iteration_passages", [])
+                    ],
                     "excluded_pmid": source_pmid.get(item.id),
                     "nli": getattr(agent.nli, "version", "local"),
                     "raw_outputs": gen.raw_outputs[raw_before:],
