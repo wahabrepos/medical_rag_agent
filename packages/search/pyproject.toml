@@ -4,6 +4,8 @@ version = "0.1.0"
 description = "Hybrid retrieval: BM25 index, pgvector search and rank fusion."
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "defusedxml>=0.7",
+    "httpx>=0.28",
     "medrag-core",
     "medrag-db",
     "numpy>=2.2",

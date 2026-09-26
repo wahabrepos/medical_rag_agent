@@ -93,7 +93,7 @@ files = [
 
 [[tool.mypy.overrides]]
 # No type stubs published for these.
-module = ["datasets", "datasets.*", "onnxruntime", "onnxruntime.*"]
+module = ["datasets", "datasets.*", "onnxruntime", "onnxruntime.*", "defusedxml", "defusedxml.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
