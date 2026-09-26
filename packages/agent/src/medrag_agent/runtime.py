@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from medrag_agent.errors import ProviderUnavailableError
 from medrag_agent.graph import AgentState, build_graph
 from medrag_agent.llm import LlmGenerator, config_for_model
 from medrag_core.policy import LoopSettings
@@ -27,7 +28,7 @@ class ParityAgent:
     graph: Any
     generator: LlmGenerator
     retriever: HybridRetriever
-    nli: DebertaNli
+    nli: object
 
     def run(
         self, question: str, *, binary_answer: bool, multiple_choice: bool = False
@@ -54,6 +55,8 @@ def build_parity_agent(
     index_dir: Path = Path("data/indexes"),
     support_label: str = RESEARCH_WORK_SUPPORT_LABEL,
     loop: LoopSettings | None = None,
+    lenient_json: bool = False,
+    nli_url: str | None = None,
 ) -> ParityAgent:
     sessions = make_session_factory(make_engine(settings.database_url.get_secret_value()))
     embedder = BgeEmbedder(threads=settings.inference_threads)
@@ -63,11 +66,22 @@ def build_parity_agent(
         embedder.embed_query,
         profile=PARITY_PROFILE,
     )
-    nli = DebertaNli(threads=settings.inference_threads)
+    if nli_url:
+        from medrag_inference.client import RemoteNli
+
+        nli: RemoteNli | DebertaNli = RemoteNli(nli_url)
+    else:
+        nli = DebertaNli(threads=settings.inference_threads)
     scorer = nli.scorer(support_label)
 
     def verify(rationale: list[str], context: list[str]) -> Verification:
-        return verify_rationale(rationale, context, scorer, threshold=VERIFICATION_THRESHOLD)
+        from medrag_inference.client import InferenceUnavailableError
+
+        try:
+            return verify_rationale(rationale, context, scorer, threshold=VERIFICATION_THRESHOLD)
+        except InferenceUnavailableError as exc:
+            # A lost tunnel or remote service stops the run; the question is asked again.
+            raise ProviderUnavailableError(str(exc)) from exc
 
     model = settings.llm_primary_model
     generator = LlmGenerator(
@@ -75,6 +89,7 @@ def build_parity_agent(
             model,
             requests_per_minute=settings.llm_requests_per_minute,
             tokens_per_minute=settings.llm_tokens_per_minute,
+            lenient_json=lenient_json,
         ),
         api_key=api_key_for(model, settings),
     )

@@ -134,6 +134,16 @@ def main() -> int:
         help="MedQA prompts require an option letter instead of allowing a refusal",
     )
     ap.add_argument(
+        "--lenient-json",
+        action="store_true",
+        help="read answer fields from invalid JSON before the research-work fallback",
+    )
+    ap.add_argument(
+        "--nli-url",
+        default=None,
+        help="use a remote inference service for NLI, e.g. http://localhost:8001 over a tunnel",
+    )
+    ap.add_argument(
         "--budget",
         type=float,
         default=3.0,
@@ -163,7 +173,12 @@ def main() -> int:
             prefer_committed_answers=args.prefer_committed,
         )
         agent = build_parity_agent(
-            get_settings(), index_dir=args.index_dir, support_label=args.support_label, loop=loop
+            get_settings(),
+            index_dir=args.index_dir,
+            support_label=args.support_label,
+            loop=loop,
+            lenient_json=args.lenient_json,
+            nli_url=args.nli_url,
         )
         ledger = SpendLedger(LEDGER, cap=args.budget)
         gen = agent.generator
@@ -222,6 +237,8 @@ def main() -> int:
                     "final_answer_rule": args.final_answer_rule,
                     "prefer_committed": args.prefer_committed,
                     "mcq_commit": args.mcq_commit,
+                    "lenient_json": args.lenient_json,
+                    "nli": getattr(agent.nli, "version", "local"),
                     "raw_outputs": gen.raw_outputs[raw_before:],
                     "history": [
                         {"query": h.query, "answer": h.answer, "support_score": h.support_score}

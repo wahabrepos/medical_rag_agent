@@ -41,6 +41,7 @@ class GeneratorConfig:
     temperature: float | None = None  # None: not sent, as in the research work
     reasoning_effort: str | None = None  # sent only when set (reasoning models)
     expected_completion_tokens: int = 400  # used only to estimate throttling
+    lenient_json: bool = False  # read fields from invalid JSON (not in the research work)
     requests_per_minute: int = 30
     tokens_per_minute: int = 8_000
     num_retries: int = 6
@@ -175,7 +176,9 @@ class LlmGenerator:
         messages = build_messages(
             query, context, history, binary_answer=binary_answer, multiple_choice=multiple_choice
         )
-        parsed = ParsedGeneration.from_text(self.complete(messages).text)
+        parsed = ParsedGeneration.from_text(
+            self.complete(messages).text, lenient=self.config.lenient_json
+        )
         return Generation(
             answer=parsed.answer,
             rationale=parsed.rationale,
