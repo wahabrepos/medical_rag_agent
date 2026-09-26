@@ -17,7 +17,7 @@ model's answer.
 
 import re
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import StrEnum
 
 EVIDENCE_THRESHOLD = 0.7  # support probability of one statement-passage pair
@@ -99,9 +99,15 @@ class StatementEvidence:
     contradiction: float  # best contradiction probability
     contradicting_passage: int | None  # index if contradiction >= threshold
     quote: str | None = None  # verbatim quote from the supporting passage (quoted mode)
+    # Restates a fact given in the question itself (e.g. the patient's findings).
+    from_question: bool = False
 
     @property
     def supported(self) -> bool:
+        return self.supporting_passage is not None or self.from_question
+
+    @property
+    def literature_supported(self) -> bool:
         return self.supporting_passage is not None
 
     @property
@@ -289,6 +295,47 @@ def base_statements(rationale: Sequence[str]) -> list[str]:
     return [s for s in rationale if s.strip()]
 
 
+def ground_in_question(
+    assessment: EvidenceAssessment,
+    question: str,
+    probabilities: ProbabilityFn,
+    *,
+    threshold: float = EVIDENCE_THRESHOLD,
+    normalize: bool = True,
+) -> EvidenceAssessment:
+    """Mark statements that only restate the question as grounded in it.
+
+    Clinical vignettes give the patient's findings; a rationale that repeats them
+    ("the patient is hypotensive and tachycardic") cannot be found in any study but
+    is backed by the user's own input. The verifier checks each statement no passage
+    supports against the question; inferences beyond it (a diagnosis, a mechanism)
+    still need the literature.
+    """
+    todo = [i for i, s in enumerate(assessment.statements) if not s.supported]
+    if not todo or not question.strip():
+        return assessment
+    claims = [assessment.statements[i].statement for i in todo]
+    if normalize:
+        claims = [normalize_statement(c) for c in claims]
+    rows = probabilities([(question, c) for c in claims])
+    statements = list(assessment.statements)
+    for i, row in zip(todo, rows, strict=True):
+        if float(row[ENTAILMENT]) >= threshold:
+            statements[i] = replace(statements[i], from_question=True)
+    return EvidenceAssessment(_status(statements), _fraction(statements), statements)
+
+
+def is_grounded(assessment: EvidenceAssessment) -> bool:
+    """Every statement is supported (by a study or, for restated facts, by the
+    question) and at least one by a study: what the evidence gate shows."""
+    statements = assessment.statements
+    return (
+        bool(statements)
+        and all(s.supported for s in statements)
+        and any(s.literature_supported for s in statements)
+    )
+
+
 def present_answer(
     answer: str,
     assessment: EvidenceAssessment,
@@ -298,8 +345,8 @@ def present_answer(
 ) -> str:
     """The answer shown to users.
 
-    Gated (the product default): only an answer whose every checked statement is
-    supported is shown; anything else is "insufficient evidence". On the full
+    Gated (the product default): only a grounded answer (`is_grounded`) is shown;
+    anything else is "insufficient evidence". On the full
     evaluation run such answers were 94% correct on PubMedQA, against 72% for the
     rest, so an unsupported answer is not evidence of anything.
 
@@ -311,8 +358,7 @@ def present_answer(
         case AnswerPolicy.SHOW_ALL:
             return answer
         case AnswerPolicy.EVIDENCE_GATED:
-            grounded = assessment.statements and all(s.supported for s in assessment.statements)
-            return answer if grounded else INSUFFICIENT_EVIDENCE
+            return answer if is_grounded(assessment) else INSUFFICIENT_EVIDENCE
         case AnswerPolicy.UNCERTAIN_YES_NO:
             unsupported = assessment.status in (
                 EvidenceStatus.NOT_SUPPORTED,

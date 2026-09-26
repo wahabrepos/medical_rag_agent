@@ -56,6 +56,9 @@ class StatementEvidenceOut(BaseModel):
     quote: str | None = Field(
         default=None, description="verbatim sentence of the supporting study, when quoted"
     )
+    from_question: bool = Field(
+        default=False, description="restates a fact given in the question (not literature)"
+    )
 
 
 class EvidenceOut(BaseModel):

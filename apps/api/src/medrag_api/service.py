@@ -153,6 +153,7 @@ class AnswerService:
                         supporting_pmid=pmid(s.supporting_passage),
                         contradicting_pmid=pmid(s.contradicting_passage),
                         quote=s.quote,
+                        from_question=s.from_question,
                     )
                     for i, s in enumerate(assessment.statements)
                 ],

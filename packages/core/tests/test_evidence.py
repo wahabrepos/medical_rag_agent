@@ -11,6 +11,8 @@ from medrag_core.evidence import (
     StatementEvidence,
     assess_evidence,
     assess_quoted_claims,
+    ground_in_question,
+    is_grounded,
     present_answer,
     quote_in_passage,
     states_aim,
@@ -230,3 +232,42 @@ def test_aim_quotes_do_not_count_as_evidence() -> None:
     result = assess_quoted_claims([claim], [QuotedClaim(claim, 1, passage)], [passage], probs)
 
     assert result.status is EvidenceStatus.NOT_SUPPORTED
+
+
+QUESTION = "A 63-year-old man has chest pain, hypotension and an irregular pulse. Next step?"
+
+
+def test_restated_findings_are_grounded_in_the_question() -> None:
+    finding = "The patient is hypotensive with an irregular pulse."
+    diagnosis = "The patient has aortic dissection."
+    fact = "Unstable tachyarrhythmias need synchronized cardioversion."
+    probs = table(
+        {
+            (QUESTION, finding): (0.0, 0.95, 0.05),
+            (QUESTION, diagnosis): (0.0, 0.10, 0.90),
+            ("Textbook passage.", fact): (0.0, 0.90, 0.10),
+        }
+    )
+    base = assess_evidence([finding, diagnosis, fact], ["Textbook passage."], probs)
+
+    grounded = ground_in_question(base, QUESTION, probs)
+
+    by_text = {s.statement: s for s in grounded.statements}
+    assert by_text[finding].from_question
+    assert by_text[finding].supported
+    assert not by_text[finding].literature_supported
+    assert not by_text[diagnosis].supported  # an inference still needs the literature
+    assert by_text[fact].literature_supported
+    assert not is_grounded(grounded)  # the diagnosis is unsupported
+
+
+def test_restating_the_question_alone_is_not_grounded() -> None:
+    finding = "The patient is hypotensive with an irregular pulse."
+    probs = table({(QUESTION, finding): (0.0, 0.95, 0.05)})
+    only_question = ground_in_question(
+        assess_evidence([finding], ["Unrelated passage."], probs), QUESTION, probs
+    )
+
+    assert only_question.statements[0].supported
+    assert not is_grounded(only_question)
+    assert present_answer("D", only_question, AnswerFormat.MULTIPLE_CHOICE) == INSUFFICIENT_EVIDENCE

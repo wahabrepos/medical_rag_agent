@@ -230,6 +230,7 @@ def main() -> int:
         from medrag_agent.budget import BudgetExceededError, SpendLedger, cost
         from medrag_agent.errors import ProviderUnavailableError
         from medrag_agent.runtime import build_parity_agent
+        from medrag_core.evidence import is_grounded
         from medrag_core.policy import FinalAnswerRule, LoopSettings
         from medrag_inference.client import InferenceUnavailableError
         from medrag_settings import get_settings
@@ -334,14 +335,14 @@ def main() -> int:
                     "evidence_quotes": args.evidence_quotes,
                     "evidence_status": assessment.status.value,
                     "supported_fraction": assessment.supported_fraction,
-                    # Shown by the evidence-gated product: every statement supported.
-                    "gated_shown": bool(assessment.statements)
-                    and all(st.supported for st in assessment.statements),
+                    # Shown by the evidence-gated product (medrag_core.evidence.is_grounded).
+                    "gated_shown": is_grounded(assessment),
                     "statements": [
                         {
                             "text": st.statement,
                             "support": round(st.support, 4),
                             "quote": st.quote,
+                            "from_question": st.from_question,
                         }
                         for st in assessment.statements
                     ],

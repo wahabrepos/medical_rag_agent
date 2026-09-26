@@ -15,6 +15,7 @@ from medrag_core.evidence import (
     EvidenceAssessment,
     assess_evidence,
     assess_quoted_claims,
+    ground_in_question,
 )
 
 
@@ -38,7 +39,8 @@ def assess_final(state: Any, verifier: Verifier, *, quoted: bool = False) -> Fin
 
     With an answer claim, the claim is assessed first, then the rationale. With
     `quoted`, a statement counts only when its verbatim quote is found in a passage
-    (see medrag_core.evidence.assess_quoted_claims).
+    (see medrag_core.evidence.assess_quoted_claims). Statements that restate the
+    question are then marked as grounded in it (medrag_core.evidence.ground_in_question).
     """
     final = state.get("final_iteration")
     passages: list[Any] = list(state["iteration_passages"][final - 1]) if final else []
@@ -61,4 +63,10 @@ def assess_final(state: Any, verifier: Verifier, *, quoted: bool = False) -> Fin
         assessment = assess_evidence(
             statements, texts, probabilities, threshold=verifier.support_threshold
         )
+    assessment = ground_in_question(
+        assessment,
+        state.get("question", ""),
+        probabilities,
+        threshold=verifier.support_threshold,
+    )
     return FinalAssessment(assessment, passages, claim is not None)
