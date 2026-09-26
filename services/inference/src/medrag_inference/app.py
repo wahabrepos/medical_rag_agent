@@ -1,4 +1,4 @@
-"""HTTP inference service: sentence embeddings and NLI probabilities on CPU.
+"""HTTP inference service: sentence embeddings and claim-verifier (NLI) probabilities.
 
     uv run --env-file .env uvicorn medrag_inference.app:app --port 8001
 
@@ -33,6 +33,9 @@ class Embedder(Protocol):
 class Nli(Protocol):
     @property
     def version(self) -> str: ...
+
+    # Support probability that counts as supported (differs between verifiers).
+    support_threshold: float
 
     def probabilities(
         self, pairs: list[tuple[str, str]], *, batch_size: int = ...
@@ -74,18 +77,18 @@ class Health(BaseModel):
     status: str
     embedder: str
     nli: str
+    support_threshold: float
 
 
 def load_models() -> Models:
     from medrag_inference.embedding import BgeEmbedder
-    from medrag_inference.nli import DebertaNli
+    from medrag_inference.nli import load_verifier
     from medrag_settings import get_settings
 
     settings = get_settings()
-    threads = settings.inference_threads
     return Models(
-        embedder=BgeEmbedder(threads=threads),
-        nli=DebertaNli(threads=threads, device=settings.inference_device),
+        embedder=BgeEmbedder(threads=settings.inference_threads),
+        nli=load_verifier(settings),
     )
 
 
@@ -104,7 +107,12 @@ def create_app(loader: Callable[[], Models] = load_models) -> FastAPI:
     @app.get("/healthz")
     def healthz(request: Request) -> Health:
         m = models(request)
-        return Health(status="ok", embedder=m.embedder.version, nli=m.nli.version)
+        return Health(
+            status="ok",
+            embedder=m.embedder.version,
+            nli=m.nli.version,
+            support_threshold=m.nli.support_threshold,
+        )
 
     @app.post("/embed")
     def embed(body: EmbedRequest, request: Request) -> EmbedResponse:

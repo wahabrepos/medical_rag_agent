@@ -1,4 +1,5 @@
 from collections.abc import Iterator
+from pathlib import Path
 
 import numpy as np
 import numpy.typing as npt
@@ -17,6 +18,7 @@ class FakeEmbedder:
 
 class FakeNli:
     version = "fake-nli@1"
+    support_threshold = 0.5
 
     def __init__(self) -> None:
         self.seen: list[tuple[str, str]] = []
@@ -42,7 +44,12 @@ def client(nli: FakeNli) -> Iterator[TestClient]:
 
 def test_healthz_reports_model_versions(client: TestClient) -> None:
     body = client.get("/healthz").json()
-    assert body == {"status": "ok", "embedder": "fake-embedder@1", "nli": "fake-nli@1"}
+    assert body == {
+        "status": "ok",
+        "embedder": "fake-embedder@1",
+        "nli": "fake-nli@1",
+        "support_threshold": 0.5,
+    }
 
 
 def test_embed(client: TestClient) -> None:
@@ -78,9 +85,31 @@ def test_nli_batches_respect_token_budget() -> None:
 
     lengths = [10] * 20 + [512] * 10
     order = sorted(range(len(lengths)), key=lambda i: lengths[i])
-    batches = _batches(order, lengths, batch_size=16, max_tokens=4096)
+    batches = _batches(order, lengths, batch_size=16, max_tokens=4096)  # explicit budget
 
     assert sorted(i for b in batches for i in b) == list(range(30))
     assert all(len(b) <= 16 for b in batches)
     assert all(len(b) * max(lengths[i] for i in b) <= 4096 for b in batches)
     assert [len(b) for b in batches] == [16, 8, 6]  # 4 short + 4 long = 8 x 512 tokens
+
+
+def test_minicheck_classes_map_onto_nli_labels() -> None:
+    from medrag_inference.minicheck import MiniCheckVerifier
+
+    verifier = MiniCheckVerifier.__new__(MiniCheckVerifier)  # mapping only, no model
+    probs = np.array([[0.9, 0.1], [0.2, 0.8]], dtype=np.float32)
+
+    labelled = verifier._to_labels(probs)
+
+    # (contradiction, entailment, neutral) = (0, P(supported), P(unsupported))
+    assert labelled.tolist() == [
+        pytest.approx([0.0, 0.1, 0.9]),
+        pytest.approx([0.0, 0.8, 0.2]),
+    ]
+
+
+def test_minicheck_without_exported_model_explains_how_to_get_it(tmp_path: Path) -> None:
+    from medrag_inference.minicheck import MiniCheckVerifier
+
+    with pytest.raises(FileNotFoundError, match=r"export_minicheck\.py"):
+        MiniCheckVerifier(tmp_path / "missing.onnx")

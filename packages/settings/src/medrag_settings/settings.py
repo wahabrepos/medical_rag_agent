@@ -6,6 +6,7 @@ tracebacks. Call `.get_secret_value()` only at the point of use.
 
 from enum import StrEnum
 from functools import lru_cache
+from typing import Literal
 
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -43,6 +44,10 @@ class Settings(BaseSettings):
     # Inference service (embeddings + NLI on CPU). None = ONNX Runtime default.
     inference_threads: int | None = None
     inference_device: str = "cpu"  # "cuda" needs onnxruntime-gpu
+    # Claim verifier: "deberta-nli" (research-work parity) or "minicheck" (grounding;
+    # ONNX exported with services/inference/scripts/export_minicheck.py).
+    verifier: Literal["deberta-nli", "minicheck"] = "deberta-nli"
+    verifier_onnx_path: str = "data/models/minicheck-roberta-large.onnx"
 
     # Public API (apps/api).
     api_keys: SecretStr | None = None  # comma-separated bearer keys; none = open in APP_ENV=local

@@ -25,6 +25,7 @@ def test_remote_probabilities_and_scorer(remote: RemoteNli) -> None:
     probs = remote.probabilities(pairs, batch_size=2)  # two requests
 
     assert remote.version == "fake-nli@1"
+    assert remote.support_threshold == 0.5
     assert probs.shape == (3, 3)
     assert np.allclose(probs[:, 1], 0.2)
     assert remote.scorer("neutral")(pairs) == pytest.approx([0.7, 0.7, 0.7])

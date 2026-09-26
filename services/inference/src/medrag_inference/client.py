@@ -24,6 +24,9 @@ class RemoteNli:
         self._retries = retries
         health = self._request("GET", "/healthz")
         self.version = str(health["nli"])
+        # Services from before per-verifier thresholds used DeBERTa's 0.7.
+        threshold = health.get("support_threshold", 0.7)
+        self.support_threshold = float(threshold) if isinstance(threshold, int | float) else 0.7
 
     def _request(self, method: str, path: str, json: object | None = None) -> dict[str, object]:
         last: Exception | None = None

@@ -1,0 +1,127 @@
+{
+ "model": "lytang/MiniCheck-RoBERTa-Large",
+ "revision": "74c8919647e61ed0f71bc177d94f10930f090068",
+ "source": "PyTorch fp32 CPU, transformers",
+ "cases": [
+  {
+   "passage": "25 suitable patients were enrolled, and 107 hypotensive events were documented. 40 ST events occurred in 14 patients, of which a quarter were symptomatic. Fourteen HII events occurred in eight patients, with 13 of the 14 preceded by a fall in diastolic pressure (median diastolic pressure 57.5 mm Hg, interquartile range 11, maximum 72 mm Hg, minimum 45 mm Hg), and six preceded by a fall in systolic pressure (chi(2) = 11.9, p<0.001). ST events were significantly associated with preceding hypotensive events (chi(2) = 40.2, p<0.0001). Patients with HII events were more frequently taking multiple hypotensive drug regimens (8/8 v 9/17, chi(2) = 5.54, p = 0.022)..",
+   "claim": "Septic shock from Neisseria meningitidis can cause adrenal hemorrhage (Waterhouse‑Friderichsen syndrome), leading to acute adrenal cortical insufficiency and severe hypotension.",
+   "supported": 0.019418
+  },
+  {
+   "passage": "Of the 60 patients with HSP, 29 (48.3 %) developed subsequent renal involvement, of whom four underwent kidney biopsy. The mean serum PTX3 level of patients with subsequent renal involvement was significantly higher than those of patients without renal involvement and of the controls (2.20 ± 1.30 vs. 1.36 ± 0.85 and 1.03 ± 0.7 ng/ml, respectively; p = 0.004). Immunofluorescence evaluation of skin biopsy revealed that in addition to immunoglobulin A (IgA) deposition, the IgM deposition was significantly associated with subsequent renal involvement (p = 0.008)..",
+   "claim": "Such patients typically have low serum IgA with normal IgG and IgM levels.",
+   "supported": 0.01123
+  },
+  {
+   "passage": "We reviewed medical records of all blunt trauma patients admitted to our trauma service from January 1, 1992, to March 31, 1998. Study patients had a blood alcohol level>or =80 mg/dL, Glasgow Coma Scale (GCS) score of 15, and unremarkable abdominal examination..",
+   "claim": "Other options (dopamine, lisinopril, TIPS) are not standard treatments for hepatorenal syndrome.",
+   "supported": 0.006176
+  },
+  {
+   "passage": "A 48-year-old right handed gardener presented with a white discoloration and numbness of her left ring finger. She reported cutting her roses without protection gloves so repetitive scratchy lesions especially of her left hand occurred..",
+   "claim": "The appropriate next step is to obtain a tissue diagnosis via biopsy of the lesion.",
+   "supported": 0.011334
+  },
+  {
+   "passage": "The patient required hospital admission and showed a favorable response after hydration and urine alkalinization. There were 4 additional cases published of which there was one death..",
+   "claim": "First-line pharmacologic treatment for agitated delirium is a low-dose antipsychotic such as olanzapine; benzodiazepines and antihistamines can worsen delirium, and restraints are a last resort.",
+   "supported": 0.007321
+  },
+  {
+   "passage": "In both the groups exposed to talc (Groups 3 and 4), evidence of foreign body reaction and infection, along with an increase in inflammatory cells, were found in all the genital tissues. Genital infection was observed in 12 rats in the study group and 2 rats in the control group. Neoplastic change was not found. However, there was an increase in the number of follicles in animals exposed to talc. No peritoneal change was observed. In the groups not exposed to talc, similar infectious findings were found, but there was a statistically significant difference between the groups (Groups 1 and 2 vs. Groups 3 and 4, P>0.05). Neoplastic change was also not observed in these groups. Four groups were compared in terms of neoplastic effects and infections. In Groups 1, 5 rats were normal, two developed vulvovaginitis and endometritis with overinfection (in both ovaries), and one developed salpingitis (in both fallopian tubes), that is, infection was found in a total of two rats. In Group 2, only one experimental animal had endometritis. All the animals in Groups 3 and 4 developed infections..",
+   "claim": "The noninfectious isolate gains infectivity after exposure to lysed bacteria, indicating uptake of free DNA.",
+   "supported": 0.023216
+  },
+  {
+   "passage": "Included were patients with familial adenomatous polyposis who had undergone proctocolectomy with IPAA or colectomy and ileorectal anastomosis, and subsequently developed an intra-abdominal desmoid tumor..",
+   "claim": "The study compared patients with restorative proctocolectomy (which includes ileal pouch-anal anastomosis) to those with ileorectal anastomosis.",
+   "supported": 0.113655
+  },
+  {
+   "passage": "From 2000 to 2007, 344 patients underwent pancreatoduodenectomy for PA. Fifty-three patients (elevated group) had preoperatively elevated serum CA 19-9 levels (>400 IU/ml) after resolution of obstructive jaundice. Of these, 27 patients had high levels (400-899 IU/ml (HL)) and 26 patients had very high levels>or=900 IU/ml (VHL). Fifty patients with normal preoperative serum CA 19-9 levels (<37 IU/ml) comprised the control group..",
+   "claim": "Passage 1 documents elevated preoperative serum CA 19-9 levels in patients undergoing pancreatoduodenectomy for pancreatic adenocarcinoma.",
+   "supported": 0.179602
+  },
+  {
+   "passage": "Fifty-five percent of the patients had persistent asthma. Overall, 48% (95% CI 41.2-54.8) of persistent asthmatics were receiving inadequate treatment, and 66% (95% CI 59.5-72.4) had not used their medication daily over the past 3 months. Persistent asthmatics who were inadequately treated had a significantly greater frequency of asthma attacks (geometric mean ratio 3.7; 95% CI 2.1-6.6) than those using an adequate dose of medication. Mild and moderate persistent asthmatics using an adequate medication regimen reported a low number of asthma attacks (median 0). At the multivariate analysis, a good control of the disease was positively associated with an adequate dose of anti-inflammatory medication (OR = 2.2; 95% CI 1.1-4.5) and was negatively associated with a later onset of asthma (OR = 0.96; 95% CI 0.93-0.99) and severe asthma (OR = 0.37; 95% CI 0.17-0.81)..",
+   "claim": "This matches answer choice A",
+   "supported": 0.171527
+  },
+  {
+   "passage": "By the conclusion of the study, all remaining 17 practices had adopted PHQ-9 as a routine part of depression care in their practice. On the basis of responses from 17 psychiatrists from those practices, PHQ-9 scores influenced clinical decision making for 93% of 6,096 patient contacts. With the additional information gained from the PHQ-9 score, one or more treatment changes occurred during 40% of these clinical contacts. Changing the dosage of antidepressant medication and adding another medication were the most common treatment changes recorded by psychiatrists, followed by starting or increasing psychotherapy and by switching or initiating antidepressants. In 3% of the patient contacts, using the PHQ-9 led to additional suicide risk assessment..",
+   "claim": "The remaining 17 practices adopted PHQ-9 routinely, it influenced clinical decisions in 93% of contacts, and led to treatment changes, demonstrating both helpfulness and feasibility.",
+   "supported": 0.052037
+  },
+  {
+   "passage": "Patient age ranged from 11 months to 144 months (mean age: 23 months). Among the 21 unilateral cases, testicular absence or atrophy was confirmed in seven patients with a scrotal nubbin in six, and blind-ending vas and vessels at the external inguinal ring in one patient. Among the remaining 14 patients with sizeable testes, 12 testes were intra-abdominal peeping testes and two testicles were seen within the distal inguinal canal, which may be missed on physical examination owing to patient obesity. The intra-abdominal peeping testicle had the opened processus vaginalis entering the internal ring in which testicle was found. These were fixed into the scrotum successfully by cranial mobilization of spermatic vessel sometimes cutting the internal oblique muscle and by Prentiss and Fowler-Stephen's maneuver. Diagnostic laparoscopy was done on three patients with bilateral cases..",
+   "claim": "The second testicle is located in the inguinal canal, indicating an undescended testis",
+   "supported": 0.084641
+  },
+  {
+   "passage": "Women with ovaries of polycystic morphology (PCO), without any other features of polycystic ovary syndrome (PCOS), respond similarly to women with PCOS when stimulated with exogenous gonadotrophins, and both groups share various endocrinological disturbances underlying their pathology. In women with PCOS, metformin co-treatment during IVF has been shown to increase pregnancy rates and reduce the risk of ovarian hyperstimulation syndrome (OHSS). The aim of this study was to investigate whether metformin co-treatment before and during IVF can also increase the live birth rate (LBR) and lower severe OHSS rates for women with PCO, but no other manifestations of PCOS..",
+   "claim": "No other passages report outcomes for this specific subgroup (PCO without other PCOS features) during IVF.",
+   "supported": 0.087352
+  },
+  {
+   "passage": "Eighteen of 815 patients (advanced cancer; median age = 57.5 years [range 36-81]; 77.8% female) received breathlessness symptom control with opioid PCT; daily morphine equivalent dose at Day 1 was median = 20.3 mg (5.0-49.6 mg); Day 2: 13.0 mg (1.0-78.5 mg); Day 3: 16.0 mg (8.3-47.0 mg). Numeric rating scale of current breathlessness decreased (baseline: median = 5 [range 1-10]; Day 1: median = 4 [range 0-8], P < 0.01; Day 2: median = 4 [range 0-5], P < 0.01). Physiological parameters were stable over time. On Day 3, 12/12 patients confirmed that this mode of application provided relief of breathlessness..",
+   "claim": "Successful implementation of opioid PCT for breathlessness, supporting its role as a therapeutic concept.",
+   "supported": 0.447781
+  },
+  {
+   "passage": "Second pancreas survival of the 17 patients transplanted from 1995 was close to primary graft survival of the whole population (71% vs. 79% at 1 year and 59% vs. 69% at 5 years; P=0.5075) and significantly better than their first pancreas survival (71% vs. 29% at 1 year and 59% vs. 7% at 5 years; P=0.0008) regardless of the cause of first pancreas loss. The same results were observed with all 37 retransplantations. Survival of second simultaneous pancreas and kidney transplantations was better than survival of second pancreas after kidney. Patient survival was excellent (89% at 5 years). Pancreas retransplantation had no impact on kidney graft function and survival (100% at 5 years)..",
+   "claim": "Second pancreas graft survival rates similar to primary graft survival (71% vs 79% at 1 year and 59% vs 69% at 5 years) with no significant difference (P=0.5075).",
+   "supported": 0.410067
+  },
+  {
+   "passage": "One-hundred-fourteen trauma patients were initiated on therapeutic anticoagulation. The most common indication for anticoagulation was deep venous thrombosis (46%). Twenty-four patients (21%) had at least 1 anticoagulation complication. The most common complication was a sudden drop in hemoglobin concentration requiring blood transfusion (11 patients). Five patients died (4%), 3 of whom had significant hemorrhage attributed to anticoagulation. Bivariate followed by logistic regression analysis identified chronic obstructive pulmonary disease (OR = 9.2, 95%CI = 1.5-54.7), UH use (OR = 3.8, 95%CI = 1.1-13.0), and lower initial platelet count (OR = 1.004, 95%CI = 1.000-1.008) as being associated with complications. Patients receiving UH vs. FH differed in several characteristics including laboratory values and anticoagulation indications..",
+   "claim": "Five patients (4%) died, three of whom had hemorrhage attributed to anticoagulation, indicating a non‑negligible risk of serious adverse outcomes.",
+   "supported": 0.263968
+  },
+  {
+   "passage": "Six providers performed 197 IUD insertion attempts. These providers had a mean of 14.1 years of experience (range 1-27, S.D. ±12.5). Among nulliparous women, 27 of 138 (19.6%) IUD insertions were unsuccessful. In parous women, 8 of 59 IUD insertions were unsuccessful (13.6%). The adjusted odds ratio (aOR) showed that IUD insertion failure was more likely in nulliparous women compared to parous women (aOR=2.31, 95% CI 0.90-6.52, p=.09)..",
+   "claim": "The study reports that among 197 IUD insertion attempts in community family planning clinics, a substantial proportion were unsuccessful (19.6% in nulliparous women, 13.6% in parous women).",
+   "supported": 0.211974
+  },
+  {
+   "passage": "In 19 of 23 patients, endometrial cancers were detected only on T2-weighted images. In the remaining 4 patients, of whom two had coexisting leiomyoma, no cancer was detected on T2-weighted images. This corresponds to an 83% detection sensitivity for the carcinomas. When DW images and fused DW images/T2-weighted images were used in addition to the T2-weighted images, cancers were identified in 3 of the remaining 4 patients in addition to the 19 patients (overall detection sensitivity of 96%). The mean ADC value of endometrial cancer (n=22) was (0.97+/-0.19)x10(-3)mm(2)/s, which was significantly lower than those of the normal endometrium, myometrium, leiomyoma and adenomyosis (p<0.05)..",
+   "claim": "Study reports that using diffusion-weighted (DW) images in addition to T2-weighted images increased cancer detection sensitivity from 83% to 96%.",
+   "supported": 0.218492
+  },
+  {
+   "passage": "From February 2001 to January 2003, 219 patients (75 with primary and 144 with recurrent cervical cancer) were eligible for analysis. Sixteen had hyperglycaemic DM, 12 had euglycaemic DM and 191 were in the non-DM group. The diagnostic power of PET in the hyperglycaemic DM, euglycaemic DM and non-DM groups did not differ significantly with regard to the identification of either metastatic lesions (AUC, 0.967/0.947/0.925, P>0.05) or primary tumours/local recurrence (AUC, 0.950/0.938/0.979, P>0.05). Considering all DM patients, PET showed a significantly higher detection power than MRI/CT scans in respect of metastatic lesions (AUC=0.956 vs 0.824, P=0.012)..",
+   "claim": "Thus diabetes mellitus did not significantly affect FDG-PET efficacy",
+   "supported": 0.268824
+  },
+  {
+   "passage": "The sample population consisted of 6.4% underweight, 70.5% normal weight, 7.7% overweight, and 15.4% obese. Forty-four percent of parents underestimated children's body size using word descriptions and 47% underestimated using figures. Forty percent of the children underestimated their own body size using descriptions and 43% underestimated using figures. The physicians in this study had a higher percentage of correct estimates; however, they underestimated 33% of the patients using both word descriptions and figures. Some obese children were not recognized, and several average children were perceived as underweight..",
+   "claim": "Children underestimated their own body size in 40% (descriptions) and 43% (figures).",
+   "supported": 0.906267
+  },
+  {
+   "passage": "Forty-three participants completed the study. For 7 (13.5%) the MTO records did not match the self-reports regarding collision involvement, and for 9 (17.3%) the MTO records did not match self-reports regarding driving convictions. The kappa coefficient for the correlation between MTO records and self-reports was 0.52 for collisions and 0.47 for convictions (both in the moderate range of agreement). When both sources of data were consulted, up to 56 percent more accidents and up to 46 percent more convictions were identified in the study population in the 5 years before study entry compared to when either source was used alone..",
+   "claim": "Comparison of Ministry of Transportation records with self‑reports showed mismatches in 13.5% of cases for collisions and 17.3% for convictions.",
+   "supported": 0.790422
+  },
+  {
+   "passage": "Out of 3306 patients undergoing elective adenotonsillectomy or tonsillectomy, post-operative late haemorrhage occurred in 59 (1.78%). We noted that 42 episodes (71.2%) occurred in the night-time and 17 (28.8%) in the day-time. The average time from the operation was 8.4 days. A statistically significant difference (p=0.002) was found when comparing the frequencies of night-time and day-time haemorrhages. We did not observe any significant difference in the distribution per hour of the haemorrhages..",
+   "claim": "Of these 59 haemorrhages, 42 (71.2%) occurred during night-time hours.",
+   "supported": 0.963179
+  },
+  {
+   "passage": "BMI significantly increased from Y1 to Y15 (P<0.0005) with medians (interquartile ranges) of 24.5 kg/m(2)  (22.5-27.2 kg/m(2) ) and 26.5 kg/m(2)  (23.9-30.1 kg/m(2) ), respectively. At Y15, 45.1% of subjects had knee pain. A greater BMI at Y1 (odds ratio [OR] 1.34, 95% confidence interval [95% CI]1.05-1.69), at Y15 (OR 1.34, 95% CI 1.10-1.61), and change in BMI over 15 years (OR 1.40, 95% CI 1.00-1.93) were significant predictors of knee pain at Y15 (P<0.05). BMI change was associated with bilateral (OR 1.61, 95% CI 1.05-1.76, P = 0.024) but not unilateral knee pain (OR 1.22, 95% CI 0.73-1.76, P = 0.298). The association between BMI change and knee pain was independent of radiographic knee osteoarthritis (OA). The strength of association between BMI and knee pain at Y15 was similar during followup measurements..",
+   "claim": "The association between BMI change and knee pain was independent of radiographic knee osteoarthritis.",
+   "supported": 0.977857
+  },
+  {
+   "passage": "This study was designed to determine whether preclerkship performance examinations could accurately identify medical students at risk for failing a senior clinical performance examination (CPE)..",
+   "claim": "The study aimed to determine if preclerkship performance exams could identify students at risk for failing senior CPE.",
+   "supported": 0.906082
+  },
+  {
+   "passage": "The high prevalence of obesity in African American (AA) women may result, in part, from a lower resting metabolic rate (RMR) than non-AA women. If true, AA women should require fewer calories than non-AA women to maintain weight. Our objective was to determine in the setting of a controlled feeding study, if AA women required fewer calories than non-AA women to maintain weight..",
+   "claim": "Passage 1 posits a hypothesis that AA women might need fewer calories due to lower RMR.",
+   "supported": 0.757009
+  }
+ ]
+}

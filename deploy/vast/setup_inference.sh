@@ -27,8 +27,19 @@ PY
 MEDRAG_TEST_DEVICE=cuda .venv/bin/python -m pytest -q -m model -p no:cacheprovider \
   services/inference/tests/test_nli_model.py
 
+# VERIFIER=minicheck serves the MiniCheck claim verifier instead of DeBERTa NLI. Its
+# ONNX file must be exported first (services/inference/scripts/export_minicheck.py,
+# needs torch) and placed at VERIFIER_ONNX_PATH; it is checked like the NLI model.
+VERIFIER="${VERIFIER:-deberta-nli}"
+export VERIFIER_ONNX_PATH="${VERIFIER_ONNX_PATH:-$HOME/medrag/data/models/minicheck-roberta-large.onnx}"
+if [ "$VERIFIER" = minicheck ]; then
+  [ -f "$VERIFIER_ONNX_PATH" ] || { echo "no MiniCheck ONNX at $VERIFIER_ONNX_PATH" >&2; exit 1; }
+  MEDRAG_TEST_DEVICE=cuda .venv/bin/python -m pytest -q -m model -p no:cacheprovider \
+    services/inference/tests/test_minicheck_model.py
+fi
+
 # Serve on localhost only; the Jetson reaches it through an SSH tunnel.
-INFERENCE_DEVICE=cuda nohup .venv/bin/python -m uvicorn medrag_inference.app:app \
+VERIFIER="$VERIFIER" INFERENCE_DEVICE=cuda nohup .venv/bin/python -m uvicorn medrag_inference.app:app \
   --host 127.0.0.1 --port 8001 > inference.log 2>&1 &
 for _ in $(seq 60); do curl -sf localhost:8001/healthz && echo && exit 0; sleep 2; done
 echo "service did not start; see ~/medrag/inference.log" >&2

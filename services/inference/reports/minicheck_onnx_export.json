@@ -1,0 +1,21 @@
+{
+  "model": "lytang/MiniCheck-RoBERTa-Large",
+  "revision": "74c8919647e61ed0f71bc177d94f10930f090068",
+  "pairs": 220,
+  "onnx": {
+    "cpu": {
+      "max_abs_diff": 0.000677,
+      "decision_flips": {
+        "0.1878": 1,
+        "0.5": 0
+      }
+    },
+    "cuda": {
+      "max_abs_diff": 0.000974,
+      "decision_flips": {
+        "0.1878": 0,
+        "0.5": 0
+      }
+    }
+  }
+}

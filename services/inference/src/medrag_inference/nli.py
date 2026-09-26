@@ -1,5 +1,7 @@
 """NLI verifier: cross-encoder/nli-deberta-v3-base with ONNX Runtime on CPU.
 
+(The shared ONNX core also serves the MiniCheck claim verifier; see minicheck.py.)
+
 Returns all three class probabilities per (premise, hypothesis) pair, in the
 model's label order: 0 = contradiction, 1 = entailment, 2 = neutral.
 
@@ -47,31 +49,28 @@ DEFAULT_CACHE_SIZE = 20_000
 MAX_BATCH_TOKENS = 2048
 
 
-class DebertaNli:
-    model_id = NLI_MODEL_ID
-    revision = NLI_REVISION
+class OnnxPairClassifier:
+    """Shared core of the (passage, statement) pair classifiers: an ONNX Runtime
+    session, length-bucketed batching under a padded-token budget and an in-memory
+    cache. Subclasses map the model's own classes onto LABELS (`_to_labels`) and
+    set `support_threshold`, the support probability that counts as supported."""
+
     labels = LABELS
+    support_threshold = 0.7
 
     def __init__(
         self,
+        model_path: str | Path,
+        tokenizer_path: str | Path,
         *,
-        cache_dir: Path | None = None,
+        truncation: str,
         threads: int | None = None,
         max_length: int = MAX_LENGTH,
         cache_size: int = DEFAULT_CACHE_SIZE,
         device: str = "cpu",
     ) -> None:
-        token = os.environ.get("HF_TOKEN") or None
-        self.model_file = MODEL_FILE
-        model_path = hf_hub_download(
-            NLI_MODEL_ID, self.model_file, revision=NLI_REVISION, cache_dir=cache_dir, token=token
-        )
-        tok_path = hf_hub_download(
-            NLI_MODEL_ID, "tokenizer.json", revision=NLI_REVISION, cache_dir=cache_dir, token=token
-        )
-        self.tokenizer = Tokenizer.from_file(tok_path)
-        # Same truncation as the research work: longest_first to 512 tokens.
-        self.tokenizer.enable_truncation(max_length=max_length, strategy="longest_first")
+        self.tokenizer = Tokenizer.from_file(str(tokenizer_path))
+        self.tokenizer.enable_truncation(max_length=max_length, strategy=truncation)
         self.tokenizer.no_padding()
 
         options = ort.SessionOptions()
@@ -85,7 +84,9 @@ class DebertaNli:
             if device == "cuda"
             else ["CPUExecutionProvider"]
         )
-        self.session = ort.InferenceSession(model_path, sess_options=options, providers=providers)
+        self.session = ort.InferenceSession(
+            str(model_path), sess_options=options, providers=providers
+        )
         if device == "cuda" and "CUDAExecutionProvider" not in self.session.get_providers():
             raise RuntimeError("CUDA requested but onnxruntime has no CUDA provider")
         self._input_names = {i.name for i in self.session.get_inputs()}
@@ -96,7 +97,11 @@ class DebertaNli:
 
     @property
     def version(self) -> str:
-        return f"{NLI_MODEL_ID}@{NLI_REVISION[:12]}+{self.model_file.rsplit('/', 1)[-1]}"
+        raise NotImplementedError
+
+    def _to_labels(self, probs: npt.NDArray[np.float32]) -> npt.NDArray[np.float32]:
+        """The model's class probabilities as LABELS columns."""
+        return probs
 
     def probabilities(
         self, pairs: Sequence[tuple[str, str]], *, batch_size: int = 16
@@ -156,12 +161,73 @@ class DebertaNli:
             logits = self.session.run(None, feeds)[0].astype(np.float64)
             logits -= logits.max(axis=1, keepdims=True)
             exp = np.exp(logits)
-            out[idx] = (exp / exp.sum(axis=1, keepdims=True)).astype(np.float32)
+            out[idx] = self._to_labels((exp / exp.sum(axis=1, keepdims=True)).astype(np.float32))
         return out
 
     def scorer(self, label: str = CORRECT_SUPPORT_LABEL) -> "LabelScorer":
         """An NliScorer (see medrag_core.verification) returning one label's probability."""
         return LabelScorer(self, label)
+
+
+class DebertaNli(OnnxPairClassifier):
+    model_id = NLI_MODEL_ID
+    revision = NLI_REVISION
+
+    def __init__(
+        self,
+        *,
+        cache_dir: Path | None = None,
+        threads: int | None = None,
+        max_length: int = MAX_LENGTH,
+        cache_size: int = DEFAULT_CACHE_SIZE,
+        device: str = "cpu",
+    ) -> None:
+        token = os.environ.get("HF_TOKEN") or None
+        self.model_file = MODEL_FILE
+        model_path = hf_hub_download(
+            NLI_MODEL_ID, self.model_file, revision=NLI_REVISION, cache_dir=cache_dir, token=token
+        )
+        tok_path = hf_hub_download(
+            NLI_MODEL_ID, "tokenizer.json", revision=NLI_REVISION, cache_dir=cache_dir, token=token
+        )
+        # Same truncation as the research work: longest_first to 512 tokens.
+        super().__init__(
+            model_path,
+            tok_path,
+            truncation="longest_first",
+            threads=threads,
+            max_length=max_length,
+            cache_size=cache_size,
+            device=device,
+        )
+
+    @property
+    def version(self) -> str:
+        return f"{NLI_MODEL_ID}@{NLI_REVISION[:12]}+{self.model_file.rsplit('/', 1)[-1]}"
+
+
+class VerifierSettings(Protocol):
+    @property
+    def verifier(self) -> str: ...
+    @property
+    def verifier_onnx_path(self) -> str: ...
+    @property
+    def inference_threads(self) -> int | None: ...
+    @property
+    def inference_device(self) -> str: ...
+
+
+def load_verifier(settings: VerifierSettings) -> OnnxPairClassifier:
+    """The claim verifier chosen in the settings (VERIFIER)."""
+    if settings.verifier == "minicheck":
+        from medrag_inference.minicheck import MiniCheckVerifier
+
+        return MiniCheckVerifier(
+            settings.verifier_onnx_path,
+            threads=settings.inference_threads,
+            device=settings.inference_device,
+        )
+    return DebertaNli(threads=settings.inference_threads, device=settings.inference_device)
 
 
 def _batches(
