@@ -98,3 +98,28 @@ def test_percentile_interpolates_linearly() -> None:
 def _golden_rows() -> list[dict[str, Any]]:
     path = Path(__file__).resolve().parents[1] / "golden" / "golden_150.jsonl"
     return [json.loads(line) for line in path.read_text("utf-8").splitlines() if line]
+
+
+def test_grounded_metrics() -> None:
+    from medrag_eval.metrics import grounded_metrics
+
+    preds = [
+        {"final_answer": "A", "support_score": 0.9},
+        {"final_answer": "B", "support_score": 0.8},
+        {"final_answer": "C", "support_score": 0.1},
+    ]
+    got = grounded_metrics(preds, ["A", "C", "C"], Dataset.MEDQA)
+
+    assert got["grounded_share"] == pytest.approx(2 / 3)
+    assert got["grounded_count"] == 2
+    assert got["grounded_accuracy"] == 0.5  # A right, B wrong; the ungrounded C is not counted
+
+
+def test_grounded_accuracy_absent_when_nothing_is_grounded() -> None:
+    from medrag_eval.metrics import grounded_metrics
+
+    got = grounded_metrics(
+        [{"final_answer": "yes", "support_score": 0.2}], ["yes"], Dataset.PUBMEDQA
+    )
+    assert "grounded_accuracy" not in got
+    assert got["grounded_share"] == 0.0

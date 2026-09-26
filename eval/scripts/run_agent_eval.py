@@ -27,7 +27,7 @@ from pathlib import Path
 from typing import Any
 
 from medrag_eval.datasets import EvalItem, load_full_set, load_golden, load_reference_predictions
-from medrag_eval.metrics import Dataset, evaluate
+from medrag_eval.metrics import Dataset, evaluate, grounded_metrics
 
 ROOT = Path(__file__).resolve().parents[2]
 REFERENCE_SYSTEM = "selfmedrag_mistral"
@@ -83,8 +83,12 @@ def report(run_dir: Path, items: list[EvalItem]) -> dict[str, Any]:
         for i in done:
             reason = predictions[i.id]["stop_reason"]
             stops[reason] = stops.get(reason, 0) + 1
+        support_labels = {predictions[i.id].get("support_label", "neutral") for i in done}
         out["datasets"][ds.value] = {
             "questions": len(done),
+            "support_label": ",".join(sorted(support_labels)),
+            # Meaningful only with the entailment verifier; see medrag_eval.metrics.
+            "grounded": grounded_metrics([predictions[i.id] for i in done], truth, ds),
             "of": sum(1 for i in items if i.dataset is ds),
             "agent": new,
             "research_work_same_questions": old,
@@ -107,6 +111,13 @@ def print_report(result: dict[str, Any]) -> None:
             f"(rw {r['avg_iterations']:.3f})  >1 iteration {a['more_than_one_iter_pct']:.1f}%  "
             f"avg support {a['avg_support_score']:.3f}  empty {ds['empty_answers']}  "
             f"stops {ds['stop_reasons']}"
+        )
+        g = ds["grounded"]
+        grounded_acc = g.get("grounded_accuracy")
+        print(
+            f"{'':9} grounded ({ds['support_label']} verifier): "
+            f"{g['grounded_share']:.1%} of answers"
+            + (f", accuracy {grounded_acc:.4f}" if grounded_acc is not None else "")
         )
 
 

@@ -123,3 +123,36 @@ def evaluate(
         results["latency_p50"] = percentile(latencies, 50)
         results["latency_p95"] = percentile(latencies, 95)
     return results
+
+
+GROUNDED_THRESHOLD = 0.7
+
+
+def grounded_metrics(
+    predictions: Sequence[Mapping[str, Any]],
+    ground_truth: Sequence[str],
+    dataset: Dataset,
+    *,
+    threshold: float = GROUNDED_THRESHOLD,
+) -> dict[str, float]:
+    """How many answers are backed by the retrieved literature, and how accurate those are.
+
+    An answer counts as grounded when its support score reaches `threshold`. The
+    number is only meaningful when support comes from the entailment column (the
+    research work's "neutral" column marks almost everything as supported).
+    `grounded_accuracy` is left out when no answer is grounded.
+    """
+    grounded = [
+        (p, g)
+        for p, g in zip(predictions, ground_truth, strict=True)
+        if p.get("support_score", 0.0) >= threshold
+    ]
+    out = {
+        "grounded_share": len(grounded) / len(predictions),
+        "grounded_count": float(len(grounded)),
+    }
+    if grounded:
+        y_pred = [normalize_prediction(p.get("final_answer", ""), dataset) for p, _ in grounded]
+        y_true = [normalize_ground_truth(g, dataset) for _, g in grounded]
+        out["grounded_accuracy"] = accuracy(y_true, y_pred)
+    return out
