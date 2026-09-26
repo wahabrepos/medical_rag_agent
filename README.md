@@ -247,6 +247,26 @@ directly comparable with the research work's 71.30% / 75.96%.
 16 of the 75 MedQA answers were "insufficient evidence" (the system prompt asks for this when
 the context does not support a claim); on the other 59 the agent was right 47 times.
 
+### v2 experiments (golden 150, gpt-oss-120b)
+
+Each change is measured against the v1 baseline on the same 150 questions:
+
+| Run | Change | MedQA | PubMedQA | MedQA "insufficient evidence" | Loop iterates |
+|---|---|---|---|---|---|
+| v1 | research-work pipeline | 62.7% | 77.3% | 16 | 1–3% |
+| v2a | corrected verifier (NLI *entailment*) | 32.0% | 78.7% | 49 | ~100% |
+| v2b | v2a + keep the best-supported answer, never replace an answer with a refusal | 64.0% | 77.3% | 10 | ~100% |
+| v2c | v2b + multiple-choice questions must name an option | **80.0%** | 77.3% | 0 | ~100% |
+| research work | Mistral-small, same questions | 69.3% | 76.0% | – | 0% |
+
+- With the corrected verifier the loop actually iterates, but the research-work rules then
+  return the latest answer, which often backs off to "insufficient evidence" (v2a). Keeping
+  the best-supported answer and preferring real answers fixes that (v2b).
+- The multiple-choice constraint removes the refusals (v2c). Support stays low on MedQA
+  (about 0.03): the PubMedQA-based corpus rarely backs USMLE-style reasoning, so many MedQA
+  answers rely on the model's own knowledge. Low-support answers must be flagged to users.
+- Differences of a few points on 150 questions are within noise; a full-set run confirms them.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
