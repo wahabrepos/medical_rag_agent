@@ -19,6 +19,11 @@ _ANSWER_ALIASES = ("causes", "result", "response", "diagnosis", "conclusion")
 # A JSON object that may contain objects nested one level deep.
 _JSON_OBJECT = re.compile(r"\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}", re.DOTALL)
 _SENTENCE_SPLIT = re.compile(r"[.!?]")
+# Lenient field extraction for almost-valid JSON (not in the research work).
+_JSON_STRING = r'"((?:[^"\\]|\\.)*)"'
+_ANSWER_FIELD = re.compile(r'"answer"\s*:\s*' + _JSON_STRING, re.DOTALL)
+_RATIONALE_FIELD = re.compile(r'"rationale"\s*:\s*\[(.*?)\]', re.DOTALL)
+_CONFIDENCE_FIELD = re.compile(r'"confidence"\s*:\s*([0-9]*\.?[0-9]+)(?=\s*[,}\n])')
 
 
 def _normalise(parsed: dict[str, Any]) -> dict[str, Any] | None:
@@ -78,7 +83,39 @@ def _fallback(text: str) -> dict[str, Any]:
     }
 
 
-def _parse(text: str) -> tuple[dict[str, Any], bool]:
+def _lenient(text: str) -> dict[str, Any] | None:
+    """Read the answer, rationale and confidence fields out of invalid JSON.
+
+    Models occasionally write almost-valid JSON (for example `"confidence": 0. nine`);
+    the research-work fallback then keeps the raw text as the answer.
+    """
+    answer = _ANSWER_FIELD.search(text)
+    if answer is None:
+        return None
+    rationale_match = _RATIONALE_FIELD.search(text)
+    rationale = (
+        [_unescape(m) for m in re.findall(_JSON_STRING, rationale_match.group(1))]
+        if rationale_match
+        else []
+    )
+    confidence = _CONFIDENCE_FIELD.search(text)
+    return {
+        "answer": _unescape(answer.group(1)).strip(),
+        "rationale": rationale or [_unescape(answer.group(1))],
+        "confidence": float(confidence.group(1)) if confidence else DEFAULT_CONFIDENCE,
+        "citations": [],
+    }
+
+
+def _unescape(value: str) -> str:
+    try:
+        decoded: str = json.loads(f'"{value}"')
+        return decoded
+    except json.JSONDecodeError:
+        return value
+
+
+def _parse(text: str, *, lenient: bool = False) -> tuple[dict[str, Any], bool]:
     """Return the parsed dict and whether the sentence fallback was used."""
     text = re.sub(r"```json\s*", "", text)
     text = re.sub(r"```\s*", "", text)
@@ -94,15 +131,20 @@ def _parse(text: str) -> tuple[dict[str, Any], bool]:
             if normalised is not None:
                 return normalised, False
 
+    if lenient:
+        repaired = _lenient(text)
+        if repaired is not None:
+            return repaired, False
     return _fallback(text), True
 
 
-def parse_generation_output(text: str) -> dict[str, Any]:
+def parse_generation_output(text: str, *, lenient: bool = False) -> dict[str, Any]:
     """Parse raw model output into a dict with answer, rationale, confidence, citations.
 
-    Extra keys from the model's JSON are kept, as in the research work.
+    Extra keys from the model's JSON are kept, as in the research work. With
+    `lenient`, fields are read from invalid JSON before the sentence fallback.
     """
-    return _parse(text)[0]
+    return _parse(text, lenient=lenient)[0]
 
 
 @dataclass(frozen=True)
@@ -116,8 +158,8 @@ class ParsedGeneration:
     raw: dict[str, Any] = field(repr=False)
 
     @classmethod
-    def from_text(cls, text: str) -> "ParsedGeneration":
-        raw, used_fallback = _parse(text)
+    def from_text(cls, text: str, *, lenient: bool = False) -> "ParsedGeneration":
+        raw, used_fallback = _parse(text, lenient=lenient)
         rationale = raw["rationale"]
         if not isinstance(rationale, list):
             rationale = [str(rationale)]

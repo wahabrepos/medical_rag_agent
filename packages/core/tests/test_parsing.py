@@ -43,3 +43,47 @@ def test_typed_view_flags_fallback_and_coerces_types() -> None:
     assert odd.rationale == ["1"]
     assert odd.confidence == 0.7
     assert not odd.used_fallback
+
+
+GLITCH = """{
+  "answer": "B",
+  "rationale": [
+    "Hyperuricemia follows reduced \\"renal\\" excretion.",
+    "Alcohol raises urate."
+  ],
+  "confidence": 0. nine,
+  "citations": ["Passage 2"]
+}"""
+
+
+def test_lenient_reads_fields_from_invalid_json() -> None:
+    parsed = ParsedGeneration.from_text(GLITCH, lenient=True)
+
+    assert parsed.answer == "B"
+    assert parsed.rationale == [
+        'Hyperuricemia follows reduced "renal" excretion.',
+        "Alcohol raises urate.",
+    ]
+    assert parsed.confidence == 0.7  # the unreadable confidence falls back to the default
+    assert not parsed.used_fallback
+
+
+def test_lenient_is_off_by_default_like_the_research_work() -> None:
+    parsed = ParsedGeneration.from_text(GLITCH)
+
+    assert parsed.used_fallback
+    assert parsed.answer.startswith("{")
+
+
+def test_lenient_keeps_valid_json_path_and_fallback() -> None:
+    valid = '{"answer": "A", "rationale": ["x"], "confidence": 0.8}'
+    assert parse_generation_output(valid, lenient=True) == parse_generation_output(valid)
+    assert parse_generation_output("Answer: D", lenient=True) == parse_generation_output(
+        "Answer: D"
+    )
+
+
+def test_lenient_reads_confidence_when_readable() -> None:
+    text = '{"answer": "yes", "rationale": ["a" "b"], "confidence": 0.85, oops}'
+    parsed = ParsedGeneration.from_text(text, lenient=True)
+    assert (parsed.answer, parsed.confidence) == ("yes", 0.85)
