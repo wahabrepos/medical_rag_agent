@@ -38,6 +38,7 @@ class FakeNli:
     """Entailment 0.9 for (passage 0, 'supported claim'); contradiction for 'contradicted claim'."""
 
     version = "fake-nli"
+    support_threshold = 0.7
 
     def probabilities(self, pairs: list[tuple[str, str]]) -> list[list[float]]:
         rows = []

@@ -4,7 +4,7 @@ Uses the NLI probabilities the verifier already computes. Every rationale
 statement gets its best entailment and contradiction scores over the passages,
 and the answer gets one status:
 
-- supported: at least `threshold` of the statements are entailed by a passage
+- supported: at least SUPPORTED_SHARE of the statements are entailed by a passage
 - partially_supported: some statements are entailed
 - not_supported: none are (the answer rests on the model's own knowledge)
 - contradicted: a passage contradicts a statement more than any passage supports it
@@ -19,7 +19,8 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from enum import StrEnum
 
-EVIDENCE_THRESHOLD = 0.7
+EVIDENCE_THRESHOLD = 0.7  # support probability of one statement-passage pair
+SUPPORTED_SHARE = 0.7  # share of supported statements for "supported"
 # Column order of the NLI model's probabilities (cross-encoder/nli-deberta-v3-base).
 CONTRADICTION, ENTAILMENT = 0, 1
 
@@ -101,7 +102,8 @@ def assess_evidence(
     normalize: bool = True,
 ) -> EvidenceAssessment:
     """Assess each statement; with `normalize`, passage references are removed first
-    (the original statement text is kept in the result)."""
+    (the original statement text is kept in the result). `threshold` is the pair-level
+    probability that counts as support or contradiction; it depends on the verifier."""
     statements = [s for s in rationale if s.strip()]
     if not statements or not passages:
         return EvidenceAssessment(EvidenceStatus.NO_EVIDENCE, 0.0, [])
@@ -130,7 +132,7 @@ def assess_evidence(
     fraction = sum(s.supported for s in result) / len(result)
     if any(s.contradicted for s in result):
         status = EvidenceStatus.CONTRADICTED
-    elif fraction >= threshold:
+    elif fraction >= SUPPORTED_SHARE:
         status = EvidenceStatus.SUPPORTED
     elif fraction > 0:
         status = EvidenceStatus.PARTIALLY_SUPPORTED

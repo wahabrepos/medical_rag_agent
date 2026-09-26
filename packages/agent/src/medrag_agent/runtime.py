@@ -23,14 +23,13 @@ from medrag_agent.graph import AgentState, build_graph
 from medrag_agent.llm import LlmGenerator, RateLimiter, config_for_model
 from medrag_core.policy import FinalAnswerRule, LoopSettings
 from medrag_core.verification import (
-    VERIFICATION_THRESHOLD,
     Verification,
     verify_rationale,
     verify_with_contradictions,
 )
 from medrag_db.session import make_engine, make_session_factory
-from medrag_inference import RESEARCH_WORK_SUPPORT_LABEL, BgeEmbedder, DebertaNli
-from medrag_inference.nli import LabelScorer
+from medrag_inference import RESEARCH_WORK_SUPPORT_LABEL, BgeEmbedder
+from medrag_inference.nli import LabelScorer, load_verifier
 from medrag_search import BM25Index, HybridRetriever, LiveAugmentedRetriever, PubMedClient
 from medrag_settings import Settings
 
@@ -49,6 +48,9 @@ class PassageRetriever(Protocol):
 
 
 class NliModel(Protocol):
+    # Support probability that counts as supported (0.7 for DeBERTa, 0.5 for MiniCheck).
+    support_threshold: float
+
     def probabilities(
         self, pairs: Sequence[tuple[str, str]], *, batch_size: int = ...
     ) -> npt.NDArray[np.float32]: ...
@@ -76,6 +78,9 @@ class AgentComponents:
     limiter: RateLimiter = field(init=False)
 
     def __post_init__(self) -> None:
+        # MiniCheck has no neutral class: its "neutral" column is P(unsupported).
+        if "MiniCheck" in getattr(self.nli, "version", "") and self.support_label != "entailment":
+            raise ValueError('the MiniCheck verifier needs support_label="entailment"')
         self.limiter = RateLimiter(
             self.settings.llm_requests_per_minute, self.settings.llm_tokens_per_minute
         )
@@ -104,14 +109,14 @@ class AgentComponents:
                     rationale,
                     context,
                     lambda pairs: self.nli.probabilities(pairs).tolist(),
-                    threshold=VERIFICATION_THRESHOLD,
+                    threshold=self.nli.support_threshold,
                     normalize=self.normalize_statements,
                 )
             return verify_rationale(
                 rationale,
                 context,
                 scorer,
-                threshold=VERIFICATION_THRESHOLD,
+                threshold=self.nli.support_threshold,
                 normalize=self.normalize_statements,
             )
         except InferenceUnavailableError as exc:
@@ -159,7 +164,7 @@ def build_components(
 
         nli = RemoteNli(nli_url)
     else:
-        nli = DebertaNli(threads=settings.inference_threads, device=settings.inference_device)
+        nli = load_verifier(settings)
     return AgentComponents(
         settings=settings,
         retriever=retriever,

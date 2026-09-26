@@ -113,6 +113,7 @@ class AnswerService:
             [claim, *rationale] if claim else rationale,
             texts,
             lambda pairs: self.components.nli.probabilities(pairs),
+            threshold=self.components.nli.support_threshold,
         )
 
         def pmid(index: int | None) -> int | None:
