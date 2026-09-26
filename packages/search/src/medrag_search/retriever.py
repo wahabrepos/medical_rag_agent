@@ -1,6 +1,6 @@
 """Hybrid retrieval: BM25 + dense search fused with Reciprocal Rank Fusion."""
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Collection, Sequence
 from dataclasses import dataclass
 
 from sqlalchemy import select
@@ -63,11 +63,34 @@ class HybridRetriever:
         self.weight_bm25 = weight_bm25
         self.weight_dense = weight_dense
 
-    def search(self, query: str) -> RetrievalResult:
-        bm25_ids = self._bm25.search(query, self.per_retriever_k)
+    def search(self, query: str, *, exclude_pmids: Collection[int] = ()) -> RetrievalResult:
+        """Hybrid search; chunks of the articles in `exclude_pmids` are never returned
+        (used for leakage-free evaluation)."""
         with self._sessions() as session:
+            excluded_docs: list[int] = []
+            excluded_chunks: set[int] = set()
+            if exclude_pmids:
+                excluded_docs = list(
+                    session.scalars(select(Document.id).where(Document.pmid.in_(exclude_pmids)))
+                )
+                excluded_chunks = set(
+                    session.scalars(
+                        select(Chunk.id).where(
+                            Chunk.document_id.in_(excluded_docs), Chunk.profile == self.profile
+                        )
+                    )
+                )
+            bm25_ids = [
+                i
+                for i in self._bm25.search(query, self.per_retriever_k + len(excluded_chunks))
+                if i not in excluded_chunks
+            ][: self.per_retriever_k]
             dense_ids = dense_search(
-                session, self._embed(query), profile=self.profile, k=self.per_retriever_k
+                session,
+                self._embed(query),
+                profile=self.profile,
+                k=self.per_retriever_k,
+                exclude_document_ids=excluded_docs,
             )
             fused = select_context(
                 bm25_ids,
@@ -81,9 +104,9 @@ class HybridRetriever:
             passages = self._load(session, fused)
         return RetrievalResult(bm25_ids, dense_ids, fused, passages)
 
-    def __call__(self, query: str) -> list[str]:
+    def __call__(self, query: str, *, exclude_pmids: Collection[int] = ()) -> list[str]:
         """Passage texts, the shape the Self-MedRAG loop expects."""
-        return self.search(query).texts
+        return self.search(query, exclude_pmids=exclude_pmids).texts
 
     @staticmethod
     def _load(session: Session, chunk_ids: Sequence[int]) -> list[Passage]:

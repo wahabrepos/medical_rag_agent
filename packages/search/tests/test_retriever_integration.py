@@ -76,3 +76,19 @@ def test_hybrid_retriever_returns_passages(database_url: str, seeded: list[int])
     assert result.passages[0].pmid == 1001
     assert result.passages[0].text == TEXTS[1]
     assert retriever("metformin diabetes") == result.texts
+
+
+def test_excluded_articles_are_never_returned(database_url: str, seeded: list[int]) -> None:
+    bm25 = BM25Index.from_texts(TEXTS, seeded)
+    retriever = HybridRetriever(
+        make_session_factory(make_engine(database_url)),
+        bm25,
+        lambda _q: _unit(1).tolist(),
+        top_k=3,
+    )
+
+    result = retriever.search("metformin diabetes", exclude_pmids=[1001])
+
+    assert seeded[1] not in result.bm25_ids + result.dense_ids + result.fused_ids
+    assert all(p.pmid != 1001 for p in result.passages)
+    assert len(result.fused_ids) == 3  # still a full top-k from the other articles
