@@ -54,3 +54,34 @@ def test_normalized_verification_checks_claims() -> None:
     assert [h for _, h in seen] == ["Aspirin helps.", "X is rare."]
     assert result.support_score == 0.5
     assert result.unsupported == ["X is rare."]  # normalised, so refinement queries are clean
+
+
+def _probs(rows: dict[tuple[str, str], tuple[float, float, float]]):  # type: ignore[no-untyped-def]
+    return lambda pairs: [rows.get(p, (0.0, 0.1, 0.9)) for p in pairs]
+
+
+def test_contradiction_vetoes_support() -> None:
+    from medrag_core.verification import verify_with_contradictions
+
+    probs = _probs({("p1", "A helps."): (0.0, 0.9, 0.1), ("p2", "B is safe."): (0.8, 0.1, 0.1)})
+    result = verify_with_contradictions(["A helps.", "B is safe."], ["p1", "p2"], probs)
+
+    assert result.support_score == 0.0
+    assert result.unsupported == ["B is safe."]
+    assert result.best_scores == [0.9, 0.1]
+
+
+def test_without_contradiction_support_is_the_entailed_share() -> None:
+    from medrag_core.verification import verify_with_contradictions
+
+    probs = _probs({("p1", "A helps."): (0.0, 0.9, 0.1)})
+    result = verify_with_contradictions(["Passage 1 states that A helps.", "Other."], ["p1"], probs)
+    assert result.support_score == 0.5
+    assert result.unsupported == ["Other."]
+
+
+def test_weak_contradiction_does_not_veto() -> None:
+    from medrag_core.verification import verify_with_contradictions
+
+    probs = _probs({("p1", "A helps."): (0.75, 0.2, 0.05), ("p2", "A helps."): (0.0, 0.8, 0.2)})
+    assert verify_with_contradictions(["A helps."], ["p1", "p2"], probs).support_score == 1.0

@@ -25,6 +25,7 @@ class Generation:
     rationale: list[str]
     confidence: float
     citations: list[str]
+    claim: str | None = None  # optional one-sentence answer claim (answer check)
 
 
 @dataclass(frozen=True)

@@ -23,6 +23,7 @@ _SENTENCE_SPLIT = re.compile(r"[.!?]")
 _JSON_STRING = r'"((?:[^"\\]|\\.)*)"'
 _ANSWER_FIELD = re.compile(r'"answer"\s*:\s*' + _JSON_STRING, re.DOTALL)
 _RATIONALE_FIELD = re.compile(r'"rationale"\s*:\s*\[(.*?)\]', re.DOTALL)
+_CLAIM_FIELD = re.compile(r'"claim"\s*:\s*' + _JSON_STRING, re.DOTALL)
 _CONFIDENCE_FIELD = re.compile(r'"confidence"\s*:\s*([0-9]*\.?[0-9]+)(?=\s*[,}\n])')
 
 
@@ -99,7 +100,10 @@ def _lenient(text: str) -> dict[str, Any] | None:
         else []
     )
     confidence = _CONFIDENCE_FIELD.search(text)
+    claim = _CLAIM_FIELD.search(text)
+    extra = {"claim": _unescape(claim.group(1))} if claim else {}
     return {
+        **extra,
         "answer": _unescape(answer.group(1)).strip(),
         "rationale": rationale or [_unescape(answer.group(1))],
         "confidence": float(confidence.group(1)) if confidence else DEFAULT_CONFIDENCE,
@@ -155,6 +159,7 @@ class ParsedGeneration:
     citations: list[str]
     used_fallback: bool
     """True when the output was not valid JSON with both an answer and a rationale."""
+    claim: str | None
     raw: dict[str, Any] = field(repr=False)
 
     @classmethod
@@ -175,5 +180,6 @@ class ParsedGeneration:
             confidence=float(confidence),
             citations=[str(c) for c in citations],
             used_fallback=used_fallback,
+            claim=str(raw["claim"]).strip() or None if raw.get("claim") else None,
             raw=raw,
         )

@@ -55,6 +55,13 @@ MULTIPLE_CHOICE_INSTRUCTION = (
     'say so in the "rationale" field.'
 )
 
+# Optional (not in the research work): a one-sentence answer claim the verifier can
+# check against the passages, in addition to the rationale.
+ANSWER_CLAIM_INSTRUCTION = (
+    '\n\nAlso include a "claim" field in your JSON: one sentence stating your final '
+    "answer as a factual claim, without mentioning passages or options by letter."
+)
+
 # Only the most recent attempts are shown to the generator.
 MAX_HISTORY_IN_PROMPT = 2
 
@@ -103,6 +110,7 @@ def build_user_prompt(
     *,
     binary_answer: bool = False,
     multiple_choice: bool = False,
+    answer_claim: bool = False,
     template: str = USER_PROMPT_TEMPLATE,
 ) -> str:
     """The user turn before stripping: template, then the answer-format constraint if any."""
@@ -115,6 +123,8 @@ def build_user_prompt(
         prompt += BINARY_ANSWER_INSTRUCTION
     if multiple_choice:
         prompt += MULTIPLE_CHOICE_INSTRUCTION
+    if answer_claim:
+        prompt += ANSWER_CLAIM_INSTRUCTION
     return prompt
 
 
@@ -125,6 +135,7 @@ def build_prompt(
     *,
     binary_answer: bool = False,
     multiple_choice: bool = False,
+    answer_claim: bool = False,
     system_prompt: str = SYSTEM_PROMPT,
     template: str = USER_PROMPT_TEMPLATE,
 ) -> str:
@@ -135,6 +146,7 @@ def build_prompt(
         history,
         binary_answer=binary_answer,
         multiple_choice=multiple_choice,
+        answer_claim=answer_claim,
         template=template,
     )
     return f"{system_prompt}\n\n{user}"
@@ -147,6 +159,7 @@ def build_messages(
     *,
     binary_answer: bool = False,
     multiple_choice: bool = False,
+    answer_claim: bool = False,
     system_prompt: str = SYSTEM_PROMPT,
     template: str = USER_PROMPT_TEMPLATE,
 ) -> ChatMessages:
@@ -157,6 +170,7 @@ def build_messages(
         history,
         binary_answer=binary_answer,
         multiple_choice=multiple_choice,
+        answer_claim=answer_claim,
         template=template,
     )
     return ChatMessages(system=system_prompt.strip(), user=user.strip())

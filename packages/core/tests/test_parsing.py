@@ -87,3 +87,12 @@ def test_lenient_reads_confidence_when_readable() -> None:
     text = '{"answer": "yes", "rationale": ["a" "b"], "confidence": 0.85, oops}'
     parsed = ParsedGeneration.from_text(text, lenient=True)
     assert (parsed.answer, parsed.confidence) == ("yes", 0.85)
+
+
+def test_claim_is_read_from_json_and_lenient_json() -> None:
+    valid = '{"answer": "yes", "rationale": ["r"], "claim": "Aspirin lowers risk."}'
+    broken = '{"answer": "yes", "rationale": ["r"], "confidence": 0. nine, "claim": "It works."}'
+
+    assert ParsedGeneration.from_text(valid).claim == "Aspirin lowers risk."
+    assert ParsedGeneration.from_text(broken, lenient=True).claim == "It works."
+    assert ParsedGeneration.from_text('{"answer": "no", "rationale": ["r"]}').claim is None

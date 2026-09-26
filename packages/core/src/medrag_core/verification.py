@@ -64,3 +64,43 @@ def verify_rationale(
         unsupported=unsupported,
         best_scores=best_scores,
     )
+
+
+ProbabilityFn = Callable[[list[tuple[str, str]]], Sequence[Sequence[float]]]
+"""(passage, statement) pairs -> [contradiction, entailment, neutral] per pair."""
+
+
+def verify_with_contradictions(
+    statements: Sequence[str],
+    passages: Sequence[str],
+    probabilities: ProbabilityFn,
+    *,
+    threshold: float = VERIFICATION_THRESHOLD,
+    normalize: bool = True,
+) -> Verification:
+    """Entailment support, with a veto: if a passage contradicts any statement (at least
+    `threshold`, and more than any passage supports it), the support score is 0 so the
+    loop refines instead of accepting. Contradicted statements count as unsupported.
+    """
+    claims = [normalize_statement(s) for s in statements] if normalize else list(statements)
+    if not claims:
+        return Verification(support_score=1.0, unsupported=[], best_scores=[])
+    if not passages:
+        return Verification(support_score=0.0, unsupported=claims, best_scores=[])
+
+    rows = probabilities([(p, c) for c in claims for p in passages])
+    n = len(passages)
+    unsupported: list[str] = []
+    best_scores: list[float] = []
+    vetoed = False
+    for i, claim in enumerate(claims):
+        block = rows[i * n : (i + 1) * n]
+        entail = max(float(r[1]) for r in block)
+        contra = max(float(r[0]) for r in block)
+        best_scores.append(entail)
+        contradicted = contra >= threshold and contra > entail
+        vetoed = vetoed or contradicted
+        if entail < threshold or contradicted:
+            unsupported.append(claim)
+    support = 0.0 if vetoed else (len(claims) - len(unsupported)) / len(claims)
+    return Verification(support_score=support, unsupported=unsupported, best_scores=best_scores)

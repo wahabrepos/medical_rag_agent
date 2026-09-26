@@ -54,3 +54,12 @@ def test_multiple_choice_instruction_is_optional_and_last() -> None:
     assert mcq.user.startswith(plain.user)
     assert mcq.user.endswith('say so in the "rationale" field.')
     assert mcq.system == plain.system
+
+
+def test_answer_claim_instruction_is_optional() -> None:
+    plain = build_messages("Q?", ["p"], [])
+    with_claim = build_messages("Q?", ["p"], [], answer_claim=True)
+
+    assert '"claim"' not in plain.user
+    assert with_claim.user.startswith(plain.user)
+    assert '"claim" field' in with_claim.user
