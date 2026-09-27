@@ -74,6 +74,17 @@ def test_load_search_and_cached_bm25(index_dir: Path) -> None:
     assert passage.chunk_id < -(10**9)  # never collides with live PubMed ids (-pmid)
 
 
+def test_book_titles_are_readable() -> None:
+    from medrag_search.knowledge import book_title
+
+    assert book_title("Obstentrics_Williams", "Obstentrics_Williams") == "Williams Obstetrics"
+    assert (
+        book_title("InternalMed_Harrison", "Sepsis")
+        == "Harrison's Principles of Internal Medicine: Sepsis"
+    )
+    assert book_title("New_Book", "") == "New Book"
+
+
 class FakeLocal:
     def __init__(self, texts: list[str]) -> None:
         self.texts = texts

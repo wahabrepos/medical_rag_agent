@@ -36,6 +36,28 @@ KNOWLEDGE_DOCUMENT_ID = -2
 # Knowledge chunk ids are negative and far below any PubMed id (live passages use -pmid).
 CHUNK_ID_OFFSET = 10**10
 
+# Readable names of the MedRAG textbook files (the dataset's own spellings as keys).
+BOOK_TITLES = {
+    "Anatomy_Gray": "Gray's Anatomy",
+    "Biochemistry_Lippincott": "Lippincott Illustrated Reviews: Biochemistry",
+    "Cell_Biology_Alberts": "Alberts, Molecular Biology of the Cell",
+    "First_Aid_Step1": "First Aid for the USMLE Step 1",
+    "First_Aid_Step2": "First Aid for the USMLE Step 2 CK",
+    "Gynecology_Novak": "Berek & Novak's Gynecology",
+    "Histology_Ross": "Ross, Histology: A Text and Atlas",
+    "Immunology_Janeway": "Janeway's Immunobiology",
+    "InternalMed_Harrison": "Harrison's Principles of Internal Medicine",
+    "Neurology_Adams": "Adams and Victor's Principles of Neurology",
+    "Obstentrics_Williams": "Williams Obstetrics",
+    "Pathology_Robbins": "Robbins Basic Pathology",
+    "Pathoma_Husain": "Pathoma (Husain)",
+    "Pediatrics_Nelson": "Nelson Textbook of Pediatrics",
+    "Pharmacology_Katzung": "Katzung's Basic & Clinical Pharmacology",
+    "Physiology_Levy": "Berne & Levy Physiology",
+    "Psichiatry_DSM-5": "DSM-5",
+    "Surgery_Schwartz": "Schwartz's Principles of Surgery",
+}
+
 QueryEmbedder = Callable[[str], Sequence[float]]
 TextEmbedder = Callable[[list[str]], npt.NDArray[np.float32]]
 
@@ -86,7 +108,7 @@ class KnowledgeIndex:
             chunk_id=-(CHUNK_ID_OFFSET + position),
             document_id=KNOWLEDGE_DOCUMENT_ID,
             pmid=0,
-            title=f"{row['book']}: {row['title']}",
+            title=book_title(row["book"], row["title"]),
             text=row["text"],
             book=row["book"],
         )
@@ -98,6 +120,12 @@ class KnowledgeIndex:
         scores = self.vectors @ q
         dense = [int(i) for i in np.argsort(-scores, kind="stable")[:candidates]]
         return reciprocal_rank_fusion(bm25, dense)[:k]
+
+
+def book_title(book: str, title: str) -> str:
+    """ "Williams Obstetrics", plus the snippet's own title when it names a section."""
+    name = BOOK_TITLES.get(book, book.replace("_", " "))
+    return name if title in ("", book) else f"{name}: {title}"
 
 
 class PassageSource(Protocol):
