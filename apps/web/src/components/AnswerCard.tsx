@@ -49,7 +49,17 @@ export function AnswerCard({ response, client, benchmarkAnswer }: Props) {
 
       <section>
         <h3 className="section-title">Reasoning, checked against the sources</h3>
-        <Statements statements={response.evidence.statements} />
+        {(response.evidence.statements.length > 0 || !response.evidence.hidden_statements) && (
+          <Statements statements={response.evidence.statements} />
+        )}
+        {response.evidence.hidden_statements > 0 && (
+          <p className="hint">
+            {response.evidence.hidden_statements} unchecked{" "}
+            {response.evidence.hidden_statements === 1 ? "statement is" : "statements are"} hidden
+            because they would reveal the withheld answer. Tick “Also show the model’s answer…” to
+            see them, marked as unverified.
+          </p>
+        )}
       </section>
 
       <section>

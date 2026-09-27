@@ -92,7 +92,8 @@
       "quote": "The NHS referral rate was significantly higher (rate ratio 1.40, 95 percent CI 1.15 to 1.71, p = 0.001) in wards with private referral rates in the top fifth compared with the bottom fifth after adjustment for deprivation and practice.",
       "from_question": false
      }
-    ]
+    ],
+    "hidden_statements": 0
    },
    "citations": [
     {
@@ -244,7 +245,8 @@
       "quote": null,
       "from_question": true
      }
-    ]
+    ],
+    "hidden_statements": 0
    },
    "citations": [
     {
@@ -346,7 +348,8 @@
       "quote": null,
       "from_question": false
      }
-    ]
+    ],
+    "hidden_statements": 0
    },
    "citations": [
     {
@@ -486,7 +489,8 @@
       "quote": null,
       "from_question": false
      }
-    ]
+    ],
+    "hidden_statements": 0
    },
    "citations": [
     {
@@ -626,7 +630,8 @@
       "quote": "Women 21–29 years old with a normal Pap smear should have the test repeated every 3 years",
       "from_question": false
      }
-    ]
+    ],
+    "hidden_statements": 0
    },
    "citations": [
     {

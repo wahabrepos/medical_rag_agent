@@ -44,6 +44,8 @@ export interface Evidence {
   supported_fraction: number;
   message: string;
   statements: StatementEvidence[];
+  /** Ungrounded statements left out of a withheld answer (they would reveal it). */
+  hidden_statements: number;
 }
 
 export interface AskResponse {

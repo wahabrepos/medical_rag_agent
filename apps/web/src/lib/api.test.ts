@@ -76,6 +76,10 @@ describe("mockResponse", () => {
     const hidden = mockResponse(withheld, { question: "", answer_format: "free", include_unverified: false });
     expect(hidden.model_answer).toBeNull();
     expect(hidden.note).not.toMatch(/Unverified/);
+    expect(hidden.evidence.statements.every((s) => s.supported)).toBe(true);
+    expect(hidden.evidence.hidden_statements).toBe(
+      withheld.evidence.statements.filter((s) => !s.supported).length,
+    );
 
     const shown = mockResponse(withheld, { question: "", answer_format: "free", include_unverified: true });
     expect(shown.model_answer).not.toBeNull();

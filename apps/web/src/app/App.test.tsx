@@ -41,7 +41,7 @@ describe("App (demo mode)", () => {
 
   it("labels statements that restate the question, which alone do not ground an answer", async () => {
     const { user } = setup();
-    const card = await askExample(user, /finding restated from the question/i);
+    const card = await askExample(user, /finding restated from the question/i, true);
     expect(within(card).getByText("From your question")).toBeInTheDocument();
     expect(within(card).getAllByText(/^Source \[\d+\]$/).length).toBeGreaterThan(0);
     expect(within(card).getByText("Not found in the sources")).toBeInTheDocument();
@@ -54,6 +54,9 @@ describe("App (demo mode)", () => {
 
     expect(within(card).getByRole("heading", { level: 2 })).toHaveTextContent("Insufficient evidence");
     expect(within(card).queryByText(/unverified answer/i)).toBeNull();
+    // its ungrounded reasoning would reveal the answer: hidden, with a count
+    expect(within(card).queryByText("Not found in the sources")).toBeNull();
+    expect(within(card).getByText(/unchecked statements? (is|are) hidden/)).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Progress" })).not.toHaveTextContent(/unverified draft/);
   });
 

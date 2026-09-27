@@ -119,10 +119,16 @@ const UNVERIFIED_NOTE = / Unverified model answer \(not backed by these studies\
 /** What the API returns for a recorded answer, given the request's options. */
 export function mockResponse(answer: AskResponse, request: AskRequest): AskResponse {
   if (answer.answer !== INSUFFICIENT_EVIDENCE || request.include_unverified) return answer;
+  const kept = answer.evidence.statements.filter((s) => s.supported);
   return {
     ...answer,
     model_answer: null,
     note: answer.note ? answer.note.replace(UNVERIFIED_NOTE, "") : answer.note,
+    evidence: {
+      ...answer.evidence,
+      statements: kept,
+      hidden_statements: answer.evidence.statements.length - kept.length,
+    },
   };
 }
 
