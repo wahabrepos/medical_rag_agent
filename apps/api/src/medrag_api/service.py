@@ -122,23 +122,26 @@ class AnswerService:
             )
             if request.include_unverified:
                 note += f' Unverified model answer (not backed by these studies): "{model_answer}".'
-        seen: set[int] = set()
-        citations = []
-        for p in passages:
+        # One citation per distinct passage, so a quote always points at the text it
+        # came from (two passages of one article are two citations).
+        citations: list[Citation] = []
+        citation_of: dict[int, int] = {}  # passage index -> citation index
+        seen: dict[tuple[str, object], int] = {}
+        for i, p in enumerate(passages):
             source = getattr(p, "source", "pubmed")
-            key = p.pmid if source == "pubmed" else p.chunk_id
-            if key in seen:
-                continue
-            seen.add(key)
-            citations.append(
-                Citation(
-                    source=source,
-                    pmid=p.pmid if source == "pubmed" else None,
-                    title=p.title,
-                    url=PUBMED_URL.format(pmid=p.pmid) if source == "pubmed" else None,
-                    passage=p.text,
+            key = (source, getattr(p, "chunk_id", p.pmid))
+            if key not in seen:
+                seen[key] = len(citations)
+                citations.append(
+                    Citation(
+                        source=source,
+                        pmid=p.pmid if source == "pubmed" else None,
+                        title=p.title,
+                        url=PUBMED_URL.format(pmid=p.pmid) if source == "pubmed" else None,
+                        passage=p.text,
+                    )
                 )
-            )
+            citation_of[i] = seen[key]
         return AskResponse(
             run_id=uuid.uuid4(),
             question=request.question,
@@ -158,6 +161,11 @@ class AnswerService:
                         supported=s.supported,
                         contradicted=s.contradicted,
                         supporting_pmid=pmid(s.supporting_passage),
+                        supporting_citation=(
+                            citation_of[s.supporting_passage]
+                            if s.supporting_passage is not None
+                            else None
+                        ),
                         contradicting_pmid=pmid(s.contradicting_passage),
                         quote=s.quote,
                         from_question=s.from_question,

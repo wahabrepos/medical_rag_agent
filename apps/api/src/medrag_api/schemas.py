@@ -54,6 +54,9 @@ class StatementEvidenceOut(BaseModel):
     contradicted: bool
     supporting_pmid: int | None
     contradicting_pmid: int | None
+    supporting_citation: int | None = Field(
+        default=None, description="index in `citations` of the supporting source"
+    )
     quote: str | None = Field(
         default=None, description="verbatim sentence of the supporting study, when quoted"
     )

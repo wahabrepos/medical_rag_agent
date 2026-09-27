@@ -147,6 +147,7 @@ def test_answer_with_evidence_and_citations(make_client: Callable[..., TestClien
     assert body["evidence"]["status"] == "supported"
     (statement,) = body["evidence"]["statements"]
     assert (statement["supported"], statement["supporting_pmid"]) == (True, 111)
+    assert body["citations"][statement["supporting_citation"]]["pmid"] == 111
     assert [c["pmid"] for c in body["citations"]] == [111, 222]
     assert body["citations"][0]["url"] == "https://pubmed.ncbi.nlm.nih.gov/111/"
     assert body["cost"] > 0
