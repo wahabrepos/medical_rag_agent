@@ -8,11 +8,24 @@ The agent retrieves PubMed evidence with hybrid search, generates a JSON answer 
 
 ## Status
 
-Early development. The workspace, tooling and the research-work reference data are in place, and a first API serves the agent. The core Self-MedRAG logic (prompts, JSON parsing, BM25 tokenizer, RRF fusion, NLI verification and the loop's stop rules) is ported to `packages/core`, and the data layer (PostgreSQL + pgvector schema, corpus ingestion, hybrid retrieval) reproduces the research-work retrieval: on 200 reference questions the fused top-5 overlap is 0.996 and BM25 scores are bit-identical. The first milestone is a **parity build** that reproduces the research-work results before any behaviour changes:
+Early development. The workspace, tooling and the research-work reference data are in place, and an API and a web UI serve the agent. The core Self-MedRAG logic (prompts, JSON parsing, BM25 tokenizer, RRF fusion, NLI verification and the loop's stop rules) is ported to `packages/core`, and the data layer (PostgreSQL + pgvector schema, corpus ingestion, hybrid retrieval) reproduces the research-work retrieval: on 200 reference questions the fused top-5 overlap is 0.996 and BM25 scores are bit-identical. The first milestone is a **parity build** that reproduces the research-work results before any behaviour changes:
 
 | System (research work) | MedQA | PubMedQA |
 |---|---|---|
 | Self-MedRAG + Mistral-small | 71.30% | 75.96% |
+
+## Demo
+
+![The web UI answering two live questions: a grounded "no" with quoted sources, then "insufficient evidence" for a drug the corpus does not cover](docs/media/ui-live.webp)
+
+A live session (recorded 2026-09-27): each question is typed into the web UI and answered by
+the running system, with no replayed answers. The API ran on the Jetson, gpt-oss-120b (Groq)
+wrote the answers and MiniCheck checked every statement on a rented RTX 3060, reached through
+an SSH tunnel; each question cost about €0.0005. First, a literature question: both
+statements are quoted from the study they come from (highlighted in its abstract) and verified,
+so the answer is shown. Then a question about a drug newer than the PubMed corpus: nothing
+supports an answer, so it is withheld as "insufficient evidence". Without a GPU, the UI's demo
+mode replays recorded answers instead (`make web-install && make web-dev`; see [Web UI](#web-ui)).
 
 ## Origin: the research-work prototype
 
@@ -156,7 +169,8 @@ deploy/               Docker Compose and Caddy config
 
 ## Development
 
-Requirements: [uv](https://docs.astral.sh/uv/) (it installs Python 3.12 for you) and Docker.
+Requirements: [uv](https://docs.astral.sh/uv/) (it installs Python 3.12 for you) and Docker; for
+the web UI, Node.js 20.9 or later (pnpm comes through `corepack enable`).
 
 ```bash
 cp .env.example .env      # then fill in MISTRAL_API_KEY, GROQ_API_KEY, HF_TOKEN
@@ -307,8 +321,11 @@ Step 7 were mostly noise, so the answer pipeline was rebuilt around an **evidenc
   passage and a verbatim quote. A claim is backed only if the quote really is in a retrieved
   passage, is not a statement of the study's aim or hypothesis, and the verifier finds the
   passage supports the claim.
-- **Question grounding:** a statement that restates the question (a vignette's findings) is
-  grounded in the question and labelled so; diagnoses and other inferences need a source.
+- **Question grounding:** a statement that restates what the user stated (a vignette's
+  findings) is grounded in the question and labelled so. Only the stem's declarative sentences
+  count, never the answer options or the question asked ("Does X reduce Y?" asserts nothing),
+  and the statement must reuse their words (80% of its content words) as well as pass the
+  verifier; diagnoses and other inferences need a source.
 - **Gate** (`ANSWER_POLICY=evidence_gated`): the answer is shown only when every statement is
   grounded and at least one by a source; otherwise "insufficient evidence", the studies found,
   and the model's answer only on request (`include_unverified`), labelled as unverified.
@@ -318,18 +335,21 @@ re-applies the final rules to earlier runs):
 
 | Run | Questions answered by the gate (MedQA · PubMedQA) | Accuracy of those | Accuracy of withheld |
 |---|---|---|---|
-| v3e quotes (product configuration) | 1% · **44%** | 100% · **91%** | 77% · 67% |
+| v3e quotes (product configuration) | 0% · **41%** | – · **90%** | 77% · 68% |
 | v3f quotes + quoted answer claim | 0% · 1% | – · 100% | 76% · 76% |
-| v3g quotes + textbooks | 20% · 47% | **67%** · 83% | 77% · 70% |
+| v3g quotes + textbooks | 16% · 47% | **58%** · 83% | 78% · 70% |
 
-- On literature questions (PubMedQA style) the gate answers 44% of questions, 91% of them
-  correctly; the withheld ones would have been right only 67% of the time.
+- On literature questions (PubMedQA style) the gate answers 41% of questions, 90% of them
+  correctly; the withheld ones would have been right only 68% of the time.
 - **Grounded statements do not make a clinical answer correct.** With 18 medical textbooks as
   background knowledge (MedRAG, research evaluation only: no licence for products), MedQA
-  answers whose every statement was quoted and verified were *less* often right (67%) than
-  the withheld ones (77%): true textbook facts that do not decide between the options. A
-  stricter threshold does not fix it. Textbooks are therefore not used, and clinical-vignette
-  questions are, correctly, almost never answered by the gate (1%).
+  answers whose every statement was quoted and verified were *less* often right (58%) than
+  the withheld ones (78%): true textbook facts that do not decide between the options. A
+  stricter threshold does not fix it. Textbooks are therefore not used, and the gate answers
+  none of the 75 clinical-vignette questions.
+- Question grounding was first too loose: the web UI showed an answer option taken as a fact,
+  and re-checking found questions ("Does X...?") and diagnoses passing as restatements. With
+  the rules above (all runs re-gated), one statement in 450 answers is grounded in the question.
 - What the product can claim: every statement it shows is quoted from a retrieved study and
   verified, or restates the user's question. It cannot claim the conclusion drawn from them is
   always right; the remaining errors are wrong inferences from true statements. The labels
@@ -394,7 +414,38 @@ The `answer` field is the model's answer only when the gate passes (every statem
 at least one by a source); otherwise it is `"insufficient evidence"`, `model_answer` is withheld
 unless the request sets `include_unverified`, and `note` explains why. `ANSWER_POLICY` can be set
 to `uncertain_yes_no` (the Step 7 behaviour) or `show_all` (benchmarks). Every answer lists its
-citations and a disclaimer.
+citations (one per retrieved passage; `supporting_citation` links a statement to its source) and a
+disclaimer. With the gate, the progress stream does not include draft answers (they are
+unverified) unless `include_unverified` is set. Browsers on other origins need `CORS_ORIGINS`.
+
+### Web UI
+
+`apps/web` is a Next.js app exported as static files (Cloudflare Pages or any static host) that
+calls the API from the browser:
+
+```bash
+cd apps/web && corepack enable && pnpm install
+NEXT_PUBLIC_API_URL=mock pnpm dev          # demo mode: recorded answers, no API or GPU needed
+NEXT_PUBLIC_API_URL=http://localhost:8000 pnpm dev   # the API (set CORS_ORIGINS=http://localhost:3000)
+pnpm lint && pnpm typecheck && pnpm test && pnpm build   # what CI runs; build writes out/
+```
+
+It is built around the evidence gate:
+
+- An answer is shown only when the API's gate passes; otherwise "Insufficient evidence" is a
+  normal result that says why, with the studies found. The model's own answer appears only if
+  the user asks for it, collapsed and marked unverified; drafts are never shown during the run.
+- Each reasoning statement shows where it comes from: a verbatim quote linked to its source
+  (and highlighted in the passage), "from your question", or "not found in the sources".
+- Sources quoted by a statement are listed first (PubMed links; textbook passages marked as
+  research-evaluation only); the other retrieved passages are collapsed.
+- Progress per attempt while the agent works, a persistent disclaimer, and thumbs up/down with
+  an optional comment stored with the run.
+
+The recording at the top of this README was made with headless Chromium against the live API
+(`docs/media/record-live.mjs`, `docs/media/encode_demo.py`). Demo mode replays five real golden-set answers (`eval/scripts/export_ui_fixtures.py` rebuilds
+them with the API's own response code from recorded runs) and shows each example's benchmark
+answer, including one whose statements are all verified but whose option is wrong.
 
 ## License
 
