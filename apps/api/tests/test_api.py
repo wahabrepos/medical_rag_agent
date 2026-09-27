@@ -163,8 +163,10 @@ def test_partly_supported_answers_are_withheld(make_client: Callable[..., TestCl
     assert (body["answer"], body["model_answer"]) == ("insufficient evidence", None)
     assert "do not support every part" in body["note"]
     assert "B" not in body["note"]
-    first, second = body["evidence"]["statements"]
-    assert (first["supported"], second["supported"]) == (True, False)
+    # the ungrounded statement would reveal the withheld answer: only its count is returned
+    (grounded,) = body["evidence"]["statements"]
+    assert grounded["supported"]
+    assert body["evidence"]["hidden_statements"] == 1
     assert [c["pmid"] for c in body["citations"]] == [111, 222]  # related studies still listed
 
 
@@ -179,6 +181,8 @@ def test_unverified_answer_only_on_request(make_client: Callable[..., TestClient
 
     assert (body["answer"], body["model_answer"]) == ("insufficient evidence", "no")
     assert 'Unverified model answer (not backed by these studies): "no"' in body["note"]
+    assert body["evidence"]["hidden_statements"] == 0
+    assert [s["text"] for s in body["evidence"]["statements"]] == ["other claim"]
 
 
 def test_uncertain_yes_no_policy(make_client: Callable[..., TestClient]) -> None:
@@ -196,7 +200,8 @@ def test_uncertain_yes_no_policy(make_client: Callable[..., TestClient]) -> None
 
 def test_contradicted_answers_are_flagged(make_client: Callable[..., TestClient]) -> None:
     client = make_client(FakeComponents(answer("A", "contradicted claim")))
-    body = client.post("/v1/ask", json={"question": "Which?"}, headers=AUTH).json()
+    ask = {"question": "Which?", "include_unverified": True}  # withheld: statements on request
+    body = client.post("/v1/ask", json=ask, headers=AUTH).json()
 
     assert body["evidence"]["status"] == "contradicted"
     assert body["evidence"]["statements"][0]["contradicting_pmid"] == 222
@@ -320,7 +325,9 @@ def test_answer_claim_is_assessed_first(make_client: Callable[..., TestClient]) 
     components.new_generator = with_claim  # type: ignore[method-assign]
     body = (
         make_client(components)
-        .post("/v1/ask", json={"question": "What treats X?"}, headers=AUTH)
+        .post(
+            "/v1/ask", json={"question": "What treats X?", "include_unverified": True}, headers=AUTH
+        )
         .json()
     )
 

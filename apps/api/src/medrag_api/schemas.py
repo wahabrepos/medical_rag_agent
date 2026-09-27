@@ -70,6 +70,11 @@ class EvidenceOut(BaseModel):
     supported_fraction: float
     message: str
     statements: list[StatementEvidenceOut]
+    hidden_statements: int = Field(
+        default=0,
+        description="ungrounded statements left out because the answer was withheld "
+        "(they would reveal it); returned with include_unverified",
+    )
 
 
 class AskResponse(BaseModel):

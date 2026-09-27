@@ -142,6 +142,13 @@ class AnswerService:
                     )
                 )
             citation_of[i] = seen[key]
+        # A withheld answer's ungrounded reasoning states the answer ("... is a classic
+        # presentation of retinal detachment"), so it is only returned on request.
+        hide = (
+            {i for i, s in enumerate(assessment.statements) if not s.supported}
+            if withheld and not request.include_unverified
+            else set()
+        )
         return AskResponse(
             run_id=uuid.uuid4(),
             question=request.question,
@@ -153,6 +160,7 @@ class AnswerService:
                 status=assessment.status,
                 supported_fraction=assessment.supported_fraction,
                 message=EVIDENCE_MESSAGES[assessment.status],
+                hidden_statements=sum(1 for i in range(len(assessment.statements)) if i in hide),
                 statements=[
                     StatementEvidenceOut(
                         kind="claim" if claim and i == 0 else "rationale",
@@ -171,6 +179,7 @@ class AnswerService:
                         from_question=s.from_question,
                     )
                     for i, s in enumerate(assessment.statements)
+                    if i not in hide
                 ],
             ),
             citations=citations,
