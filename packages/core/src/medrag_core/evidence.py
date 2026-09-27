@@ -295,6 +295,101 @@ def base_statements(rationale: Sequence[str]) -> list[str]:
     return [s for s in rationale if s.strip()]
 
 
+_OPTIONS = re.compile(r"\n\s*answer choices:", re.IGNORECASE)
+
+
+def question_stem(question: str) -> str:
+    """The question without its answer options: the options are candidate answers,
+    not facts the user stated, so they cannot ground a statement."""
+    match = _OPTIONS.search(question)
+    return (question[: match.start()] if match else question).strip()
+
+
+_SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
+_WORD = re.compile(r"[a-z0-9]+(?:[-'][a-z0-9]+)*")
+# Words that carry no fact of their own.
+_STOPWORDS = frozenset(
+    [
+        "the",
+        "a",
+        "an",
+        "and",
+        "or",
+        "of",
+        "in",
+        "on",
+        "at",
+        "to",
+        "for",
+        "with",
+        "without",
+        "by",
+        "from",
+        "as",
+        "is",
+        "are",
+        "was",
+        "were",
+        "be",
+        "been",
+        "being",
+        "has",
+        "have",
+        "had",
+        "this",
+        "that",
+        "these",
+        "those",
+        "it",
+        "its",
+        "his",
+        "her",
+        "their",
+        "he",
+        "she",
+        "they",
+        "patient",
+        "patients",
+        "which",
+        "who",
+        "whom",
+        "whose",
+        "than",
+        "then",
+        "there",
+        "also",
+        "not",
+        "no",
+    ]
+)
+# Share of a statement's content words that must appear in the question's facts.
+QUESTION_WORD_COVERAGE = 0.8
+
+
+def question_facts(question: str) -> str:
+    """The declarative sentences of the question's stem: what the user stated.
+
+    Answer options are candidate answers and questions ("Does X reduce Y?") assert
+    nothing, so neither can ground a statement.
+    """
+    sentences = _SENTENCE_END.split(question_stem(question))
+    return " ".join(s.strip() for s in sentences if s.strip() and not s.strip().endswith("?"))
+
+
+def _content_words(text: str) -> set[str]:
+    """Content words cut to five letters, so word forms match (hypotensive/hypotension)."""
+    return {w[:5] for w in _WORD.findall(text.lower()) if w not in _STOPWORDS and len(w) > 2}
+
+
+def restates(statement: str, facts: str, *, coverage: float = QUESTION_WORD_COVERAGE) -> bool:
+    """Whether a statement reuses the question's own words (a restated finding), rather
+    than adding a conclusion such as a diagnosis that the question never states."""
+    words = _content_words(statement)
+    if not words:
+        return False
+    return len(words & _content_words(facts)) / len(words) >= coverage
+
+
 def ground_in_question(
     assessment: EvidenceAssessment,
     question: str,
@@ -307,19 +402,24 @@ def ground_in_question(
 
     Clinical vignettes give the patient's findings; a rationale that repeats them
     ("the patient is hypotensive and tachycardic") cannot be found in any study but
-    is backed by the user's own input. The verifier checks each statement no passage
-    supports against the question; inferences beyond it (a diagnosis, a mechanism)
-    still need the literature.
+    is backed by the user's own input. A statement no passage supports counts as
+    grounded in the question only if it restates the stem's declarative sentences
+    (never the answer options or the question asked) in the stem's own words, and
+    the verifier agrees; inferences (a diagnosis, a mechanism) still need a source.
     """
+    facts = question_facts(question)
     todo = [i for i, s in enumerate(assessment.statements) if not s.supported]
-    if not todo or not question.strip():
+    if not todo or not facts:
         return assessment
     claims = [assessment.statements[i].statement for i in todo]
     if normalize:
         claims = [normalize_statement(c) for c in claims]
-    rows = probabilities([(question, c) for c in claims])
+    candidates = [(i, c) for i, c in zip(todo, claims, strict=True) if restates(c, facts)]
+    if not candidates:
+        return assessment
+    rows = probabilities([(facts, c) for _, c in candidates])
     statements = list(assessment.statements)
-    for i, row in zip(todo, rows, strict=True):
+    for (i, _), row in zip(candidates, rows, strict=True):
         if float(row[ENTAILMENT]) >= threshold:
             statements[i] = replace(statements[i], from_question=True)
     return EvidenceAssessment(_status(statements), _fraction(statements), statements)

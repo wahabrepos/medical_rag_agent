@@ -14,7 +14,10 @@ from medrag_core.evidence import (
     ground_in_question,
     is_grounded,
     present_answer,
+    question_facts,
+    question_stem,
     quote_in_passage,
+    restates,
     states_aim,
 )
 
@@ -235,6 +238,7 @@ def test_aim_quotes_do_not_count_as_evidence() -> None:
 
 
 QUESTION = "A 63-year-old man has chest pain, hypotension and an irregular pulse. Next step?"
+FACTS = "A 63-year-old man has chest pain, hypotension and an irregular pulse."
 
 
 def test_restated_findings_are_grounded_in_the_question() -> None:
@@ -243,8 +247,8 @@ def test_restated_findings_are_grounded_in_the_question() -> None:
     fact = "Unstable tachyarrhythmias need synchronized cardioversion."
     probs = table(
         {
-            (QUESTION, finding): (0.0, 0.95, 0.05),
-            (QUESTION, diagnosis): (0.0, 0.10, 0.90),
+            (FACTS, finding): (0.0, 0.95, 0.05),
+            (FACTS, diagnosis): (0.0, 0.95, 0.05),  # verifier fooled: the word check stops it
             ("Textbook passage.", fact): (0.0, 0.90, 0.10),
         }
     )
@@ -263,7 +267,7 @@ def test_restated_findings_are_grounded_in_the_question() -> None:
 
 def test_restating_the_question_alone_is_not_grounded() -> None:
     finding = "The patient is hypotensive with an irregular pulse."
-    probs = table({(QUESTION, finding): (0.0, 0.95, 0.05)})
+    probs = table({(FACTS, finding): (0.0, 0.95, 0.05)})
     only_question = ground_in_question(
         assess_evidence([finding], ["Unrelated passage."], probs), QUESTION, probs
     )
@@ -271,3 +275,40 @@ def test_restating_the_question_alone_is_not_grounded() -> None:
     assert only_question.statements[0].supported
     assert not is_grounded(only_question)
     assert present_answer("D", only_question, AnswerFormat.MULTIPLE_CHOICE) == INSUFFICIENT_EVIDENCE
+
+
+def test_answer_options_do_not_ground_statements() -> None:
+    question = (
+        "Fever and a tender liver. Next step?\n\nAnswer choices:\nC. Antibiotics and drainage"
+    )
+    claim = "Management includes biliary drainage."
+    stem = "Fever and a tender liver. Next step?"
+    # The verifier would accept the claim from the options, but only the stem is checked.
+    probs = table({(question, claim): (0.0, 0.95, 0.05), (stem, claim): (0.0, 0.05, 0.95)})
+    base = assess_evidence([claim], ["Unrelated passage."], probs)
+
+    assert question_stem(question) == stem
+    assert not ground_in_question(base, question, probs).statements[0].from_question
+    assert question_stem("  Does X help?  ") == "Does X help?"
+
+
+def test_questions_assert_nothing() -> None:
+    title = "Does quilting suture prevent seroma in abdominoplasty?"
+    vignette = "A 25-year-old man has jaundice. HBsAg is positive. What is the diagnosis?"
+
+    assert question_facts(title) == ""
+    assert question_facts(vignette) == "A 25-year-old man has jaundice. HBsAg is positive."
+    probs = table({(title, "Quilting suture prevents seroma."): (0.0, 0.99, 0.01)})
+    base = assess_evidence(["Quilting suture prevents seroma."], ["Other."], probs)
+    assert not ground_in_question(base, title, probs).statements[0].from_question
+
+
+def test_inferences_are_not_restatements() -> None:
+    facts = "A 25-year-old man has jaundice and fatigue. HBsAg and IgM anti-HBc are positive."
+
+    assert restates("The man has jaundice and fatigue", facts)
+    assert restates("HBsAg and IgM anti-HBc are positive", facts)
+    assert not restates(
+        "HBsAg positive with IgM anti-HBc indicates acute hepatitis B infection", facts
+    )
+    assert not restates("", facts)
