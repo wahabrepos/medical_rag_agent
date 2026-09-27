@@ -1,0 +1,102 @@
+{
+ "1": {
+  "verdict": "declined",
+  "note": "no diagnosis; retrieval found the 'elephant trunk' surgical technique"
+ },
+ "2": {
+  "verdict": "different",
+  "note": "describes the work-up (ultrasound, core biopsy), names no diagnosis"
+ },
+ "3": {
+  "verdict": "declined",
+  "note": "no diagnosis"
+ },
+ "4": {
+  "verdict": "match",
+  "note": "uncontrolled diabetes"
+ },
+ "5": {
+  "verdict": "match",
+  "note": "meningitis"
+ },
+ "6": {
+  "verdict": "match",
+  "note": "retinal detachment"
+ },
+ "7": {
+  "verdict": "partial",
+  "note": "possible fracture, not specifically femoral neck"
+ },
+ "8": {
+  "verdict": "declined",
+  "note": "no diagnosis"
+ },
+ "9": {
+  "verdict": "different",
+  "note": "influenza-like illness, not sepsis"
+ },
+ "10": {
+  "verdict": "declined",
+  "note": "no diagnosis"
+ },
+ "11": {
+  "verdict": "partial",
+  "note": "names colorectal cancer, but reads 'pants feel looser' as looser stools and ignores the blood"
+ },
+ "12": {
+  "verdict": "declined",
+  "note": "no diagnosis"
+ },
+ "13": {
+  "verdict": "match",
+  "note": "biliary colic / gallbladder disease"
+ },
+ "14": {
+  "verdict": "declined",
+  "note": "no diagnosis"
+ },
+ "15": {
+  "verdict": "declined",
+  "note": "no diagnosis"
+ },
+ "16": {
+  "verdict": "declined",
+  "note": "no diagnosis"
+ },
+ "17": {
+  "verdict": "different",
+  "note": "ventricular arrhythmias, not atrial fibrillation"
+ },
+ "18": {
+  "verdict": "declined",
+  "note": "no diagnosis"
+ },
+ "19": {
+  "verdict": "match",
+  "note": "pneumonia"
+ },
+ "20": {
+  "verdict": "declined",
+  "note": "no diagnosis"
+ },
+ "21": {
+  "verdict": "declined",
+  "note": "no diagnosis"
+ },
+ "22": {
+  "verdict": "match",
+  "note": "ACL tear"
+ },
+ "23": {
+  "verdict": "partial",
+  "note": "sciatica from nerve root irritation; does not name disc herniation"
+ },
+ "24": {
+  "verdict": "declined",
+  "note": "no diagnosis"
+ },
+ "25": {
+  "verdict": "match",
+  "note": "hypovolemia from blood loss"
+ }
+}
