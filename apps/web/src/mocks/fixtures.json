@@ -1,0 +1,676 @@
+[
+ {
+  "id": "pubmedqa-labeled-788",
+  "label": "Answer shown: every statement quoted and verified",
+  "source_run": "v3e-quotes",
+  "gold_answer": "no",
+  "request": {
+   "question": "Does increased use of private health care reduce the demand for NHS care?",
+   "answer_format": "yes_no"
+  },
+  "events": [
+   {
+    "event": "retrieved",
+    "data": {
+     "iteration": 1,
+     "passages": 5
+    }
+   },
+   {
+    "event": "generated",
+    "data": {
+     "iteration": 1
+    }
+   },
+   {
+    "event": "verified",
+    "data": {
+     "iteration": 1,
+     "support": 0.0
+    }
+   },
+   {
+    "event": "refining",
+    "data": {
+     "next_iteration": 2
+    }
+   },
+   {
+    "event": "retrieved",
+    "data": {
+     "iteration": 2,
+     "passages": 5
+    }
+   },
+   {
+    "event": "generated",
+    "data": {
+     "iteration": 2
+    }
+   },
+   {
+    "event": "verified",
+    "data": {
+     "iteration": 2,
+     "support": 1.0
+    }
+   }
+  ],
+  "answer": {
+   "run_id": "37bcafcf-6b2a-5c57-9497-cb35224299c6",
+   "question": "Does increased use of private health care reduce the demand for NHS care?",
+   "answer_format": "yes_no",
+   "answer": "no",
+   "model_answer": "no",
+   "note": null,
+   "evidence": {
+    "status": "supported",
+    "supported_fraction": 1.0,
+    "message": "Supported by the retrieved literature.",
+    "statements": [
+     {
+      "kind": "rationale",
+      "text": "Private referral rates are lower in the most deprived areas while NHS referral rates are slightly higher",
+      "support": 0.9784,
+      "supported": true,
+      "contradicted": false,
+      "supporting_pmid": 15774570,
+      "contradicting_pmid": null,
+      "supporting_citation": 1,
+      "quote": "Private referral rates were lower in patients from the most deprived fifth of wards compared with the least deprived fifth (rate ratio 0.25, 95 percent CI 0.15 to 0.41, p<0.001), whereas NHS referral rates were slightly higher in patients in the most deprived fifth of wards (rate ratio 1.18, 95 percent CI 0.98 to 1.42, p = 0.08)",
+      "from_question": false
+     },
+     {
+      "kind": "rationale",
+      "text": "NHS referral rates are higher in wards with high private referral rates",
+      "support": 0.9581,
+      "supported": true,
+      "contradicted": false,
+      "supporting_pmid": 15774570,
+      "contradicting_pmid": null,
+      "supporting_citation": 1,
+      "quote": "The NHS referral rate was significantly higher (rate ratio 1.40, 95 percent CI 1.15 to 1.71, p = 0.001) in wards with private referral rates in the top fifth compared with the bottom fifth after adjustment for deprivation and practice.",
+      "from_question": false
+     }
+    ]
+   },
+   "citations": [
+    {
+     "source": "pubmed",
+     "pmid": 15774570,
+     "title": "Does increased use of private health care reduce the demand for NHS care?",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/15774570/",
+     "passage": "The use of the private sector for health care is increasing, but it is unclear whether this will reduce demand on the NHS. The aim of this study was to examine the relationship between private and NHS outpatient referral rates accounting for their association with deprivation.."
+    },
+    {
+     "source": "pubmed",
+     "pmid": 15774570,
+     "title": "Does increased use of private health care reduce the demand for NHS care?",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/15774570/",
+     "passage": "Of 17,137 referrals, 90.4 percent (15,495) were to the NHS and 9.6 percent (1642) to the private sector. Private referral rates were lower in patients from the most deprived fifth of wards compared with the least deprived fifth (rate ratio 0.25, 95 percent CI 0.15 to 0.41, p<0.001), whereas NHS referral rates were slightly higher in patients in the most deprived fifth of wards (rate ratio 1.18, 95 percent CI 0.98 to 1.42, p = 0.08) both after age standardisation and adjustment for practice. The NHS referral rate was significantly higher (rate ratio 1.40, 95 percent CI 1.15 to 1.71, p = 0.001) in wards with private referral rates in the top fifth compared with the bottom fifth after adjustment for deprivation and practice.."
+    },
+    {
+     "source": "pubmed",
+     "pmid": 15774570,
+     "title": "Does increased use of private health care reduce the demand for NHS care?",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/15774570/",
+     "passage": "This is a prospective survey of general practitioner referrals to private and NHS consultant-led services between 1 January and 31 December 2001 from 10 general practices in the Trent Focus Collaborative Research Network, United Kingdom. Patient referrals were aggregated to give private and NHS referral rates for each electoral ward in each practice.."
+    },
+    {
+     "source": "pubmed",
+     "pmid": 14511161,
+     "title": "The minimum data set weight-loss quality indicator: does it reflect differences in care processes related to weight loss?",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/14511161/",
+     "passage": "The prevalence of weight loss was significantly higher in the participants in the upper quartile NHs than in participants in the lower quartile NHs based on MDS and monthly weight data documented in the medical record. NHs with a higher prevalence of weight loss had a significantly larger proportion of residents with risk factors for weight loss, namely low oral food and fluid intake. There were few significant differences on care process measures between low- and high-weight-loss NHs. Staff in low-weight-loss NHs consistently provided verbal prompting and social interaction during meals to a greater proportion of residents, including those most at risk for weight loss.."
+    },
+    {
+     "source": "pubmed",
+     "pmid": 12919231,
+     "title": "The minimum data set pressure ulcer indicator: does it reflect differences in care processes related to pressure ulcer prevention and treatment in nursing homes?",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/12919231/",
+     "passage": "There were no differences between homes with low- and high-PU prevalence rates reported on the MDS PU quality indicator on most care processes. NHs with high PU prevalence rates used pressure-reduction surfaces more frequently and were better at documentation of four wound characteristics when PUs were present. No measure of PU care processes was better in low-PU NHs. Neither low- nor high-PU prevalence NHs routinely repositioned residents every 2 hours, even though 2-hour repositioning was documented in the medical record for nearly all residents.."
+    }
+   ],
+   "iterations": 2,
+   "stop_reason": "accepted",
+   "model": "groq/openai/gpt-oss-120b",
+   "latency_seconds": 3.605,
+   "cost": 0.000857,
+   "disclaimer": "Research use only. This is not medical advice and must not be used for clinical decisions."
+  }
+ },
+ {
+  "id": "medqa-test-568",
+  "label": "Withheld: a finding restated from the question, but no source for the reasoning",
+  "source_run": "v3g-quotes-textbooks",
+  "gold_answer": "A",
+  "request": {
+   "question": "A 55-year-old woman presents with severe pruritus and fatigue. She denies any similar symptoms in the past. No significant past medical history. Upon physical examination, scleral icterus is present, and significant hepatosplenomegaly is noted. Mild peripheral edema is also present. Laboratory findings are significant for elevated serum levels of bilirubin, aminotransferases, alkaline phosphatase (ALP), γ-glutamyl transpeptidase (GGTP), immunoglobulins, as well as cholesterol (especially HDL fraction). Antiviral antibodies are not present. The erythrocyte sedimentation rate is also elevated. Anti-mitochondrial antibodies are found. A liver biopsy is performed, and the histopathologic examination shows bile duct injury, cholestasis, and granuloma formation. Which of the following is the most likely diagnosis in this patient?\n\nAnswer choices:\nA. Primary biliary cirrhosis\nB. Hemolytic anemia\nC. Hepatitis A\nD. Gilbert syndrome\n\nOutput ONLY the single letter (A/B/C/D) of the correct answer.",
+   "answer_format": "multiple_choice"
+  },
+  "events": [
+   {
+    "event": "retrieved",
+    "data": {
+     "iteration": 1,
+     "passages": 5
+    }
+   },
+   {
+    "event": "generated",
+    "data": {
+     "iteration": 1
+    }
+   },
+   {
+    "event": "verified",
+    "data": {
+     "iteration": 1,
+     "support": 0.3333333333333333
+    }
+   },
+   {
+    "event": "refining",
+    "data": {
+     "next_iteration": 2
+    }
+   },
+   {
+    "event": "retrieved",
+    "data": {
+     "iteration": 2,
+     "passages": 5
+    }
+   },
+   {
+    "event": "generated",
+    "data": {
+     "iteration": 2
+    }
+   },
+   {
+    "event": "verified",
+    "data": {
+     "iteration": 2,
+     "support": 0.25
+    }
+   }
+  ],
+  "answer": {
+   "run_id": "92855848-595b-5949-a62c-9b911a899c4d",
+   "question": "A 55-year-old woman presents with severe pruritus and fatigue. She denies any similar symptoms in the past. No significant past medical history. Upon physical examination, scleral icterus is present, and significant hepatosplenomegaly is noted. Mild peripheral edema is also present. Laboratory findings are significant for elevated serum levels of bilirubin, aminotransferases, alkaline phosphatase (ALP), γ-glutamyl transpeptidase (GGTP), immunoglobulins, as well as cholesterol (especially HDL fraction). Antiviral antibodies are not present. The erythrocyte sedimentation rate is also elevated. Anti-mitochondrial antibodies are found. A liver biopsy is performed, and the histopathologic examination shows bile duct injury, cholestasis, and granuloma formation. Which of the following is the most likely diagnosis in this patient?\n\nAnswer choices:\nA. Primary biliary cirrhosis\nB. Hemolytic anemia\nC. Hepatitis A\nD. Gilbert syndrome\n\nOutput ONLY the single letter (A/B/C/D) of the correct answer.",
+   "answer_format": "multiple_choice",
+   "answer": "insufficient evidence",
+   "model_answer": "A",
+   "note": "No answer is shown because the retrieved studies do not support every part of it; the studies found are listed below. Unverified model answer (not backed by these studies): \"A\".",
+   "evidence": {
+    "status": "partially_supported",
+    "supported_fraction": 0.6666666666666666,
+    "message": "Partly supported by the retrieved literature; unsupported statements are marked.",
+    "statements": [
+     {
+      "kind": "rationale",
+      "text": "Patient has severe pruritus, fatigue, and anti-mitochondrial antibodies",
+      "support": 0.5832,
+      "supported": true,
+      "contradicted": false,
+      "supporting_pmid": null,
+      "contradicting_pmid": null,
+      "supporting_citation": 1,
+      "quote": "When symptoms appear, their onset is insidious, with patients typically complaining of slowly increasing fatigue and pruritus.",
+      "from_question": false
+     },
+     {
+      "kind": "rationale",
+      "text": "Laboratory shows cholestatic pattern with elevated ALP, GGT, immunoglobulins and cholesterol",
+      "support": 0.0,
+      "supported": false,
+      "contradicted": false,
+      "supporting_pmid": null,
+      "contradicting_pmid": null,
+      "supporting_citation": null,
+      "quote": null,
+      "from_question": false
+     },
+     {
+      "kind": "rationale",
+      "text": "Liver biopsy shows bile duct injury, cholestasis, and granuloma formation",
+      "support": 0.0,
+      "supported": true,
+      "contradicted": false,
+      "supporting_pmid": null,
+      "contradicting_pmid": null,
+      "supporting_citation": null,
+      "quote": null,
+      "from_question": true
+     }
+    ]
+   },
+   "citations": [
+    {
+     "source": "textbook",
+     "pmid": null,
+     "title": "Harrison's Principles of Internal Medicine",
+     "url": null,
+     "passage": "Typical physical findings in liver disease are icterus, hepatomegaly, hepatic tenderness, splenomegaly, spider angiomata, palmar erythema, and excoriations. Signs of advanced disease include muscle wasting, ascites, edema, dilated abdominal veins, hepatic fetor, asterixis, mental confusion, stupor, and coma. In male patients with cirrhosis, particularly that related to alcohol use, signs of hyperestrogenemia such as gynecomastia, testicular atrophy, and loss of male-pattern hair distribution may be found. Icterus is best appreciated when the sclera is inspected under natural light. In fair-skinned individuals, a yellow tinge to the skin may be obvious. In dark-skinned individuals, examination of the mucous membranes below the tongue can demonstrate jaundice. Jaundice is rarely detectable if the serum bilirubin level is <43 μmol/L (2.5 mg/dL) but may remain detectable below this level during recovery from jaundice (because of protein and tissue binding of conjugated bilirubin)."
+    },
+    {
+     "source": "textbook",
+     "pmid": null,
+     "title": "Robbins Basic Pathology",
+     "url": null,
+     "passage": "Fig. 16.27 Primarybiliarycirrhosis.Aportaltractismarkedlyexpandedbyaninfiltrateoflymphocytesandplasmacells.Notethegranulomatousreac-tiontothebileductundergoingdestruction(the“floridductlesion”). Most patients are diagnosed while asymptomatic following a workup triggered by the identification of an elevated serum alkaline phosphatase level or severe itching. Hypercholesterolemia is common. Anti-mitochondrial antibodies are present in 90% to 95% of patients. They are highly characteristic of PBC, although other autoantibodies may be seen in a small number of cases. The disease is confirmed by liver biopsy, which is considered diagnostic if a florid duct lesion is present. When symptoms appear, their onset is insidious, with patients typically complaining of slowly increasing fatigue and pruritus."
+    },
+    {
+     "source": "textbook",
+     "pmid": null,
+     "title": "Harrison's Principles of Internal Medicine",
+     "url": null,
+     "passage": "Laboratory Findings Laboratory findings in PBC show cholestatic liver enzyme abnormalities with an elevation in γ-glutamyl transpeptidase and alkaline phosphatase (ALP) along with mild elevations in aminotransferases (ALT and AST). Immunoglobulins, particularly IgM, are typically increased. Hyperbilirubinemia usually is seen once cirrhosis has developed. Thrombocytopenia, leukopenia, and anemia may be seen in patients with portal hypertension and hypersplenism. Liver biopsy shows characteristic features as described above and should be evident to any experienced hepatopathologist. Up to 10% of patients with characteristic PBC will have features of AIH as well and are defined as having “overlap” syndrome. These patients are usually treated as PBC patients and may progress to cirrhosis with the same frequency as typical PBC patients. Some patients require immunosuppressive medications as well."
+    },
+    {
+     "source": "textbook",
+     "pmid": null,
+     "title": "Schwartz's Principles of Surgery",
+     "url": null,
+     "passage": "B e antigen (HBeAg) and hepatitis B viral DNA, can be used to confirm ongoing infection and to guide appropri-ate antiviral therapy.Autoimmune causes of cirrhosis include primary bili-ary cirrhosis, primary sclerosing cholangitis, and autoimmune hepatitis. Patients with primary biliary cirrhosis may be asymp-tomatic or may present with a history of fatigue, pruritus, and skin hyperpigmentation that is not related to jaundice. Anti-mitochondrial antibodies will test positive in the vast majority of cases. Affected patients also may have marked elevations in serum cholesterol, while hyperbilirubinemia is seen late in the course of the disease. Primary sclerosing cholangitis is a chronic cholestatic disease of the liver associated with ulcer-ative colitis and Crohn’s disease. The clinical presentation can include pruritus, steatorrhea, fat-soluble vitamin deficiencies, and metabolic bone disease. The diagnosis is often established by imaging of the biliary tree, which reveals a"
+    },
+    {
+     "source": "textbook",
+     "pmid": null,
+     "title": "First Aid for the USMLE Step 2 CK",
+     "url": null,
+     "passage": "Exam often reveals jaundice, scleral icterus, tender hepatomegaly, possible splenomegaly, and lymphadenopathy. Chronic hepatitis usually gives rise to symptoms indicative of chronic liver disease (jaundice, fatigue, hepatosplenomegaly). At least 80% of those infected with HCV and 10% of those with HBV will develop chronic hepatitis. Dramatically ↑ ALT and AST and ↑ bilirubin/alkaline phosphatase are present in the acute form. In chronic hepatitis, ALT and AST are ↑ for > 6 months with a concurrent ↑ in alkaline phosphatase/bilirubin and hypoalbuminemia. In severe cases, PT will be prolonged, as all clotting factors except factor VIII are produced by the liver. The diagnosis of viral hepatitis is made by hepatitis serology (see Table 2.6-8 and Figure 2.6-11 for a description and timing of serologic markers) and by liver biopsy in chronic or severe cases."
+    }
+   ],
+   "iterations": 2,
+   "stop_reason": "stalled",
+   "model": "groq/openai/gpt-oss-120b",
+   "latency_seconds": 8.015,
+   "cost": 0.001269,
+   "disclaimer": "Research use only. This is not medical advice and must not be used for clinical decisions."
+  }
+ },
+ {
+  "id": "pubmedqa-labeled-173",
+  "label": "Withheld: the only quote states the study's aim",
+  "source_run": "v3e-quotes",
+  "gold_answer": "yes",
+  "request": {
+   "question": "Can Flexible Instruments Create Adequate Femoral Tunnel Lengths at 90° of Knee Flexion in Anterior Cruciate Ligament Reconstruction?",
+   "answer_format": "yes_no"
+  },
+  "events": [
+   {
+    "event": "retrieved",
+    "data": {
+     "iteration": 1,
+     "passages": 5
+    }
+   },
+   {
+    "event": "generated",
+    "data": {
+     "iteration": 1
+    }
+   },
+   {
+    "event": "verified",
+    "data": {
+     "iteration": 1,
+     "support": 1.0
+    }
+   }
+  ],
+  "answer": {
+   "run_id": "dd8722f7-eff5-5f2f-991b-af9d1131fa0f",
+   "question": "Can Flexible Instruments Create Adequate Femoral Tunnel Lengths at 90° of Knee Flexion in Anterior Cruciate Ligament Reconstruction?",
+   "answer_format": "yes_no",
+   "answer": "insufficient evidence",
+   "model_answer": "yes",
+   "note": "No answer is shown because the retrieved studies do not support every part of it; the studies found are listed below. Unverified model answer (not backed by these studies): \"yes\".",
+   "evidence": {
+    "status": "not_supported",
+    "supported_fraction": 0.0,
+    "message": "Not supported by the retrieved literature: this answer relies on the model's general medical knowledge.",
+    "statements": [
+     {
+      "kind": "rationale",
+      "text": "Flexible reamer systems can produce femoral tunnel lengths greater than 20 mm at 90° of knee flexion",
+      "support": 0.0,
+      "supported": false,
+      "contradicted": false,
+      "supporting_pmid": null,
+      "contradicting_pmid": null,
+      "supporting_citation": null,
+      "quote": null,
+      "from_question": false
+     }
+    ]
+   },
+   "citations": [
+    {
+     "source": "pubmed",
+     "pmid": 27281318,
+     "title": "Can Flexible Instruments Create Adequate Femoral Tunnel Lengths at 90° of Knee Flexion in Anterior Cruciate Ligament Reconstruction?",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/27281318/",
+     "passage": "This study aims to study femoral tunnel lengths drilled with a flexible reamer and the distance to important lateral structures obtained by flexing the knee at various angles and by drilling the guide pins arthroscopically to resemble clinical practice. The purpose of this cadaveric study was twofold: 1. to determine whether femoral tunnel lengths of greater than 20 mm can be created with a flexible reamer system at 90 ° of knee flexion and 2. to determine whether the lateral structures of the knee are safe with this technique.."
+    },
+    {
+     "source": "pubmed",
+     "pmid": 27106125,
+     "title": "Does Anteromedial Portal Drilling Improve Footprint Placement in Anterior Cruciate Ligament Reconstruction?",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/27106125/",
+     "passage": "Considerable debate remains over which anterior cruciate ligament (ACL) reconstruction technique can best restore knee stability. Traditionally, femoral tunnel drilling has been done through a previously drilled tibial tunnel; however, potential nonanatomic tunnel placement can produce a vertical graft, which although it would restore sagittal stability, it would not control rotational stability. To address this, some suggest that the femoral tunnel be created independently of the tibial tunnel through the use of an anteromedial (AM) portal, but whether this results in a more anatomic footprint or in stability comparable to that of the intact contralateral knee still remains controversial.QUESTIONS/."
+    },
+    {
+     "source": "pubmed",
+     "pmid": 27281318,
+     "title": "Can Flexible Instruments Create Adequate Femoral Tunnel Lengths at 90° of Knee Flexion in Anterior Cruciate Ligament Reconstruction?",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/27281318/",
+     "passage": "Ten fresh cadaveric knees were utilized. The intra-osseous length can be measured with a specially de - signed flexible guide pin. Flexible pins were inserted with the knee at 70°, 90°, and 120° of flexion. The intra-osseous length was measured with the measuring device. Each speci - men was dissected around the lateral aspect of the knee to identify the critical structures, the common peroneal nerve, and the LCL. The distance from the guide pins to the com - mon peroneal nerve and femoral attachment of the LCL were measured with a standard flexible paper ruler to the nearest millimeter.."
+    },
+    {
+     "source": "pubmed",
+     "pmid": 24695920,
+     "title": "Does anterior laxity of the uninjured knee influence clinical outcomes of ACL reconstruction?",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/24695920/",
+     "passage": "We retrospectively reviewed 163 patients who had undergone unilateral ACL reconstruction from January 2002 to August 2009. Patients were divided into three groups according to the anterior laxity of the contralateral, normal knee in 30° of knee flexion as measured with a KT2000 arthrometer exerting a force of 134 N:<5 mm for Group 1, 5 to 7.5 mm for Group 2, and>7.5 mm for Group 3. Anterior laxity of the uninjured knee was assessed preoperatively, and anterior laxity of the reconstructed knee was assessed at twenty-four months postoperatively. Anterior stability of the knee was also assessed with use of the Lachman and pivot-shift tests. Functional outcomes were assessed with the Lysholm score and the International Knee Documentation Committee (IKDC) score.."
+    },
+    {
+     "source": "pubmed",
+     "pmid": 24825174,
+     "title": "Is the native ACL insertion site \"completely restored\" using an individualized approach to single-bundle ACL-R?",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/24825174/",
+     "passage": "The goal of individualized anatomic anterior cruciate ligament reconstruction (ACL-R) is to reproduce each patient's native insertion site as closely as possible. The amount of the native insertion site that is recreated by the tunnel aperture area is currently unknown, as are the implications of the degree of coverage. As such, the goals of this study are to determine whether individualized anatomic ACL-R techniques can maximally fill the native insertion site and to attempt to establish a crude measure to evaluate the percentage of reconstructed area as a first step towards elucidating the implications of complete footprint restoration.."
+    }
+   ],
+   "iterations": 1,
+   "stop_reason": "accepted",
+   "model": "groq/openai/gpt-oss-120b",
+   "latency_seconds": 1.534,
+   "cost": 0.000323,
+   "disclaimer": "Research use only. This is not medical advice and must not be used for clinical decisions."
+  }
+ },
+ {
+  "id": "medqa-test-1189",
+  "label": "Withheld: clinical reasoning not found in the literature",
+  "source_run": "v3e-quotes",
+  "gold_answer": "C",
+  "request": {
+   "question": "A 28-year-old male presents with a recent onset of upsetting dreams, anxiety, and disturbing flashbacks. The patient reports that he returned from active duty in Iraq 3 months ago and was adjusting to life back at home until about 7 weeks ago when he began having intense fear of loud noises and seeing sudden flashbacks to bombing attacks he endured during his time in Iraq. He had to take a leave from his army instructor duties as he was not able to handle the familiar settings of practice shooting ranges and sudden loud explosions during battalion training. After refusing to leave his house, he was finally persuaded by his wife to visit your clinic. What is the most likely diagnosis?\n\nAnswer choices:\nA. Acute stress disorder\nB. Performance anxiety\nC. Posttraumatic stress disorder\nD. Panic attack\n\nOutput ONLY the single letter (A/B/C/D) of the correct answer.",
+   "answer_format": "multiple_choice"
+  },
+  "events": [
+   {
+    "event": "retrieved",
+    "data": {
+     "iteration": 1,
+     "passages": 5
+    }
+   },
+   {
+    "event": "generated",
+    "data": {
+     "iteration": 1
+    }
+   },
+   {
+    "event": "verified",
+    "data": {
+     "iteration": 1,
+     "support": 0.0
+    }
+   },
+   {
+    "event": "refining",
+    "data": {
+     "next_iteration": 2
+    }
+   },
+   {
+    "event": "retrieved",
+    "data": {
+     "iteration": 2,
+     "passages": 5
+    }
+   },
+   {
+    "event": "generated",
+    "data": {
+     "iteration": 2
+    }
+   },
+   {
+    "event": "verified",
+    "data": {
+     "iteration": 2,
+     "support": 0.0
+    }
+   }
+  ],
+  "answer": {
+   "run_id": "cc0fd482-61e5-5c49-9ea9-5a703eb3e698",
+   "question": "A 28-year-old male presents with a recent onset of upsetting dreams, anxiety, and disturbing flashbacks. The patient reports that he returned from active duty in Iraq 3 months ago and was adjusting to life back at home until about 7 weeks ago when he began having intense fear of loud noises and seeing sudden flashbacks to bombing attacks he endured during his time in Iraq. He had to take a leave from his army instructor duties as he was not able to handle the familiar settings of practice shooting ranges and sudden loud explosions during battalion training. After refusing to leave his house, he was finally persuaded by his wife to visit your clinic. What is the most likely diagnosis?\n\nAnswer choices:\nA. Acute stress disorder\nB. Performance anxiety\nC. Posttraumatic stress disorder\nD. Panic attack\n\nOutput ONLY the single letter (A/B/C/D) of the correct answer.",
+   "answer_format": "multiple_choice",
+   "answer": "insufficient evidence",
+   "model_answer": "C",
+   "note": "No answer is shown because the retrieved studies do not support every part of it; the studies found are listed below. Unverified model answer (not backed by these studies): \"C\".",
+   "evidence": {
+    "status": "not_supported",
+    "supported_fraction": 0.0,
+    "message": "Not supported by the retrieved literature: this answer relies on the model's general medical knowledge.",
+    "statements": [
+     {
+      "kind": "rationale",
+      "text": "Symptoms of intrusive memories, nightmares, hypervigilance, and avoidance started more than one month after trauma",
+      "support": 0.0,
+      "supported": false,
+      "contradicted": false,
+      "supporting_pmid": null,
+      "contradicting_pmid": null,
+      "supporting_citation": null,
+      "quote": null,
+      "from_question": false
+     },
+     {
+      "kind": "rationale",
+      "text": "Duration and functional impairment meet criteria for posttraumatic stress disorder",
+      "support": 0.0,
+      "supported": false,
+      "contradicted": false,
+      "supporting_pmid": null,
+      "contradicting_pmid": null,
+      "supporting_citation": null,
+      "quote": null,
+      "from_question": false
+     }
+    ]
+   },
+   "citations": [
+    {
+     "source": "pubmed",
+     "pmid": 27109325,
+     "title": "Can men be included in the population subjected to puerperal psychosis?",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/27109325/",
+     "passage": "Our case report focused on the clinical description of an eighteen-year-old man suffering from an acute psychosis episode that occurred around the birth of his first child. Delusion followed a sudden decline in mood that lasted for a short period of time during the course of the third trimester of his wife's pregnancy. The delirium was rich with auditory and cenesthesic hallucinations, pregnancy and birth denial, feeling movements and hearing voices in his stomach. The symptoms disappeared after one month of treatment via an antipsychotic drug, risperidone.."
+    },
+    {
+     "source": "pubmed",
+     "pmid": 27011365,
+     "title": "Is cohesion within military units associated with post-deployment behavioral and mental health outcomes?",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/27011365/",
+     "passage": "A sample of U.S. Marines was assessed before and after deployment to Iraq or Afghanistan in 2010 or 2011. Within-group centering was used to distinguish unit-level from individual-level associations of cohesion with four behavioral and mental health outcomes assessed after deployment: alcohol misuse, violation of the Uniform Code of Military Justice (UCMJ), probable posttraumatic stress disorder (PTSD) and a positive screen for depression.."
+    },
+    {
+     "source": "pubmed",
+     "pmid": 24912140,
+     "title": "Two-year course trajectories of anxiety disorders: do DSM classifications matter?",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/24912140/",
+     "passage": "907 patients with panic disorder with agoraphobia, panic disorder without agoraphobia , agoraphobia, social phobia, or generalized anxiety disorder according to DSM-IV criteria were derived from a prospective cohort study (Netherlands Study of Depression and Anxiety). Baseline data were collected between September 2004 and February 2007; follow-up data, between October 2006 and March 2009. Latent class growth analysis was conducted, based on symptoms of anxiety and avoidance assessed with the Life Chart Interview covering a 2-year time period. Identified course trajectories were compared with DSM-IV diagnoses and a wider set of predictors.."
+    },
+    {
+     "source": "pubmed",
+     "pmid": 24912140,
+     "title": "Two-year course trajectories of anxiety disorders: do DSM classifications matter?",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/24912140/",
+     "passage": "We identified a class with minimal symptoms over time (41.7%), a moderately severe chronic class (42.8%), and a severe chronic class (15.4%). Panic disorder with agoraphobia (OR = 2.14; 95% CI, 1.48-3.09) and social phobia (OR = 1.97; 95% CI, 1.46-2.68) predicted moderately severe chronicity; panic disorder with agoraphobia (OR = 2.70; 95% CI, 1.66-4.40), social phobia (OR = 2.46; 95% CI, 1.62-3.74), and generalized anxiety disorder (OR = 1.86; 95% CI, 1.23-2.82) predicted a severe chronic course. However, baseline severity, duration of anxiety, and disability better predicted severe chronic course trajectories than DSM-categories. Additionally, partner status, age at onset, childhood trauma, and comorbid depressive disorder predicted chronic courses.."
+    },
+    {
+     "source": "pubmed",
+     "pmid": 18845342,
+     "title": "Is tonic immobility the core sign among conventional peritraumatic signs and symptoms listed for PTSD?",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/18845342/",
+     "passage": "Previous studies suggested the importance of peritraumatic reactions as predictors of PSTD symptoms severity. Despite mounting evidence that tonic immobility occurs under intense life threats its role as predictor of PTSD severity remains by and large understudied. The objective of this study was to investigate the role of peritraumatic reactions (tonic immobility, panic and dissociation) as predictors of PTSD symptoms severity.."
+    }
+   ],
+   "iterations": 2,
+   "stop_reason": "stalled",
+   "model": "groq/openai/gpt-oss-120b",
+   "latency_seconds": 3.254,
+   "cost": 0.000725,
+   "disclaimer": "Research use only. This is not medical advice and must not be used for clinical decisions."
+  }
+ },
+ {
+  "id": "medqa-test-862",
+  "label": "Textbook source: every statement verified, yet the wrong option",
+  "source_run": "v3g-quotes-textbooks",
+  "gold_answer": "B",
+  "request": {
+   "question": "A 27-year-old woman presents to her primary care physician for a general checkup. She has been doing well in school and has no complaints. The patient has a past medical history of asthma which is controlled with albuterol. She is currently sexually active but states that she uses birth control. She has many friends and states that her mood is typically positive. The patient's last pap smear was 1 year ago. Her father died of colon cancer at the age of 68, and her mother was diagnosed with breast cancer at the age of 65. Her temperature is 98.7°F (37.1°C), blood pressure is 147/108 mmHg, pulse is 80/min, respirations are 15/min, and oxygen saturation is 99% on room air. The patient's BMI is 19 kg/m^2. Physical exam demonstrates a normal S1 and S2, normal breath sounds, and an abdominal exam that is within normal limits. Which of the following is the best next step in management?\n\nAnswer choices:\nA. Colonoscopy\nB. Discontinue birth control and place an intrauterine device\nC. Pap smear\nD. Recommend weight loss\n\nOutput ONLY the single letter (A/B/C/D) of the correct answer.",
+   "answer_format": "multiple_choice"
+  },
+  "events": [
+   {
+    "event": "retrieved",
+    "data": {
+     "iteration": 1,
+     "passages": 5
+    }
+   },
+   {
+    "event": "generated",
+    "data": {
+     "iteration": 1
+    }
+   },
+   {
+    "event": "verified",
+    "data": {
+     "iteration": 1,
+     "support": 0.0
+    }
+   },
+   {
+    "event": "refining",
+    "data": {
+     "next_iteration": 2
+    }
+   },
+   {
+    "event": "retrieved",
+    "data": {
+     "iteration": 2,
+     "passages": 5
+    }
+   },
+   {
+    "event": "generated",
+    "data": {
+     "iteration": 2
+    }
+   },
+   {
+    "event": "verified",
+    "data": {
+     "iteration": 2,
+     "support": 1.0
+    }
+   }
+  ],
+  "answer": {
+   "run_id": "eed51b15-4b3d-5e74-83c5-40b71500195c",
+   "question": "A 27-year-old woman presents to her primary care physician for a general checkup. She has been doing well in school and has no complaints. The patient has a past medical history of asthma which is controlled with albuterol. She is currently sexually active but states that she uses birth control. She has many friends and states that her mood is typically positive. The patient's last pap smear was 1 year ago. Her father died of colon cancer at the age of 68, and her mother was diagnosed with breast cancer at the age of 65. Her temperature is 98.7°F (37.1°C), blood pressure is 147/108 mmHg, pulse is 80/min, respirations are 15/min, and oxygen saturation is 99% on room air. The patient's BMI is 19 kg/m^2. Physical exam demonstrates a normal S1 and S2, normal breath sounds, and an abdominal exam that is within normal limits. Which of the following is the best next step in management?\n\nAnswer choices:\nA. Colonoscopy\nB. Discontinue birth control and place an intrauterine device\nC. Pap smear\nD. Recommend weight loss\n\nOutput ONLY the single letter (A/B/C/D) of the correct answer.",
+   "answer_format": "multiple_choice",
+   "answer": "C",
+   "model_answer": "C",
+   "note": null,
+   "evidence": {
+    "status": "supported",
+    "supported_fraction": 1.0,
+    "message": "Supported by the retrieved literature.",
+    "statements": [
+     {
+      "kind": "rationale",
+      "text": "Routine cervical cancer screening with Pap smear is recommended for women starting at age 21",
+      "support": 0.9748,
+      "supported": true,
+      "contradicted": false,
+      "supporting_pmid": null,
+      "contradicting_pmid": null,
+      "supporting_citation": 0,
+      "quote": "Screening guidelines recommend regular Pap testing for all women who have reached the age of 21",
+      "from_question": false
+     },
+     {
+      "kind": "rationale",
+      "text": "If prior Pap results are normal, screening is repeated every 3 years",
+      "support": 0.9723,
+      "supported": true,
+      "contradicted": false,
+      "supporting_pmid": null,
+      "contradicting_pmid": null,
+      "supporting_citation": 4,
+      "quote": "Women 21–29 years old with a normal Pap smear should have the test repeated every 3 years",
+      "from_question": false
+     }
+    ]
+   },
+   "citations": [
+    {
+     "source": "textbook",
+     "pmid": null,
+     "title": "Harrison's Principles of Internal Medicine",
+     "url": null,
+     "passage": "cervical cancer Screening with Papanicolaou (Pap) smears decreases cervical cancer mortality. The cervical cancer mortality rate has fallen substantially since the widespread use of the Pap smear. With the onset of sexual activity comes the risk of sexual transmission of HPV, the fundamental etiologic factor for cervical cancer. Screening guidelines recommend regular Pap testing for all women who have reached the age of 21 (prior to this age, even in individuals that have begun sexual activity, screening may cause more harm than benefit). The recommended interval for Pap screening is 3 years. Screening more frequently adds little benefit but leads to important harms, including unnecessary procedures and overtreatment of transient lesions. Beginning at age 30, guidelines also offer the alternative of combined Pap smear and HPV testing for women. The screening interval for women who test normal using this approach may be lengthened to 5 years."
+    },
+    {
+     "source": "textbook",
+     "pmid": null,
+     "title": "First Aid for the USMLE Step 2 CK",
+     "url": null,
+     "passage": "Hormonal contraceptives are protective against endometrial cancer. Screening of asymptomatic women for endometrial cancer is not recommended. Fifty percent of women with cervical cancer had not had a Pap smear in the three years preceding their diagnosis, and another 10% had not been screened in f ve years. T AB LE 2.1 2-9. Classifcation Systems for Pap Smears 1 Benign Benign Normal 2 Benign with inf ammation Benign with inf ammation Normal, atypical squamous cells (ASC) 3 Mild dysplasia CIN I LSIL 3 Moderate dysplasia CIN II HSIL 3 Severe dysplasia CIN II HSIL 4 Carcinoma in situ CIN II HSIL 5 Invasive cancer Invasive cancer Invasive cancer Women ≥ 30 years of age who have had three consecutive normal tests may ↑ their screening interval to once every three years. For women ≥ 30 years of age, HPV DNA testing for high-risk strands may be used for screening as well."
+    },
+    {
+     "source": "pubmed",
+     "pmid": 26859535,
+     "title": "Screening History Among Women with Invasive Cervical Cancer in an Academic Medical Center: Will We Miss Cancers Following Updated Guidelines?",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/26859535/",
+     "passage": "Updated guidelines for the screening and management of cervical cancer in the United States recommend starting Papanicolaou (Pap) testing at age 21 and screening less frequently with less aggressive management for abnormalities. We sought to examine updated Pap test screening guidelines and how they may affect the detection of invasive cervical cancer, especially among women<30 years of age.."
+    },
+    {
+     "source": "textbook",
+     "pmid": null,
+     "title": "Schwartz's Principles of Surgery",
+     "url": null,
+     "passage": "clinical breast examination for breast cancer screening among average-risk women at any age.CervixWomen, age 21–65 yPap test and HPV DNA testCervical cancer screening should begin at age 21 y. For women age 21–29 y, screening should be done every 3 y with conventional or liquid-based Pap tests. For women age 30–65 y, screening should be done every 5 y with both the HPV test and the Pap test (preferred), or every 3 y with the Pap test alone (acceptable). Women age >65 y who have had ≥3 consecutive negative Pap tests or ≥2 consecutive negative HPV and Pap tests within the last 10 y, with the most recent test occurring within the last 5 y, and women who have had a total hysterectomy should stop cervical cancer screening.ColorectalMen and women age ≥50 ygFOBT, or FIT, or sDNA with a high sensitivity for cancerAnnual, starting at age 50 y. FSIG, orEvery 5 y, starting at age 50 y. FSIG can be performed alone, or consideration can be given to combining FSIG performed every 5 y with a"
+    },
+    {
+     "source": "textbook",
+     "pmid": null,
+     "title": "Harrison's Principles of Internal Medicine",
+     "url": null,
+     "passage": "The primary method used for cancer screening is cervical cytology via Pap smear. The guidelines of the American Society of Colposcopy and Cervical Pathology recommend initiation of cervical cancer screening at age 21, regardless of the age of sexual debut. Women 21–29 years old with a normal Pap smear should have the test repeated every 3 years. Although adolescent and young women often test positive for HPV DNA, they are at very low risk of cervical cancer. Co-testing, or testing for HPV DNA at the time of the Pap smear, is not recommended for women in this age group because the presence of HPV DNA does not correlate with the presence of high-grade squamous intraepithelial neoplasia. Women 30–65 years of age should have a Pap smear every 3 years if testing for HPV DNA is not performed. The screening interval for women in this age group can be extended to every 5 years if co-testing results are negative. HPV testing is not recommended for partners of women with HPV or for screening"
+    }
+   ],
+   "iterations": 2,
+   "stop_reason": "accepted",
+   "model": "groq/openai/gpt-oss-120b",
+   "latency_seconds": 7.134,
+   "cost": 0.001011,
+   "disclaimer": "Research use only. This is not medical advice and must not be used for clinical decisions."
+  }
+ }
+]

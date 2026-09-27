@@ -1,4 +1,4 @@
-.PHONY: install lint fmt typecheck test check hooks
+.PHONY: install lint fmt typecheck test check hooks web-install web-dev web-check
 
 install:            ## Install all workspace packages and dev tools
 	uv sync --all-packages
@@ -21,3 +21,12 @@ test:               ## Run unit tests
 	uv run pytest
 
 check: lint typecheck test   ## Everything CI runs (except gitleaks)
+
+web-install:        ## Install the web UI's dependencies (Node.js + corepack)
+	cd apps/web && corepack enable && pnpm install
+
+web-dev:            ## Web UI in demo mode (recorded answers) on http://localhost:3000
+	cd apps/web && NEXT_PUBLIC_API_URL=mock pnpm dev
+
+web-check:          ## Web UI lint, types, tests and static build (what CI runs)
+	cd apps/web && pnpm lint && pnpm typecheck && pnpm test && NEXT_PUBLIC_API_URL=mock pnpm build
