@@ -20,11 +20,12 @@ import threading
 import time
 import uuid
 from collections import deque
-from collections.abc import AsyncIterator, Callable, Iterator
+from collections.abc import AsyncIterator, Callable, Iterator, Sequence
 from contextlib import asynccontextmanager
 from typing import Annotated, Any
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
 from medrag_agent.budget import BudgetExceededError
@@ -157,13 +158,24 @@ def caller(ctx: Ctx, authorization: Annotated[str | None, Header()] = None) -> s
 Caller = Annotated[str, Depends(caller)]
 
 
-def create_app(loader: Callable[[], ApiContext] = load_context) -> FastAPI:
+def create_app(
+    loader: Callable[[], ApiContext] = load_context, *, cors_origins: Sequence[str] = ()
+) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         app.state.ctx = loader()
         yield
 
     app = FastAPI(title="medical_rag_agent", version="0.1.0", lifespan=lifespan)
+    if cors_origins:
+        # The web UI is served from another origin (e.g. Cloudflare Pages) and sends a
+        # bearer key, so only listed origins may call the API from a browser.
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=list(cors_origins),
+            allow_methods=["GET", "POST"],
+            allow_headers=["Authorization", "Content-Type"],
+        )
 
     @app.get("/healthz")
     def healthz() -> dict[str, str]:
@@ -215,4 +227,10 @@ def create_app(loader: Callable[[], ApiContext] = load_context) -> FastAPI:
     return app
 
 
-app = create_app()
+def _cors_origins() -> list[str]:
+    from medrag_settings import get_settings
+
+    return [o.strip() for o in get_settings().cors_origins.split(",") if o.strip()]
+
+
+app = create_app(cors_origins=_cors_origins())

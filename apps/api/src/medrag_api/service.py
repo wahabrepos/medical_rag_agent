@@ -59,6 +59,9 @@ class AnswerService:
         self.ledger.check(cost(model, WORST_CASE_PROMPT_TOKENS, 3 * generator.config.max_tokens))
         graph = self.components.new_graph(generator)
         started = self.clock()
+        # A draft answer is unverified: with the evidence gate it is only streamed
+        # when the caller asked for unverified answers.
+        show_drafts = self.policy is not AnswerPolicy.EVIDENCE_GATED or request.include_unverified
         state: dict[str, Any] = {}
         initial = {
             "question": request.question,
@@ -71,7 +74,7 @@ class AnswerService:
                     state = chunk
                     continue
                 for node, update in chunk.items():
-                    event = _progress_event(node, update or {}, state)
+                    event = _progress_event(node, update or {}, state, show_drafts=show_drafts)
                     if event:
                         yield event
         finally:
@@ -171,12 +174,17 @@ class AnswerService:
         )
 
 
-def _progress_event(node: str, update: dict[str, Any], state: dict[str, Any]) -> Event | None:
+def _progress_event(
+    node: str, update: dict[str, Any], state: dict[str, Any], *, show_drafts: bool
+) -> Event | None:
     iteration = state.get("iteration", 0) + 1
     if node == "retrieve" and "context" in update:
         return "retrieved", {"iteration": iteration, "passages": len(update["context"])}
     if node == "generate" and "generation" in update:
-        return "generated", {"iteration": iteration, "draft_answer": update["generation"].answer}
+        data: dict[str, Any] = {"iteration": iteration}
+        if show_drafts:
+            data["draft_answer"] = update["generation"].answer
+        return "generated", data
     if node == "verify" and "verification" in update:
         return "verified", {
             "iteration": iteration,

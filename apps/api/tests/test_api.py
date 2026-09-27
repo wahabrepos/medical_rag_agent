@@ -1,6 +1,7 @@
 import json
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass
+from itertools import pairwise
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -211,6 +212,42 @@ def test_stream_sends_progress_then_answer(make_client: Callable[..., TestClient
         ]
 
     assert events == ["retrieved", "generated", "verified", "answer"]
+
+
+def stream_data(client: TestClient, body: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    with client.stream("POST", "/v1/ask/stream", json=body, headers=AUTH) as r:
+        lines = list(r.iter_lines())
+    events = {}
+    for name, data in pairwise(lines):
+        if name.startswith("event: ") and data.startswith("data: "):
+            events[name.removeprefix("event: ")] = json.loads(data.removeprefix("data: "))
+    return events
+
+
+def test_gated_stream_does_not_leak_draft_answers(make_client: Callable[..., TestClient]) -> None:
+    client = make_client(FakeComponents(answer("B", "other claim")))
+
+    gated = stream_data(client, {"question": "Which drug?"})
+    unverified = stream_data(client, {"question": "Which drug?", "include_unverified": True})
+
+    assert "draft_answer" not in gated["generated"]
+    assert gated["answer"]["answer"] == "insufficient evidence"
+    assert unverified["generated"]["draft_answer"] == "B"
+
+
+def test_cors_only_for_listed_origins() -> None:
+    app = create_app(lambda: None, cors_origins=["https://ui.example"])  # type: ignore[arg-type,return-value]
+    with TestClient(app) as client:
+        allowed = client.options(
+            "/v1/ask",
+            headers={"Origin": "https://ui.example", "Access-Control-Request-Method": "POST"},
+        )
+        other = client.options(
+            "/v1/ask",
+            headers={"Origin": "https://evil.example", "Access-Control-Request-Method": "POST"},
+        )
+    assert allowed.headers["access-control-allow-origin"] == "https://ui.example"
+    assert "access-control-allow-origin" not in other.headers
 
 
 def test_runs_are_stored_and_take_feedback(make_client: Callable[..., TestClient]) -> None:

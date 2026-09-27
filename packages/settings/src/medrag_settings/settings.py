@@ -52,6 +52,7 @@ class Settings(BaseSettings):
     # Public API (apps/api).
     api_keys: SecretStr | None = None  # comma-separated bearer keys; none = open in APP_ENV=local
     api_requests_per_minute: int = 20  # per key
+    cors_origins: str = ""  # comma-separated browser origins allowed to call the API (web UI)
     # evidence_gated: answers only when the literature supports every statement;
     # uncertain_yes_no: the earlier behaviour; show_all: always the model's answer.
     answer_policy: Literal["evidence_gated", "uncertain_yes_no", "show_all"] = "evidence_gated"
