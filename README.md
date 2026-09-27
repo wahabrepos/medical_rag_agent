@@ -14,7 +14,67 @@ Early development. The workspace, tooling and the research-work reference data a
 |---|---|---|
 | Self-MedRAG + Mistral-small | 71.30% | 75.96% |
 
-## Demo
+## Demos
+
+### Patient-style questions: the semantic gap
+
+![Three patient-style questions asked live: "elephant on my chest" (withheld), "a curtain came down over one eye" (withheld; the model's unverified answer, retinal detachment, shown on request) and "blood in my poop" (a quoted source, the unverified rest hidden)](docs/media/ui-patient-queries.webp)
+
+25 questions written the way patients describe symptoms ("it feels like an elephant is sitting
+on my chest") were asked one by one through the live system on 2026-09-27 (API on the Jetson,
+gpt-oss-120b, MiniCheck on a rented RTX 3060), as free text with the model's own answer
+requested, and compared by hand with the expected diagnosis
+([all answers, statements and sources](eval/demos/patient_queries.md)). The recording above is a
+separate live run of three of them; answers vary between runs.
+
+- **The evidence gate showed 2 of 25 answers** and withheld the rest as "insufficient evidence".
+  Neither shown answer names the expected diagnosis (one gives the work-up for a breast lump,
+  one ties "looser pants" to looser stools): quoted, verified statements are grounded, not a
+  diagnosis.
+- **The model's own answer matched the expected diagnosis 7 times** (plus 3 partial, 3
+  different) and **declined 12 times**: the prompt tells it to say "insufficient evidence" when
+  the retrieved passages do not cover a claim, and they rarely do.
+- **The semantic gap is in retrieval.** Patients' words retrieve the wrong literature ("elephant
+  sitting on my chest" found papers on the *elephant trunk* aortic surgery technique), and the
+  PubMedQA abstracts behind the corpus seldom state textbook links such as symptoms to diagnosis.
+  Closing it would need query rewriting into clinical terms and licensed clinical sources
+  (guidelines, textbooks); the system is not meant for self-diagnosis, and the gate withholding
+  these answers is the intended behaviour.
+
+<details>
+<summary>All 25 questions (expected diagnosis vs the model's own answer)</summary>
+
+| # | Patient's words | Expected | Model's own answer | Gate | Verdict |
+|---|---|---|---|---|---|
+| 1 | It feels like an elephant is sitting on my chest when I walk. | Stable coronary artery disease | Insufficient evidence | withheld | ⚪ declined |
+| 2 | I found a hard lump in my breast that doesn’t hurt and seems to be getting bigger. | Breast cancer (likely invasive carcinoma) | Palpable breast masses are typically assessed with ultrasound followed by core needle biopsy … | **shown** | ❌ different |
+| 3 | I have this sharp pain in my lower right belly that gets worse when I move. | Acute appendicitis | Insufficient evidence | withheld | ⚪ declined |
+| 4 | I’m always thirsty, peeing all the time, and losing weight without trying. | Diabetes mellitus (likely type 1 if acute) | Your symptoms may suggest uncontrolled diabetes and you should seek medical evaluation … | withheld | ✅ match |
+| 5 | I’ve got a bad headache, stiff neck, and light really hurts my eyes. | Meningitis (likely bacterial until proven otherwise) | Your symptoms could be concerning for meningitis, which typically presents with headache, neck … | withheld | ✅ match |
+| 6 | Suddenly I can’t see out of one eye, like a curtain came down. | Retinal detachment | Sudden vision loss in one eye described as a curtain coming down suggests retinal detachment … | withheld | ✅ match |
+| 7 | My hip hurts so much after I fell, and now I can’t stand on that leg. | Femoral neck fracture | You should have your hip evaluated promptly, including imaging (e.g., X‑ray) and orthopedic … | withheld | 🟡 partial |
+| 8 | I feel really weak, my heart feels weird, and my muscles aren’t working right. | Hyperkalemia | Insufficient evidence | withheld | ⚪ declined |
+| 9 | I feel really sick, dizzy, and confused, and my family says I have a fever. | Sepsis / septic shock | Fever is a defining feature of influenza‑like illness and systemic symptoms such as dizziness … | withheld | ❌ different |
+| 10 | I suddenly felt a tearing pain in my chest that goes straight to my back. | Aortic dissection | insufficient evidence | withheld | ⚪ declined |
+| 11 | I’ve been seeing blood in my poop and my pants feel looser lately. | Colorectal cancer | Changes in bowel habits such as looser stools are recognized as symptoms that raise suspicion … | **shown** | 🟡 partial |
+| 12 | I keep coughing and sometimes there’s blood, and I’ve lost weight without trying. | Lung cancer | Insufficient evidence | withheld | ⚪ declined |
+| 13 | I get this bad pain on the right side under my ribs after eating greasy food. | Cholelithiasis / cholecystitis | Your symptoms may suggest biliary colic or gallbladder disease, which can cause right-sided … | withheld | ✅ match |
+| 14 | There’s a bulge in my groin that pops out when I cough or lift things. | Inguinal hernia | insufficient evidence | withheld | ⚪ declined |
+| 15 | My vision gets blurry sometimes and I feel tired all the time. | Type 2 diabetes mellitus | Insufficient evidence to determine the cause of blurry vision and fatigue. | withheld | ⚪ declined |
+| 16 | I can’t lie flat at night because I feel like I’m drowning. | Congestive heart failure | insufficient evidence | withheld | ⚪ declined |
+| 17 | My heart suddenly starts racing and feels like it’s skipping beats. | Atrial fibrillation | Ventricular premature beats and other ventricular arrhythmias can cause a rapid, irregular … | withheld | ❌ different |
+| 18 | It burns when I pee and I feel like I have to go all the time. | Urinary tract infection | The provided passages do not contain information about burning during urination or a frequent … | withheld | ⚪ declined |
+| 19 | I’ve had a fever and chills, and my chest hurts when I breathe in. | Pneumonia | Your symptoms of fever, chills, and chest pain on breathing may indicate a respiratory … | withheld | ✅ match |
+| 20 | I see halos around lights and my eye hurts really badly. | Acute angle-closure glaucoma | Insufficient evidence | withheld | ⚪ declined |
+| 21 | Everything looks blurry in the center, but I can still see around it. | Age-related macular degeneration | insufficient evidence | withheld | ⚪ declined |
+| 22 | My knee suddenly got swollen and painful after I twisted it. | Anterior cruciate ligament (ACL) tear | You may have an acute ligament injury such as an ACL tear, which often causes sudden swelling … | withheld | ✅ match |
+| 23 | My back pain shoots down my leg like an electric shock. | Lumbar disc herniation | Your description is characteristic of sciatica, which is often caused by lumbar nerve root … | withheld | 🟡 partial |
+| 24 | My hands cramp up and my face feels twitchy. | Hypocalcemia | Insufficient evidence | withheld | ⚪ declined |
+| 25 | I feel faint, sweaty, and like I might pass out after losing a lot of blood. | Hypovolemic shock | Your symptoms are likely due to low blood pressure from significant blood loss (hypovolemia). | withheld | ✅ match |
+
+</details>
+
+### A literature question and a question the corpus cannot answer
 
 ![The web UI answering two live questions: a grounded "no" with quoted sources, then "insufficient evidence" for a drug the corpus does not cover](docs/media/ui-live.webp)
 
@@ -412,7 +472,9 @@ answer gets an evidence status:
 
 The `answer` field is the model's answer only when the gate passes (every statement grounded,
 at least one by a source); otherwise it is `"insufficient evidence"`, `model_answer` is withheld
-unless the request sets `include_unverified`, and `note` explains why. `ANSWER_POLICY` can be set
+unless the request sets `include_unverified`, and `note` explains why. The withheld answer's
+ungrounded statements are left out too, since they would reveal it (`hidden_statements` counts
+them). `ANSWER_POLICY` can be set
 to `uncertain_yes_no` (the Step 7 behaviour) or `show_all` (benchmarks). Every answer lists its
 citations (one per retrieved passage; `supporting_citation` links a statement to its source) and a
 disclaimer. With the gate, the progress stream does not include draft answers (they are

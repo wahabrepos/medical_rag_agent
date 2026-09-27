@@ -3,12 +3,13 @@
 // Needs the API on http://127.0.0.1:8000 (CORS_ORIGINS=http://127.0.0.1:3100), a static
 // build pointing at it, served on 127.0.0.1:3100, and puppeteer-core:
 //   (cd apps/web && NEXT_PUBLIC_API_URL=http://127.0.0.1:8000 pnpm build && python3 -m http.server 3100 -d out)
-//   npm install puppeteer-core && node record-live.mjs frames/   (then encode_demo.py)
+//   npm install puppeteer-core && node record-live.mjs frames/ [questions.json]   (then encode_demo.py)
+// questions.json: [{"text": ..., "format": "free" | "yes_no" | "multiple_choice", "unverified": bool}]
 import puppeteer from "puppeteer-core";
 import fs from "node:fs";
 
 const out = process.argv[2];
-const QUESTIONS = [
+const DEFAULT_QUESTIONS = [
   {
     text: "Does increased use of private health care reduce the demand for NHS care?",
     format: "yes_no",
@@ -19,6 +20,9 @@ const QUESTIONS = [
     unverified: true,
   },
 ];
+const QUESTIONS = process.argv[3]
+  ? JSON.parse(fs.readFileSync(process.argv[3], "utf-8"))
+  : DEFAULT_QUESTIONS;
 
 const browser = await puppeteer.launch({
   executablePath: process.env.CHROMIUM ?? "/snap/bin/chromium",
@@ -75,7 +79,8 @@ async function ask({ text, format, unverified }) {
     await snap(90);
   }
   await page.select("select", format);
-  if (unverified) await page.click("input[type=checkbox]");
+  const box = await page.$("input[type=checkbox]");
+  if ((await box.evaluate((el) => el.checked)) !== Boolean(unverified)) await box.click();
   await snap(900);
   await page.click("button[type=submit]");
   await snap(300);
