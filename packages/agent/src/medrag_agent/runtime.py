@@ -84,6 +84,8 @@ class AgentComponents:
     answer_check: bool = False
     # 7b: claims with verbatim quotes; only quoted, verified claims count as supported.
     evidence_quotes: bool = False
+    # Search for the question rewritten into clinical terms (one extra LLM call).
+    query_rewrite: bool = False
     limiter: RateLimiter = field(init=False)
 
     def __post_init__(self) -> None:
@@ -139,6 +141,7 @@ class AgentComponents:
             generate=generator,
             verify=self.verify,
             settings=self.loop,
+            rewrite=generator.rewrite if self.query_rewrite else None,
         )
 
 
@@ -155,6 +158,7 @@ def build_components(
     live_pubmed: bool = False,
     evidence_quotes: bool = False,
     knowledge_dir: Path | None = None,
+    query_rewrite: bool = False,
 ) -> AgentComponents:
     sessions = make_session_factory(make_engine(settings.database_url.get_secret_value()))
     embedder = BgeEmbedder(threads=settings.inference_threads)
@@ -192,6 +196,7 @@ def build_components(
         normalize_statements=normalize_statements,
         answer_check=answer_check,
         evidence_quotes=evidence_quotes,
+        query_rewrite=query_rewrite,
     )
 
 

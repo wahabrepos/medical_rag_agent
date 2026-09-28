@@ -81,3 +81,17 @@ def test_answer_claim_needs_a_quote_when_both_options_are_on() -> None:
 
     assert both.user.endswith("when a passage supports it.")
     assert '"claim" field needs an evidence entry' not in quotes_only.user
+
+
+def test_rewrite_prompt_and_parsing() -> None:
+    from medrag_core.prompts import build_rewrite_messages, parse_rewrite
+
+    messages = build_rewrite_messages("  I'm always thirsty  ")
+    assert messages.user == "Question: I'm always thirsty"
+    assert "clinical terms" in messages.system
+
+    assert parse_rewrite('"polyuria polydipsia"\nbecause ...', "q") == "polyuria polydipsia"
+    assert parse_rewrite("Query: polyuria", "q") == "polyuria"
+    assert parse_rewrite('polyuria AND (diabetes OR "thirst")', "q") == "polyuria diabetes thirst"
+    assert parse_rewrite("   \n", " the question ") == "the question"
+    assert len(parse_rewrite(" ".join(["word"] * 100), "q").split()) == 40

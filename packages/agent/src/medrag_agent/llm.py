@@ -25,7 +25,13 @@ from typing import Any
 from medrag_agent.errors import QuotaExhaustedError
 from medrag_core.loop import Generation
 from medrag_core.parsing import ParsedGeneration
-from medrag_core.prompts import ChatMessages, HistoryEntry, build_messages
+from medrag_core.prompts import (
+    ChatMessages,
+    HistoryEntry,
+    build_messages,
+    build_rewrite_messages,
+    parse_rewrite,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -165,6 +171,10 @@ class LlmGenerator:
             logger.warning("generation hit max_tokens=%d", self.config.max_tokens)
         self.last_response = result
         return result
+
+    def rewrite(self, question: str) -> str:
+        """The question as a clinical literature search query (one extra call)."""
+        return parse_rewrite(self.complete(build_rewrite_messages(question)).text, question)
 
     def __call__(
         self,

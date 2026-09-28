@@ -244,3 +244,59 @@ def test_answer_claim_is_verified_first() -> None:
     assert seen == [["X works.", "stmt-1-a", "stmt-1-b"]]
     assert state["iteration_claims"] == ["X works."]
     assert state["rationale"] == ["stmt-1-a", "stmt-1-b"]  # the answer's rationale is unchanged
+
+
+def test_rewrite_changes_what_is_searched_not_what_is_answered() -> None:
+    fakes = Fakes([(0.1, ["claim one"]), (0.9, [])])
+    asked: list[str] = []
+
+    def generate(query: str, *args: Any, **kwargs: Any) -> Generation:
+        asked.append(query)
+        return fakes.generate(query, *args, **kwargs)
+
+    graph = build_graph(
+        retrieve=fakes.retrieve,
+        generate=generate,
+        verify=fakes.verify,
+        settings=LoopSettings(),
+        rewrite=lambda q: "polyuria polydipsia weight loss diabetes mellitus",
+    )
+    state = graph.invoke({"question": "I am always thirsty and peeing all the time"})
+
+    # both wordings are searched: clinical terms and the patient's own words
+    assert fakes.queries[0] == (
+        "I am always thirsty and peeing all the time "
+        "polyuria polydipsia weight loss diabetes mellitus"
+    )
+    assert fakes.queries[1].startswith(fakes.queries[0])
+    assert "claim one" in fakes.queries[1]
+    # the generator answers the user's own question
+    assert asked[0] == "I am always thirsty and peeing all the time"
+    assert state["rewritten_query"] == "polyuria polydipsia weight loss diabetes mellitus"
+
+
+def test_failed_rewrite_searches_the_question() -> None:
+    fakes = Fakes([(0.9, [])])
+
+    def broken(question: str) -> str:
+        raise RuntimeError("model error")
+
+    graph = build_graph(
+        retrieve=fakes.retrieve, generate=fakes.generate, verify=fakes.verify, rewrite=broken
+    )
+    graph.invoke({"question": "Is it?"})
+
+    assert fakes.queries == ["Is it?"]
+
+
+def test_quota_errors_in_rewrite_stop_the_run() -> None:
+    fakes = Fakes([(0.9, [])])
+
+    def quota(question: str) -> str:
+        raise QuotaExhaustedError("daily limit")
+
+    graph = build_graph(
+        retrieve=fakes.retrieve, generate=fakes.generate, verify=fakes.verify, rewrite=quota
+    )
+    with pytest.raises(QuotaExhaustedError):
+        graph.invoke({"question": "Is it?"})

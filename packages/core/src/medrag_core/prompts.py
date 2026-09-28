@@ -5,6 +5,7 @@ The constants reproduce the research-work parity configuration exactly
 `PROMPT_VERSION`, because accuracy is measured against these prompts.
 """
 
+import re
 from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Protocol
@@ -81,6 +82,20 @@ ANSWER_CLAIM_EVIDENCE = (
     ' The "claim" field needs an evidence entry too, with the same text, when a passage '
     "supports it."
 )
+
+# Optional (not in the research work): the question as a literature search query. Users
+# describe symptoms in everyday words ("peeing all the time"); the literature uses
+# clinical terms (polyuria). Used only for retrieval; the answer is still generated for
+# the user's own question.
+REWRITE_SYSTEM_PROMPT = (
+    "You turn medical questions into literature search queries. Translate everyday "
+    "descriptions of symptoms and body parts into clinical terms (for example 'peeing all "
+    "the time' -> polyuria, 'always thirsty' -> polydipsia), keep the medical terms the "
+    "question already uses, and add the main conditions a clinician would consider. Answer "
+    "with the query only: plain words on one line (no AND, OR, quotes or brackets), at most "
+    "30 words, no explanation."
+)
+MAX_REWRITE_WORDS = 40
 
 # Only the most recent attempts are shown to the generator.
 MAX_HISTORY_IN_PROMPT = 2
@@ -203,3 +218,22 @@ def build_messages(
         template=template,
     )
     return ChatMessages(system=system_prompt.strip(), user=user.strip())
+
+
+def build_rewrite_messages(question: str) -> ChatMessages:
+    """Messages asking for a clinical search query for `question`."""
+    return ChatMessages(system=REWRITE_SYSTEM_PROMPT, user=f"Question: {question.strip()}")
+
+
+def parse_rewrite(text: str, question: str) -> str:
+    """The search query from the model's reply; the question itself if the reply is unusable."""
+    for line in text.strip().splitlines():
+        line = line.strip().strip("\"'`").strip()
+        if line.lower().startswith(("query:", "search query:")):
+            line = line.split(":", 1)[1].strip()
+        # Boolean search syntax is noise for the local and knowledge searches.
+        line = re.sub(r"\b(AND|OR|NOT)\b|[()\[\]\"]", " ", line)
+        if line.strip():
+            words = line.split()
+            return " ".join(words[:MAX_REWRITE_WORDS])
+    return question.strip()

@@ -1,6 +1,6 @@
 """The Self-MedRAG loop as a LangGraph state graph.
 
-    START -> prepare -> guard --(ok)--> retrieve -> generate -> verify -> decide
+    START -> prepare [-> rewrite] -> guard --(ok)--> retrieve -> generate -> verify -> decide
                           ^                                              |
                           |                           continue           |
                           +---------------- refine <---------------------+
@@ -47,6 +47,8 @@ class AgentState(TypedDict, total=False):
     binary_answer: bool  # PubMedQA: the yes/no constraint is added to the prompt
     multiple_choice: bool  # optional: require an option letter (not in the research work)
     exclude_pmids: list[int]  # articles retrieval must skip (leakage-free evaluation)
+    rewritten_query: str  # the question as a clinical search query (optional rewrite step)
+    search_query: str  # what retrieval searches for, when it differs from current_query
     current_query: str
     iteration: int  # completed iterations
     started_at: float
@@ -74,7 +76,11 @@ def build_graph(
     verify: Verifier,
     settings: LoopSettings | None = None,
     clock: Callable[[], float] = time.monotonic,
+    rewrite: Callable[[str], str] | None = None,
 ) -> CompiledStateGraph[AgentState, None, AgentState, AgentState]:
+    """With `rewrite`, retrieval searches for the question together with its clinical
+    rewording (refinement adds the unsupported statements to that); the generator still
+    answers the user's own question."""
     settings = settings or LoopSettings()
 
     def prepare(state: AgentState) -> AgentState:
@@ -93,14 +99,25 @@ def build_graph(
             return {"stop_reason": StopReason.TIMEOUT.value}
         return {}
 
+    def rewrite_node(state: AgentState) -> AgentState:
+        if rewrite is None:  # the node exists only with a rewrite function
+            return {}
+        try:
+            query = rewrite(state["question"])
+        except ProviderUnavailableError:
+            raise
+        except Exception:
+            return {}  # search for the question itself
+        # Both wordings: clinical terms find research papers, the user's own words find
+        # patient-level sources (MedlinePlus says "urinating often", not "polyuria").
+        combined = f"{state['question'].strip()} {query}"
+        return {"rewritten_query": query, "search_query": combined}
+
     def retrieve_node(state: AgentState) -> AgentState:
         try:
             exclude = state.get("exclude_pmids")
-            passages = list(
-                retrieve(state["current_query"], exclude_pmids=exclude)
-                if exclude
-                else retrieve(state["current_query"])
-            )
+            query = state.get("search_query") or state["current_query"]
+            passages = list(retrieve(query, exclude_pmids=exclude) if exclude else retrieve(query))
             context = [p if isinstance(p, str) else p.text for p in passages]
             return {"context": context, "passages": passages}
         except ProviderUnavailableError:
@@ -165,6 +182,13 @@ def build_graph(
         update: AgentState = {"iteration": iteration}
         if refined is not None:
             update["current_query"] = refined
+            if state.get("rewritten_query"):
+                base = f"{state['question'].strip()} {state['rewritten_query']}"
+                searched = refine_query(
+                    base, state["verification"].unsupported, iteration, settings
+                )
+                if searched is not None:
+                    update["search_query"] = searched
         return update
 
     def finalize(state: AgentState) -> AgentState:
@@ -238,13 +262,19 @@ def build_graph(
     graph = StateGraph(AgentState)
     graph.add_node("prepare", prepare)
     graph.add_node("guard", guard)
+    if rewrite is not None:
+        graph.add_node("rewrite", rewrite_node)
     graph.add_node("retrieve", retrieve_node)
     graph.add_node("generate", generate_node)
     graph.add_node("verify", verify_node)
     graph.add_node("refine", refine_node)
     graph.add_node("finalize", finalize)
     graph.add_edge(START, "prepare")
-    graph.add_edge("prepare", "guard")
+    if rewrite is not None:
+        graph.add_edge("prepare", "rewrite")
+        graph.add_edge("rewrite", "guard")
+    else:
+        graph.add_edge("prepare", "guard")
     graph.add_conditional_edges("guard", after_guard, ["retrieve", "finalize"])
     graph.add_conditional_edges("retrieve", on_error("generate"), ["generate", "finalize"])
     graph.add_conditional_edges("generate", on_error("verify"), ["verify", "finalize"])

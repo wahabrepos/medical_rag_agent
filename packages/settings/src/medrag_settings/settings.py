@@ -58,6 +58,8 @@ class Settings(BaseSettings):
     answer_policy: Literal["evidence_gated", "uncertain_yes_no", "show_all"] = "evidence_gated"
     # Ask for claims with verbatim quotes; only quoted, verified claims count as supported.
     evidence_quotes: bool = True
+    # Search for the question rewritten into clinical terms (one extra LLM call per question).
+    query_rewrite: bool = False
     nli_url: str | None = None  # remote inference service for NLI; unset = in-process
     llm_budget: float = 3.0  # total LLM spend cap shared with evaluations (stops at 90%)
     llm_spend_ledger: str = "data/llm_spend.json"
