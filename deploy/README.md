@@ -8,6 +8,7 @@ Docker Compose files and the Caddy config for local runs; `vast/` has the GPU-ho
 make up              # build the images and start the stack
 make ingest-sample   # load 2,000 PubMedQA records (SAMPLE_RECORDS), embed, index; restart the API
 make eval-smoke      # end-to-end check through http://127.0.0.1:8090 (two LLM questions)
+make knowledge-medlineplus && make up   # optional: add the MedlinePlus health topics
 ```
 
 Open http://127.0.0.1:8090 for the web UI. `make stack-stats` shows memory per container;
@@ -18,7 +19,7 @@ Open http://127.0.0.1:8090 for the web UI. `make stack-stats` shows memory per c
 | `postgres` | PostgreSQL 17 + pgvector (internal only) | 768 MB | 62 MB |
 | `migrate` | Alembic migrations, then exits | 512 MB | – |
 | `inference` | embeddings + claim verifier on CPU | 2 GB | 1.2–1.4 GB |
-| `api` | FastAPI agent service | 1.5 GB | 460 MB |
+| `api` | FastAPI agent service | 1.5 GB | 460 MB (870 MB with MedlinePlus and live PubMed) |
 | `web` | Caddy: the static UI and a proxy for `/v1`, `/healthz`, `/readyz` | 128 MB | 41 MB |
 | `worker` | corpus ingestion job (`make ingest-sample`) | 2 GB | while ingesting |
 
@@ -34,6 +35,12 @@ amd64 on a laptop). Notes:
   database and `data/indexes` are not touched.
 - **Models.** On first start the services download BGE and the verifier into the Hugging Face
   cache. `make` reuses the host's `~/.cache/huggingface` when there is one (`HF_CACHE_DIR`).
+- **Patient-style questions.** The API also searches the question rewritten into clinical
+  terms (`QUERY_REWRITE`, one extra LLM call) and live PubMed (`LIVE_PUBMED`; set `NCBI_EMAIL`
+  in `.env`). `make knowledge-medlineplus` downloads the MedlinePlus health topics from NLM
+  (`MEDLINEPLUS_DATE`, a date listed on medlineplus.gov/xml.html) and builds
+  `data/knowledge/medlineplus`; `make up` then mounts it read-only (`KNOWLEDGE_DIR`). Citations
+  from it link to the topic page with NLM's attribution.
 - **Verifier.** Locally the inference service runs DeBERTa NLI (`VERIFIER=deberta-nli`), which
   fits in memory but is not the evaluated grounding setup; `/readyz` says so. The product's
   verifier, MiniCheck, needs a GPU host (next section) or a machine with more memory

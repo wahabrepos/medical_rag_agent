@@ -18,59 +18,69 @@ Early development. The workspace, tooling and the research-work reference data a
 
 ### Patient-style questions: the semantic gap
 
-![Three patient-style questions asked live: "elephant on my chest" (withheld), "a curtain came down over one eye" (withheld; the model's unverified answer, retinal detachment, shown on request) and "blood in my poop" (a quoted source, the unverified rest hidden)](docs/media/ui-patient-queries.webp)
+![First run: three patient-style questions asked live: "elephant on my chest" (withheld), "a curtain came down over one eye" (withheld; the model's unverified answer, retinal detachment, shown on request) and "blood in my poop" (a quoted source, the unverified rest hidden)](docs/media/ui-patient-queries.webp)
 
 25 questions written the way patients describe symptoms ("it feels like an elephant is sitting
-on my chest") were asked one by one through the live system on 2026-09-27 (API on the Jetson,
-gpt-oss-120b, MiniCheck on a rented RTX 3060), as free text with the model's own answer
-requested, and compared by hand with the expected diagnosis
-([all answers, statements and sources](eval/demos/patient_queries.md)). The recording above is a
-separate live run of three of them; answers vary between runs.
+on my chest") were asked one by one through the live system (API on the Jetson, gpt-oss-120b,
+MiniCheck on a rented RTX 3060), as free text with the model's own answer requested, and
+compared by hand with the expected diagnosis. The first run (2026-09-27) found a semantic gap;
+the second (2026-09-28) measured the changes made to close it:
 
-- **The evidence gate showed 2 of 25 answers** and withheld the rest as "insufficient evidence".
-  Neither shown answer names the expected diagnosis (one gives the work-up for a breast lump,
-  one ties "looser pants" to looser stools): quoted, verified statements are grounded, not a
-  diagnosis.
-- **The model's own answer matched the expected diagnosis 7 times** (plus 3 partial, 3
-  different) and **declined 12 times**: the prompt tells it to say "insufficient evidence" when
-  the retrieved passages do not cover a claim, and they rarely do.
-- **The semantic gap is in retrieval.** Patients' words retrieve the wrong literature ("elephant
+| | First run | With rewrite, MedlinePlus, live PubMed |
+|---|---|---|
+| Answers the evidence gate showed | 2 of 25 | **13 of 25** |
+| … naming the expected diagnosis (or the right urgent advice) | 0 | 8 (+2 partly) |
+| Model's own answer: ✅ match · 🟡 partial · ❌ different · ⚪ declined | 7 · 3 · 3 · 12 | **15** · 5 · 4 · 1 |
+| Report (every answer, statement, quote and source) | [patient_queries.md](eval/demos/patient_queries.md) | [patient_queries_v2.md](eval/demos/patient_queries_v2.md) |
+
+- **The gap was in retrieval.** Patients' words retrieved the wrong literature ("elephant
   sitting on my chest" found papers on the *elephant trunk* aortic surgery technique), and the
-  PubMedQA abstracts behind the corpus seldom state textbook links such as symptoms to diagnosis.
-  Closing it would need query rewriting into clinical terms and licensed clinical sources
-  (guidelines, textbooks); the system is not meant for self-diagnosis, and the gate withholding
-  these answers is the intended behaviour.
+  PubMedQA abstracts behind the corpus seldom state links such as symptoms to diagnosis.
+- **What changed:** the question is also searched in clinical terms (`QUERY_REWRITE`: "peeing
+  all the time" -> polyuria); MedlinePlus health topics (public domain, US National Library of
+  Medicine) add patient-level symptom lists (`make knowledge-medlineplus`); live PubMed search
+  reaches all of PubMed instead of the corpus sample (`LIVE_PUBMED`); and the agent loop now
+  checks drafts with the same quoted-claim rules as the gate, so a draft without valid quotes
+  is retried instead of being accepted and then withheld.
+- **Shown is not the same as right.** Of the 13 shown answers, 3 are off target although every
+  statement is quoted and verified: a breast lump answered with who gets a mammogram, muscle
+  weakness answered with a sentence from an unrelated case report, and hand cramps with facial
+  twitching called a nerve disorder (hypocalcemia expected). The gate proves each statement is
+  in a source, not that the conclusion is the right diagnosis. The system is not meant for
+  self-diagnosis.
+- The recording above is from the first run, of three of the questions; answers vary between
+  runs.
 
 <details>
-<summary>All 25 questions (expected diagnosis vs the model's own answer)</summary>
+<summary>All 25 questions, second run (expected diagnosis vs the model's own answer)</summary>
 
 | # | Patient's words | Expected | Model's own answer | Gate | Verdict |
 |---|---|---|---|---|---|
-| 1 | It feels like an elephant is sitting on my chest when I walk. | Stable coronary artery disease | Insufficient evidence | withheld | ⚪ declined |
-| 2 | I found a hard lump in my breast that doesn’t hurt and seems to be getting bigger. | Breast cancer (likely invasive carcinoma) | Palpable breast masses are typically assessed with ultrasound followed by core needle biopsy … | **shown** | ❌ different |
-| 3 | I have this sharp pain in my lower right belly that gets worse when I move. | Acute appendicitis | Insufficient evidence | withheld | ⚪ declined |
-| 4 | I’m always thirsty, peeing all the time, and losing weight without trying. | Diabetes mellitus (likely type 1 if acute) | Your symptoms may suggest uncontrolled diabetes and you should seek medical evaluation … | withheld | ✅ match |
-| 5 | I’ve got a bad headache, stiff neck, and light really hurts my eyes. | Meningitis (likely bacterial until proven otherwise) | Your symptoms could be concerning for meningitis, which typically presents with headache, neck … | withheld | ✅ match |
-| 6 | Suddenly I can’t see out of one eye, like a curtain came down. | Retinal detachment | Sudden vision loss in one eye described as a curtain coming down suggests retinal detachment … | withheld | ✅ match |
-| 7 | My hip hurts so much after I fell, and now I can’t stand on that leg. | Femoral neck fracture | You should have your hip evaluated promptly, including imaging (e.g., X‑ray) and orthopedic … | withheld | 🟡 partial |
-| 8 | I feel really weak, my heart feels weird, and my muscles aren’t working right. | Hyperkalemia | Insufficient evidence | withheld | ⚪ declined |
-| 9 | I feel really sick, dizzy, and confused, and my family says I have a fever. | Sepsis / septic shock | Fever is a defining feature of influenza‑like illness and systemic symptoms such as dizziness … | withheld | ❌ different |
-| 10 | I suddenly felt a tearing pain in my chest that goes straight to my back. | Aortic dissection | insufficient evidence | withheld | ⚪ declined |
-| 11 | I’ve been seeing blood in my poop and my pants feel looser lately. | Colorectal cancer | Changes in bowel habits such as looser stools are recognized as symptoms that raise suspicion … | **shown** | 🟡 partial |
-| 12 | I keep coughing and sometimes there’s blood, and I’ve lost weight without trying. | Lung cancer | Insufficient evidence | withheld | ⚪ declined |
-| 13 | I get this bad pain on the right side under my ribs after eating greasy food. | Cholelithiasis / cholecystitis | Your symptoms may suggest biliary colic or gallbladder disease, which can cause right-sided … | withheld | ✅ match |
-| 14 | There’s a bulge in my groin that pops out when I cough or lift things. | Inguinal hernia | insufficient evidence | withheld | ⚪ declined |
-| 15 | My vision gets blurry sometimes and I feel tired all the time. | Type 2 diabetes mellitus | Insufficient evidence to determine the cause of blurry vision and fatigue. | withheld | ⚪ declined |
-| 16 | I can’t lie flat at night because I feel like I’m drowning. | Congestive heart failure | insufficient evidence | withheld | ⚪ declined |
-| 17 | My heart suddenly starts racing and feels like it’s skipping beats. | Atrial fibrillation | Ventricular premature beats and other ventricular arrhythmias can cause a rapid, irregular … | withheld | ❌ different |
-| 18 | It burns when I pee and I feel like I have to go all the time. | Urinary tract infection | The provided passages do not contain information about burning during urination or a frequent … | withheld | ⚪ declined |
-| 19 | I’ve had a fever and chills, and my chest hurts when I breathe in. | Pneumonia | Your symptoms of fever, chills, and chest pain on breathing may indicate a respiratory … | withheld | ✅ match |
-| 20 | I see halos around lights and my eye hurts really badly. | Acute angle-closure glaucoma | Insufficient evidence | withheld | ⚪ declined |
-| 21 | Everything looks blurry in the center, but I can still see around it. | Age-related macular degeneration | insufficient evidence | withheld | ⚪ declined |
-| 22 | My knee suddenly got swollen and painful after I twisted it. | Anterior cruciate ligament (ACL) tear | You may have an acute ligament injury such as an ACL tear, which often causes sudden swelling … | withheld | ✅ match |
-| 23 | My back pain shoots down my leg like an electric shock. | Lumbar disc herniation | Your description is characteristic of sciatica, which is often caused by lumbar nerve root … | withheld | 🟡 partial |
-| 24 | My hands cramp up and my face feels twitchy. | Hypocalcemia | Insufficient evidence | withheld | ⚪ declined |
-| 25 | I feel faint, sweaty, and like I might pass out after losing a lot of blood. | Hypovolemic shock | Your symptoms are likely due to low blood pressure from significant blood loss (hypovolemia). | withheld | ✅ match |
+| 1 | It feels like an elephant is sitting on my chest when I walk. | Stable coronary artery disease | Possible angina (chest pain on exertion) | withheld | ✅ match |
+| 2 | I found a hard lump in my breast that doesn’t hurt and seems to be getting bigger. | Breast cancer (likely invasive carcinoma) | Diagnostic mammography is performed for people who have a lump or other signs or symptoms of … | **shown** | ❌ different |
+| 3 | I have this sharp pain in my lower right belly that gets worse when I move. | Acute appendicitis | Appendicitis can cause sharp lower right abdominal pain that worsens over time. | **shown** | ✅ match |
+| 4 | I’m always thirsty, peeing all the time, and losing weight without trying. | Diabetes mellitus (likely type 1 if acute) | Feeling very thirsty, urinating more often, and losing weight without trying are symptoms of … | **shown** | ✅ match |
+| 5 | I’ve got a bad headache, stiff neck, and light really hurts my eyes. | Meningitis (likely bacterial until proven otherwise) | You should seek urgent medical evaluation as these symptoms may indicate a potentially serious … | **shown** | ✅ match |
+| 6 | Suddenly I can’t see out of one eye, like a curtain came down. | Retinal detachment | A curtain‑like loss of vision in one eye is a symptom of retinal detachment. | **shown** | ✅ match |
+| 7 | My hip hurts so much after I fell, and now I can’t stand on that leg. | Femoral neck fracture | You may have a hip fracture and should seek urgent medical evaluation. | withheld | 🟡 partial |
+| 8 | I feel really weak, my heart feels weird, and my muscles aren’t working right. | Hyperkalemia | Weakness developed within 3-5 days of illness and myalgia was present early in the disease … | **shown** | ❌ different |
+| 9 | I feel really sick, dizzy, and confused, and my family says I have a fever. | Sepsis / septic shock | Your symptoms could be consistent with sepsis. | **shown** | ✅ match |
+| 10 | I suddenly felt a tearing pain in my chest that goes straight to my back. | Aortic dissection | Insufficient evidence | withheld | ⚪ declined |
+| 11 | I’ve been seeing blood in my poop and my pants feel looser lately. | Colorectal cancer | Blood in the stool and looser bowel movements can be caused by several rectal conditions such … | withheld | 🟡 partial |
+| 12 | I keep coughing and sometimes there’s blood, and I’ve lost weight without trying. | Lung cancer | Your symptoms could be indicative of lung cancer. | withheld | ✅ match |
+| 13 | I get this bad pain on the right side under my ribs after eating greasy food. | Cholelithiasis / cholecystitis | Greasy foods can trigger gallstone attacks | **shown** | ✅ match |
+| 14 | There’s a bulge in my groin that pops out when I cough or lift things. | Inguinal hernia | You likely have an inguinal (groin) hernia. | withheld | ✅ match |
+| 15 | My vision gets blurry sometimes and I feel tired all the time. | Type 2 diabetes mellitus | The symptoms may be indicative of diabetes. | withheld | 🟡 partial |
+| 16 | I can’t lie flat at night because I feel like I’m drowning. | Congestive heart failure | Difficulty lying flat and shortness of breath when supine are symptoms of heart failure | **shown** | ✅ match |
+| 17 | My heart suddenly starts racing and feels like it’s skipping beats. | Atrial fibrillation | Your symptoms are consistent with an arrhythmia. | **shown** | 🟡 partial |
+| 18 | It burns when I pee and I feel like I have to go all the time. | Urinary tract infection | You likely have a urinary tract infection. | **shown** | ✅ match |
+| 19 | I’ve had a fever and chills, and my chest hurts when I breathe in. | Pneumonia | Your symptoms could be consistent with pneumonia. | withheld | ✅ match |
+| 20 | I see halos around lights and my eye hurts really badly. | Acute angle-closure glaucoma | Halos around lights are a symptom of cataracts; the eye pain is not explained by the provided … | withheld | ❌ different |
+| 21 | Everything looks blurry in the center, but I can still see around it. | Age-related macular degeneration | You may have macular degeneration, which causes central vision blur while peripheral vision … | withheld | ✅ match |
+| 22 | My knee suddenly got swollen and painful after I twisted it. | Anterior cruciate ligament (ACL) tear | You likely have an anterior cruciate ligament (ACL) injury. | withheld | ✅ match |
+| 23 | My back pain shoots down my leg like an electric shock. | Lumbar disc herniation | Your symptoms are consistent with sciatica. | **shown** | 🟡 partial |
+| 24 | My hands cramp up and my face feels twitchy. | Hypocalcemia | The symptoms are consistent with a peripheral nerve disorder. | **shown** | ❌ different |
+| 25 | I feel faint, sweaty, and like I might pass out after losing a lot of blood. | Hypovolemic shock | You are likely experiencing a syncopal episode caused by low blood pressure from blood loss. | withheld | ✅ match |
 
 </details>
 
@@ -252,7 +262,9 @@ TEST_DATABASE_URL=postgresql+psycopg://medrag:medrag@localhost:5432/medrag \
 `make up && make ingest-sample && make eval-smoke` builds and starts the whole system
 (PostgreSQL + pgvector, migrations, inference service, API, web UI behind Caddy on
 http://127.0.0.1:8090) with a 2,000-record corpus sample, then checks it end to end. It needs
-about 1.9 GB of memory and no GPU; see [deploy/README.md](deploy/README.md).
+about 1.9 GB of memory and no GPU; see [deploy/README.md](deploy/README.md). The API searches
+in clinical terms and live PubMed too; run `make knowledge-medlineplus` once (download from NLM,
+about 5 minutes on the Jetson's CPU) and `make up` again to add the MedlinePlus health topics.
 
 ### Corpus and retrieval
 
@@ -355,6 +367,7 @@ Each change is measured against the v1 baseline on the same 150 questions:
 | v3e | v3d + claims with verbatim quotes | 77.3% | 77.3% | 0 | ~75% |
 | v3f | v3e + the answer claim needs a quote too | 76.0% | 76.0% | 0 | ~95% |
 | v3g | v3e + MedRAG textbooks as background knowledge | 74.7% | 76.0% | 0 | ~65% |
+| v3h | v3e + clinical query rewrite, MedlinePlus, live PubMed, loop checks quotes | 80.0% | 78.7% | 0 | ~70% |
 | research work | Mistral-small, same questions | 69.3% | 76.0% | – | 0% |
 
 - With the corrected verifier the loop actually iterates, but the research-work rules then
@@ -376,6 +389,9 @@ Each change is measured against the v1 baseline on the same 150 questions:
   questions the corpus does not cover, cannot show on these questions.
 - v3d-v3g are the Step 7b grounding runs; accuracy differences of 1-3 questions are within
   noise (gpt-oss answers vary between runs). What they change is grounding, below.
+- v3h is the configuration made for patient-style questions (see Demos); on the golden set it
+  is within noise of v3e on accuracy, at one extra LLM call per question for the rewrite
+  (about EUR 0.001 per question in all).
 
 ### Step 7b: can users trust an answer?
 
@@ -402,9 +418,10 @@ re-applies the final rules to earlier runs):
 
 | Run | Questions answered by the gate (MedQA · PubMedQA) | Accuracy of those | Accuracy of withheld |
 |---|---|---|---|
-| v3e quotes (product configuration) | 0% · **41%** | – · **90%** | 77% · 68% |
+| v3e quotes | 0% · **41%** | – · **90%** | 77% · 68% |
 | v3f quotes + quoted answer claim | 0% · 1% | – · 100% | 76% · 76% |
 | v3g quotes + textbooks | 16% · 47% | **58%** · 83% | 78% · 70% |
+| v3h quotes + rewrite, MedlinePlus, live PubMed, loop checks quotes | 17% · **57%** | 77% · 88% | 81% · 66% |
 
 - On literature questions (PubMedQA style) the gate answers 41% of questions, 90% of them
   correctly; the withheld ones would have been right only 68% of the time.
@@ -414,6 +431,11 @@ re-applies the final rules to earlier runs):
   the withheld ones (78%): true textbook facts that do not decide between the options. A
   stricter threshold does not fix it. Textbooks are therefore not used, and the gate answers
   none of the 75 clinical-vignette questions.
+- v3h (the product configuration since 2026-09-28) answers more literature questions (57%,
+  88% right) and, through MedlinePlus, 17% of the clinical vignettes; those are right 77% of
+  the time, a little below the withheld ones (81%), so the textbook finding holds for
+  MedlinePlus too: on exam-style vignettes a verified statement does not decide between the
+  options.
 - Question grounding was first too loose: the web UI showed an answer option taken as a fact,
   and re-checking found questions ("Does X...?") and diagnoses passing as restatements. With
   the rules above (all runs re-gated), one statement in 450 answers is grounded in the question.
