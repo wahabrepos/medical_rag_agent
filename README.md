@@ -247,6 +247,13 @@ TEST_DATABASE_URL=postgresql+psycopg://medrag:medrag@localhost:5432/medrag \
   uv run pytest -m integration        # uses throwaway databases, never the dev one
 ```
 
+### Full stack with Docker Compose
+
+`make up && make ingest-sample && make eval-smoke` builds and starts the whole system
+(PostgreSQL + pgvector, migrations, inference service, API, web UI behind Caddy on
+http://127.0.0.1:8090) with a 2,000-record corpus sample, then checks it end to end. It needs
+about 1.9 GB of memory and no GPU; see [deploy/README.md](deploy/README.md).
+
 ### Corpus and retrieval
 
 ```bash
