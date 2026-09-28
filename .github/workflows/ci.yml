@@ -107,6 +107,19 @@ jobs:
         env:
           NEXT_PUBLIC_API_URL: mock
 
+  images:
+    name: Docker images (amd64 build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Compose file is valid
+        run: docker compose -f deploy/docker-compose.yml --profile jobs config --quiet
+
+      # arm64 is built on the Jetson; this checks the same Dockerfiles on amd64.
+      - name: Build the stack's images
+        run: docker compose -f deploy/docker-compose.yml --profile jobs build
+
   secrets:
     name: Secret scan
     runs-on: ubuntu-latest
