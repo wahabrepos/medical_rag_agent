@@ -376,3 +376,29 @@ def test_medlineplus_citations_link_to_the_topic(make_client: Callable[..., Test
         None,
         "https://medlineplus.gov/diabetes.html",
     )
+
+
+def test_rewritten_query_is_streamed(make_client: Callable[..., TestClient]) -> None:
+    components = FakeComponents(answer("B", "supported claim"))
+    original = components.new_graph
+
+    def with_rewrite(generator: LlmGenerator) -> Any:
+        graph = original(generator)
+        return (
+            build_graph(
+                retrieve=lambda q: list(PASSAGES),
+                generate=generator,
+                verify=lambda r, c: Verification(
+                    support_score=0.9, unsupported=[], best_scores=[0.9]
+                ),
+                settings=LoopSettings(final_answer_rule=FinalAnswerRule.BEST_SUPPORTED),
+                rewrite=lambda q: "clinical terms",
+            )
+            if graph
+            else graph
+        )
+
+    components.new_graph = with_rewrite  # type: ignore[method-assign]
+    events = stream_data(make_client(components), {"question": "Which drug?"})
+
+    assert events["rewritten"] == {"query": "clinical terms"}

@@ -199,6 +199,9 @@ def _progress_event(
     node: str, update: dict[str, Any], state: dict[str, Any], *, show_drafts: bool
 ) -> Event | None:
     iteration = state.get("iteration", 0) + 1
+    if node == "rewrite" and "rewritten_query" in update:
+        # The clinical terms; retrieval searches them together with the question.
+        return "rewritten", {"query": update["rewritten_query"]}
     if node == "retrieve" and "context" in update:
         return "retrieved", {"iteration": iteration, "passages": len(update["context"])}
     if node == "generate" and "generation" in update:

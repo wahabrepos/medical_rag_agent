@@ -93,6 +93,8 @@ def load_context() -> ApiContext:
         nli_url=settings.nli_url,
         normalize_statements=True,  # v3a: better-grounded PubMedQA answers, same cost
         evidence_quotes=settings.evidence_quotes,  # 7b: claims tied to verbatim quotes
+        query_rewrite=settings.query_rewrite,
+        live_pubmed=settings.live_pubmed,
     )
     sessions = make_session_factory(make_engine(settings.database_url.get_secret_value()))
     service = AnswerService(
