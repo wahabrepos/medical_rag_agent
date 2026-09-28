@@ -1,0 +1,144 @@
+# The whole system on one machine, no GPU: PostgreSQL + pgvector, migrations, the
+# inference service (embeddings + claim verifier on CPU), the API and the web UI behind
+# Caddy on http://127.0.0.1:8090. The LLM is called through its provider's API (keys
+# from ../.env). Sized for 8 GB: every service has a memory limit.
+#
+#   make up               build and start (then make ingest-sample, make eval-smoke)
+#   make ingest-sample    load a sample of the corpus (worker job), then restart the API
+#   make eval-smoke       end-to-end check through the web entry point
+#   make down             stop (volumes are kept; make clean removes them)
+#
+# Variables (shell or deploy/.env): MEDRAG_PORT, SAMPLE_RECORDS, HF_CACHE_DIR (a host
+# Hugging Face cache to reuse), VERIFIER, VERIFIER_ONNX_PATH, MEDRAG_NLI_URL (a remote
+# verifier, e.g. MiniCheck on a GPU host through an SSH tunnel; see deploy/README.md).
+name: medrag
+
+x-python-build: &python-build
+  context: ..
+  dockerfile: deploy/docker/python.Dockerfile
+
+x-database: &database
+  DATABASE_URL: postgresql+psycopg://medrag:medrag@postgres:5432/medrag
+
+services:
+  postgres:
+    image: pgvector/pgvector:0.8.1-pg17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: medrag
+      POSTGRES_PASSWORD: medrag  # internal network only, no published port
+      POSTGRES_DB: medrag
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    shm_size: 256mb
+    command: ["postgres", "-c", "shared_buffers=128MB", "-c", "maintenance_work_mem=128MB"]
+    mem_limit: 768m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U medrag -d medrag"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  migrate:
+    build:
+      <<: *python-build
+      args: {PACKAGE: medrag-api}
+    image: medrag-api:local
+    command: ["alembic", "-c", "db/alembic.ini", "upgrade", "head"]
+    environment:
+      <<: *database
+    depends_on:
+      postgres: {condition: service_healthy}
+    mem_limit: 512m
+    restart: "no"
+
+  inference:
+    build:
+      <<: *python-build
+      args: {PACKAGE: medrag-inference}
+    image: medrag-inference:local
+    command: ["uvicorn", "medrag_inference.app:app", "--host", "0.0.0.0", "--port", "8001"]
+    restart: unless-stopped
+    environment:
+      VERIFIER: ${VERIFIER:-deberta-nli}
+      VERIFIER_ONNX_PATH: ${VERIFIER_ONNX_PATH:-/cache/models/minicheck-roberta-large.onnx}
+      INFERENCE_THREADS: "4"
+    volumes:
+      - ${HF_CACHE_DIR:-hf-cache}:/cache/huggingface
+    mem_limit: 2g
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/healthz')"]
+      interval: 10s
+      timeout: 5s
+      start_period: 180s  # first start downloads the models
+      retries: 30
+
+  api:
+    build:
+      <<: *python-build
+      args: {PACKAGE: medrag-api}
+    image: medrag-api:local
+    command: ["uvicorn", "medrag_api.app:app", "--host", "0.0.0.0", "--port", "8000"]
+    # Until make ingest-sample has built the index the API cannot start; it retries.
+    restart: unless-stopped
+    env_file:
+      - path: ../.env
+        required: false
+    environment:
+      <<: *database
+      APP_ENV: local
+      API_KEYS: ${API_KEYS:-}
+      NLI_URL: ${MEDRAG_NLI_URL:-http://inference:8001}
+      EVIDENCE_QUOTES: "true"
+      ANSWER_POLICY: evidence_gated
+      CORS_ORIGINS: ""
+      # The one LLM spend ledger (and budget cap) shared with local runs.
+      LLM_SPEND_LEDGER: /app/host-data/llm_spend.json
+    volumes:
+      - indexes:/app/data/indexes:ro
+      - ../data:/app/host-data
+      - ${HF_CACHE_DIR:-hf-cache}:/cache/huggingface
+    extra_hosts:
+      - host.docker.internal:host-gateway  # a verifier tunnelled to the host
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      inference: {condition: service_healthy}
+    mem_limit: 1536m
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz')"]
+      interval: 10s
+      timeout: 5s
+      start_period: 60s
+      retries: 30
+
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/docker/web.Dockerfile
+    image: medrag-web:local
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${MEDRAG_PORT:-8090}:80"
+    depends_on: [api]
+    mem_limit: 128m
+
+  worker:
+    profiles: [jobs]
+    build:
+      <<: *python-build
+      args: {PACKAGE: medrag-ingest}
+    image: medrag-ingest:local
+    command: ["medrag-ingest", "all", "--limit", "${SAMPLE_RECORDS:-2000}", "--profile", "parity", "--reset"]
+    environment:
+      <<: *database
+    volumes:
+      - indexes:/app/data/indexes
+      - ${HF_CACHE_DIR:-hf-cache}:/cache/huggingface
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    mem_limit: 2g
+
+volumes:
+  pgdata:
+  indexes:
+  hf-cache:
