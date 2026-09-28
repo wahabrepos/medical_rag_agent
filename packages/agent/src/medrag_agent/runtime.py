@@ -21,9 +21,11 @@ import numpy.typing as npt
 from medrag_agent.errors import ProviderUnavailableError
 from medrag_agent.graph import AgentState, build_graph
 from medrag_agent.llm import LlmGenerator, RateLimiter, config_for_model
+from medrag_core.evidence import QuotedClaim
 from medrag_core.policy import FinalAnswerRule, LoopSettings
 from medrag_core.verification import (
     Verification,
+    verify_quoted_claims,
     verify_rationale,
     verify_with_contradictions,
 )
@@ -135,6 +137,27 @@ class AgentComponents:
             # A lost tunnel or remote service stops the run; the question is asked again.
             raise ProviderUnavailableError(str(exc)) from exc
 
+    def verify_quoted(
+        self,
+        statements: list[str],
+        context: list[str],
+        quotes: Sequence[QuotedClaim],
+        question: str,
+    ) -> Verification:
+        from medrag_inference.client import InferenceUnavailableError
+
+        try:
+            return verify_quoted_claims(
+                statements,
+                context,
+                quotes,
+                question,
+                lambda pairs: self.nli.probabilities(pairs).tolist(),
+                threshold=self.nli.support_threshold,
+            )
+        except InferenceUnavailableError as exc:
+            raise ProviderUnavailableError(str(exc)) from exc
+
     def new_graph(self, generator: LlmGenerator) -> Any:
         return build_graph(
             retrieve=self.retriever.passages,
@@ -142,6 +165,7 @@ class AgentComponents:
             verify=self.verify,
             settings=self.loop,
             rewrite=generator.rewrite if self.query_rewrite else None,
+            verify_quoted=self.verify_quoted if self.evidence_quotes else None,
         )
 
 

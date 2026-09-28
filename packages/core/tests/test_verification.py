@@ -4,7 +4,8 @@ from typing import Any
 
 import pytest
 
-from medrag_core.verification import verify_rationale
+from medrag_core.evidence import QuotedClaim
+from medrag_core.verification import verify_quoted_claims, verify_rationale
 
 FIXTURES = Path(__file__).parent / "fixtures" / "research_work"
 
@@ -85,3 +86,49 @@ def test_weak_contradiction_does_not_veto() -> None:
 
     probs = _probs({("p1", "A helps."): (0.75, 0.2, 0.05), ("p2", "A helps."): (0.0, 0.8, 0.2)})
     assert verify_with_contradictions(["A helps."], ["p1", "p2"], probs).support_score == 1.0
+
+
+def quoted_probabilities(pairs: list[tuple[str, str]]) -> list[list[float]]:
+    """Entailment 0.9 when the passage says the statement word for word, else 0.1."""
+    return [[0.0, 0.9, 0.1] if c.lower() in p.lower() else [0.0, 0.1, 0.9] for p, c in pairs]
+
+
+PASSAGES = ["Feeling very thirsty is a symptom of diabetes.", "Unrelated text about sleep."]
+
+
+def test_quoted_verification_needs_a_valid_quote() -> None:
+    claim = "Feeling very thirsty is a symptom of diabetes"
+    quoted = verify_quoted_claims(
+        [claim],
+        PASSAGES,
+        [QuotedClaim(claim, 1, "Feeling very thirsty is a symptom of diabetes.")],
+        "Why am I thirsty?",
+        quoted_probabilities,
+    )
+    unquoted = verify_quoted_claims(
+        [claim], PASSAGES, [], "Why am I thirsty?", quoted_probabilities
+    )
+
+    assert quoted.support_score == 1.0
+    assert quoted.unsupported == []
+    # the passage supports it, but without a quote the draft is refined, as the gate
+    # would withhold it
+    assert unquoted.support_score == 0.0
+    assert unquoted.unsupported == [claim]
+
+
+def test_quoted_verification_accepts_restated_question_facts() -> None:
+    fact = "I have been very thirsty for a month"
+    result = verify_quoted_claims(
+        [fact], PASSAGES, [], "I have been very thirsty for a month. Why?", quoted_probabilities
+    )
+    assert result.support_score == 1.0
+
+
+def test_quoted_verification_vetoes_contradictions() -> None:
+    def contradicting(pairs: list[tuple[str, str]]) -> list[list[float]]:
+        return [[0.95, 0.02, 0.03] for _ in pairs]
+
+    result = verify_quoted_claims(["Claim."], PASSAGES, [], "Q?", contradicting)
+    assert result.support_score == 0.0
+    assert result.unsupported == ["Claim."]

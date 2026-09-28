@@ -40,6 +40,8 @@ from medrag_core.verification import Verification
 Retriever = Callable[..., Sequence[Any]]
 GeneratorFn = Callable[..., Generation]
 Verifier = Callable[[list[str], list[str]], Verification]
+# (statements, passages, evidence quotes, question) -> verification; see build_graph.
+QuotedVerifier = Callable[[list[str], list[str], Sequence[QuotedClaim], str], Verification]
 
 
 class AgentState(TypedDict, total=False):
@@ -77,10 +79,12 @@ def build_graph(
     settings: LoopSettings | None = None,
     clock: Callable[[], float] = time.monotonic,
     rewrite: Callable[[str], str] | None = None,
+    verify_quoted: QuotedVerifier | None = None,
 ) -> CompiledStateGraph[AgentState, None, AgentState, AgentState]:
     """With `rewrite`, retrieval searches for the question together with its clinical
     rewording (refinement adds the unsupported statements to that); the generator still
-    answers the user's own question."""
+    answers the user's own question. With `verify_quoted`, each draft is checked with its
+    evidence quotes instead of by `verify` (see medrag_core.verification.verify_quoted_claims)."""
     settings = settings or LoopSettings()
 
     def prepare(state: AgentState) -> AgentState:
@@ -149,7 +153,12 @@ def build_graph(
                 if generation.claim
                 else generation.rationale
             )
-            verification = verify(statements, state["context"])
+            if verify_quoted is not None:
+                verification = verify_quoted(
+                    statements, state["context"], generation.evidence, state["question"]
+                )
+            else:
+                verification = verify(statements, state["context"])
         except ProviderUnavailableError:
             raise
         except Exception as exc:

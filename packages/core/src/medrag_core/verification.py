@@ -8,7 +8,12 @@ The NLI model itself is injected, so this module stays framework-free.
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 
-from medrag_core.evidence import normalize_statement
+from medrag_core.evidence import (
+    QuotedClaim,
+    assess_quoted_claims,
+    ground_in_question,
+    normalize_statement,
+)
 
 VERIFICATION_THRESHOLD = 0.7
 
@@ -104,3 +109,36 @@ def verify_with_contradictions(
             unsupported.append(claim)
     support = 0.0 if vetoed else (len(claims) - len(unsupported)) / len(claims)
     return Verification(support_score=support, unsupported=unsupported, best_scores=best_scores)
+
+
+def verify_quoted_claims(
+    statements: Sequence[str],
+    passages: Sequence[str],
+    quotes: Sequence[QuotedClaim],
+    question: str,
+    probabilities: ProbabilityFn,
+    *,
+    threshold: float = VERIFICATION_THRESHOLD,
+) -> Verification:
+    """The loop's check with evidence quotes (not in the research work): the same rules
+    as the answer shown to the user (medrag_core.evidence.assess_quoted_claims, then
+    ground_in_question), so a draft is only accepted when it would be shown, and a draft
+    without valid quotes is refined instead. A contradicted statement vetoes the draft,
+    as in verify_with_contradictions."""
+    assessment = ground_in_question(
+        assess_quoted_claims(statements, quotes, passages, probabilities, threshold=threshold),
+        question,
+        probabilities,
+        threshold=threshold,
+    )
+    checked = assessment.statements
+    if not checked:
+        return Verification(support_score=1.0, unsupported=[], best_scores=[])
+    unsupported = [s.statement for s in checked if not s.supported]
+    vetoed = any(s.contradicted for s in checked)
+    support = 0.0 if vetoed else (len(checked) - len(unsupported)) / len(checked)
+    return Verification(
+        support_score=support,
+        unsupported=unsupported,
+        best_scores=[s.support for s in checked],
+    )

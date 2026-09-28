@@ -1,6 +1,6 @@
 import json
 import random
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from pathlib import Path
 from typing import Any
 
@@ -8,6 +8,7 @@ import pytest
 
 from medrag_agent.errors import QuotaExhaustedError
 from medrag_agent.graph import build_graph, to_loop_result
+from medrag_core.evidence import QuotedClaim
 from medrag_core.loop import Generation, IterationRecord, StopReason, run_self_medrag
 from medrag_core.policy import FinalAnswerRule, LoopSettings, RefinementStrategy
 from medrag_core.verification import Verification
@@ -300,3 +301,29 @@ def test_quota_errors_in_rewrite_stop_the_run() -> None:
     )
     with pytest.raises(QuotaExhaustedError):
         graph.invoke({"question": "Is it?"})
+
+
+def test_quoted_verification_checks_each_draft_with_its_quotes() -> None:
+    fakes = Fakes([])
+    quote = QuotedClaim("stmt-1-a", 1, "the quote")
+    seen: list[tuple[list[str], list[str], tuple[QuotedClaim, ...], str]] = []
+
+    def generate(*args: Any, **kwargs: Any) -> Generation:
+        return replace(fakes.generate(*args, **kwargs), evidence=(quote,))
+
+    def verify_quoted(
+        statements: list[str], context: list[str], quotes: Any, question: str
+    ) -> Verification:
+        seen.append((statements, context, tuple(quotes), question))
+        return Verification(support_score=1.0, unsupported=[], best_scores=[])
+
+    graph = build_graph(
+        retrieve=fakes.retrieve,
+        generate=generate,
+        verify=fakes.verify,  # scripted with no steps: fails if called
+        verify_quoted=verify_quoted,
+    )
+    state = graph.invoke({"question": "Is it?"})
+
+    assert seen == [(["stmt-1-a", "stmt-1-b"], ["b1", "b2", "d1"], (quote,), "Is it?")]
+    assert state["stop_reason"] == StopReason.ACCEPTED.value
