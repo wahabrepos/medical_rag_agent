@@ -68,6 +68,7 @@ class KnowledgePassage(Passage):
 
     book: str = ""
     source: str = "textbook"
+    url: str | None = None  # page of the source, when it has one (MedlinePlus)
 
 
 class KnowledgeIndex:
@@ -108,9 +109,15 @@ class KnowledgeIndex:
             chunk_id=-(CHUNK_ID_OFFSET + position),
             document_id=KNOWLEDGE_DOCUMENT_ID,
             pmid=0,
-            title=book_title(row["book"], row["title"]),
+            title=(
+                book_title(row["book"], row["title"])
+                if row.get("source", "textbook") == "textbook"
+                else row["title"]
+            ),
             text=row["text"],
             book=row["book"],
+            source=row.get("source", "textbook"),
+            url=row.get("url"),
         )
 
     def search(self, query: str, k: int = 5, *, candidates: int = 10) -> list[int]:

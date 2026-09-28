@@ -112,3 +112,34 @@ def test_mismatched_files_are_rejected(index_dir: Path) -> None:
     index = KnowledgeIndex.load(index_dir, embed_query)
     with pytest.raises(ValueError, match="different sizes"):
         KnowledgeIndex(index.rows[:2], index.vectors, index.bm25, embed_query)
+
+
+def test_sources_other_than_textbooks_keep_their_title_and_link(index_dir: Path) -> None:
+    rows = [
+        {
+            "id": "m-1",
+            "corpus_order": 0,
+            "book": "MedlinePlus",
+            "source": "medlineplus",
+            "title": "Diabetes",
+            "url": "https://medlineplus.gov/diabetes.html",
+            "text": TEXTS[0],
+        },
+        *[
+            {"id": f"b_{i}", "corpus_order": i, "book": "Book", "title": f"T{i}", "text": t}
+            for i, t in enumerate(TEXTS[1:], start=1)
+        ],
+    ]
+    with gzip.open(index_dir / "chunks.jsonl.gz", "wt", encoding="utf-8") as fh:
+        fh.writelines(json.dumps(r) + "\n" for r in rows)
+    (index_dir / "bm25.npz").unlink(missing_ok=True)
+
+    index = KnowledgeIndex.load(index_dir, embed_query)
+    medline, book = index.passage(0), index.passage(1)
+
+    assert (medline.source, medline.title, medline.url) == (
+        "medlineplus",
+        "Diabetes",
+        "https://medlineplus.gov/diabetes.html",
+    )
+    assert (book.source, book.title, book.url) == ("textbook", "Book: T1", None)
