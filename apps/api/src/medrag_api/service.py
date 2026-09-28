@@ -137,7 +137,11 @@ class AnswerService:
                         source=source,
                         pmid=p.pmid if source == "pubmed" else None,
                         title=p.title,
-                        url=PUBMED_URL.format(pmid=p.pmid) if source == "pubmed" else None,
+                        url=(
+                            PUBMED_URL.format(pmid=p.pmid)
+                            if source == "pubmed"
+                            else getattr(p, "url", None)
+                        ),
                         passage=p.text,
                     )
                 )

@@ -353,3 +353,26 @@ def test_textbook_citations_have_no_pubmed_link(make_client: Callable[..., TestC
     (citation,) = body["citations"]
     assert (citation["source"], citation["pmid"], citation["url"]) == ("textbook", None, None)
     assert body["evidence"]["statements"][0]["supporting_pmid"] is None
+
+
+def test_medlineplus_citations_link_to_the_topic(make_client: Callable[..., TestClient]) -> None:
+    topic = KnowledgePassage(
+        -(10**10),
+        -2,
+        0,
+        "Diabetes",
+        PASSAGES[0].text,
+        book="MedlinePlus",
+        source="medlineplus",
+        url="https://medlineplus.gov/diabetes.html",
+    )
+    client = make_client(FakeComponents(answer("B", "supported claim"), passages=[topic]))
+
+    body = client.post("/v1/ask", json={"question": "Which drug?"}, headers=AUTH).json()
+
+    (citation,) = body["citations"]
+    assert (citation["source"], citation["pmid"], citation["url"]) == (
+        "medlineplus",
+        None,
+        "https://medlineplus.gov/diabetes.html",
+    )
