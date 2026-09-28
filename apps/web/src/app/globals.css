@@ -508,3 +508,8 @@ mark {
   background: var(--info-bg);
   font-size: 0.9rem;
 }
+
+.searched {
+  margin: 0 0 8px;
+  font-size: 0.92rem;
+}

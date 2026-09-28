@@ -35,11 +35,17 @@ export function steps(events: ProgressEvent[]): Step[] {
 
 export function Progress({ events, busy }: { events: ProgressEvent[]; busy: boolean }) {
   const list = steps(events);
+  const rewritten = events.find((e) => e.event === "rewritten");
   return (
     <section className="card progress" aria-label="Progress">
       <h2 className="section-title">
         {busy ? "Searching and checking the literature…" : "How the answer was found"}
       </h2>
+      {rewritten?.event === "rewritten" && (
+        <p className="searched">
+          Also searched in clinical terms: <strong>{rewritten.data.query}</strong>
+        </p>
+      )}
       <ol aria-live="polite">
         {list.length === 0 && busy && <li className="muted">Starting…</li>}
         {list.map((s) => (

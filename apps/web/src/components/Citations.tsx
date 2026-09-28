@@ -17,6 +17,11 @@ function Passage({ text, quotes }: { text: string; quotes: string[] }) {
   return <p className="passage">{text}</p>;
 }
 
+const SOURCE_LABELS: Record<string, string> = {
+  textbook: "Textbook (research evaluation only)",
+  medlineplus: "MedlinePlus (NLM)",
+};
+
 function Item({ citation, index, quotes }: { citation: Citation; index: number; quotes: string[] }) {
   return (
     <li id={`citation-${index + 1}`}>
@@ -34,7 +39,7 @@ function Item({ citation, index, quotes }: { citation: Citation; index: number; 
         )}
         {citation.source !== "pubmed" && (
           <span className="badge neutral" title="Not a PubMed study">
-            {citation.source === "textbook" ? "Textbook (research evaluation only)" : citation.source}
+            {SOURCE_LABELS[citation.source] ?? citation.source}
           </span>
         )}
         {quotes.length > 0 && <span className="badge ok">quoted</span>}
@@ -70,6 +75,9 @@ export function Citations({
         </ol>
       ) : (
         <p className="muted">No retrieved passage supports the reasoning.</p>
+      )}
+      {citations.some((c) => c.source === "medlineplus") && (
+        <p className="hint">Courtesy of MedlinePlus from the National Library of Medicine.</p>
       )}
       {others.length > 0 && (
         <details className="other-sources">

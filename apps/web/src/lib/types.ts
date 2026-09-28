@@ -67,6 +67,7 @@ export interface AskResponse {
 
 /** Progress events of POST /v1/ask/stream, before the final "answer" event. */
 export type ProgressEvent =
+  | { event: "rewritten"; data: { query: string } }
   | { event: "retrieved"; data: { iteration: number; passages: number } }
   | { event: "generated"; data: { iteration: number; draft_answer?: string } }
   | { event: "verified"; data: { iteration: number; support: number; decision?: string | null } }
