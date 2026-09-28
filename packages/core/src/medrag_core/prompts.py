@@ -74,7 +74,12 @@ EVIDENCE_QUOTES_INSTRUCTION = (
     'rationale claim that a passage supports: {"claim": "<the claim, exactly as in the '
     'rationale>", "passage": <passage number>, "quote": "<the sentence from that passage '
     'that supports the claim, copied word for word>"}. Claims based on general medical '
-    "knowledge rather than a passage get no evidence entry."
+    "knowledge rather than a passage get no evidence entry, and a claim without one counts "
+    "as unsupported, so the answer is not shown. Prefer claims that link the "
+    "question's findings to your answer (for example 'frequent urination and extreme thirst "
+    "are symptoms of diabetes') over claims that only restate the question. Keep each "
+    "claim to what its quote states: do not add words such as 'common', 'classic' or "
+    "'typical' that the quote does not say."
 )
 
 # With both options, the answer claim needs its own quote to count as supported.
