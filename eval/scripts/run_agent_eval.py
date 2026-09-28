@@ -197,6 +197,11 @@ def main() -> int:
         help="ask for claims with verbatim quotes; only quoted, verified claims count",
     )
     ap.add_argument(
+        "--query-rewrite",
+        action="store_true",
+        help="search for the question rewritten into clinical terms (one extra LLM call)",
+    )
+    ap.add_argument(
         "--knowledge-dir",
         type=Path,
         default=None,
@@ -260,6 +265,7 @@ def main() -> int:
             live_pubmed=args.live_pubmed,
             evidence_quotes=args.evidence_quotes,
             knowledge_dir=args.knowledge_dir,
+            query_rewrite=args.query_rewrite,
         )
         ledger = SpendLedger(LEDGER, cap=args.budget)
         gen = agent.generator
@@ -341,6 +347,8 @@ def main() -> int:
                         for ps in state.get("iteration_passages", [])
                     ],
                     "knowledge_dir": str(args.knowledge_dir) if args.knowledge_dir else None,
+                    "query_rewrite": args.query_rewrite,
+                    "rewritten_query": state.get("rewritten_query"),
                     "knowledge_books": [
                         [p.book for p in ps if hasattr(p, "book")]
                         for ps in state.get("iteration_passages", [])
