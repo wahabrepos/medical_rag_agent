@@ -5,6 +5,7 @@ description = "Corpus ingestion jobs: load, chunk, embed, index."
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "datasets>=4.0",
+    "defusedxml>=0.7",
     "medrag-core",
     "medrag-db",
     "medrag-inference",

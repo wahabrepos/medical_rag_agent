@@ -1071,6 +1071,7 @@ version = "0.1.0"
 source = { editable = "workers/ingest" }
 dependencies = [
     { name = "datasets" },
+    { name = "defusedxml" },
     { name = "medrag-core" },
     { name = "medrag-db" },
     { name = "medrag-inference" },
@@ -1081,6 +1082,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "datasets", specifier = ">=4.0" },
+    { name = "defusedxml", specifier = ">=0.7" },
     { name = "medrag-core", editable = "packages/core" },
     { name = "medrag-db", editable = "packages/db" },
     { name = "medrag-inference", editable = "services/inference" },
