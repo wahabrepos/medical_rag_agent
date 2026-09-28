@@ -13,7 +13,7 @@ They state the plain symptom-to-condition knowledge that research abstracts rare
         --out data/knowledge/medlineplus
 
 Writes the files medrag_search.knowledge.KnowledgeIndex loads (chunks.jsonl.gz,
-vectors.npz, vectors.manifest.json); BM25 is built on first load.
+vectors.npz, vectors.manifest.json, bm25.npz), so the index can be mounted read-only.
 """
 
 import argparse
@@ -181,6 +181,7 @@ def main() -> None:
     args = ap.parse_args()
 
     from medrag_inference import BgeEmbedder
+    from medrag_search.bm25 import BM25Index
 
     rows = records(args.xml)
     args.out.mkdir(parents=True, exist_ok=True)
@@ -196,7 +197,9 @@ def main() -> None:
         f"{PROFILE}_vectors": vectors.astype(np.float16),
     }
     np.savez(out, **arrays)  # type: ignore[arg-type]
-    (args.out / "bm25.npz").unlink(missing_ok=True)  # rebuilt for the new chunks
+    BM25Index.from_texts((str(r["text"]) for r in rows), list(range(len(rows)))).save(
+        args.out / "bm25.npz"
+    )
     manifest = {
         "source": args.xml.name,
         "attribution": ATTRIBUTION,
