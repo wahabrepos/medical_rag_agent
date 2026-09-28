@@ -38,7 +38,9 @@ if [ "$VERIFIER" = minicheck ]; then
     services/inference/tests/test_minicheck_model.py
 fi
 
-# Serve on localhost only; the Jetson reaches it through an SSH tunnel.
+# Serve on localhost only; the Jetson reaches it through an SSH tunnel. A service left
+# running by an earlier setup is stopped first, so the script can be run again.
+pkill -f "uvicorn medrag_inference.app:app" && sleep 2 || true
 VERIFIER="$VERIFIER" INFERENCE_DEVICE=cuda nohup .venv/bin/python -m uvicorn medrag_inference.app:app \
   --host 127.0.0.1 --port 8001 > inference.log 2>&1 &
 for _ in $(seq 60); do curl -sf localhost:8001/healthz && echo && exit 0; sleep 2; done
