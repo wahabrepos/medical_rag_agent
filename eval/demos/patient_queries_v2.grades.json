@@ -1,0 +1,102 @@
+{
+  "1": {
+    "verdict": "match",
+    "note": "angina, the symptom of stable coronary artery disease"
+  },
+  "2": {
+    "verdict": "different",
+    "note": "says who gets diagnostic mammography, names no diagnosis"
+  },
+  "3": {
+    "verdict": "match",
+    "note": "appendicitis; the shown statements only describe the pain"
+  },
+  "4": {
+    "verdict": "match",
+    "note": "diabetes, from MedlinePlus symptom lists"
+  },
+  "5": {
+    "verdict": "match",
+    "note": "urgent evaluation for possible meningitis"
+  },
+  "6": {
+    "verdict": "match",
+    "note": "retinal detachment"
+  },
+  "7": {
+    "verdict": "partial",
+    "note": "hip fracture, not the femoral neck specifically"
+  },
+  "8": {
+    "verdict": "different",
+    "note": "restates a case report about weakness and myalgia"
+  },
+  "9": {
+    "verdict": "match",
+    "note": "sepsis"
+  },
+  "10": {
+    "verdict": "declined",
+    "note": "no diagnosis"
+  },
+  "11": {
+    "verdict": "partial",
+    "note": "colorectal cancer listed among possible causes"
+  },
+  "12": {
+    "verdict": "match",
+    "note": "lung cancer"
+  },
+  "13": {
+    "verdict": "match",
+    "note": "gallstone attacks"
+  },
+  "14": {
+    "verdict": "match",
+    "note": "inguinal hernia"
+  },
+  "15": {
+    "verdict": "partial",
+    "note": "diabetes, type not given"
+  },
+  "16": {
+    "verdict": "match",
+    "note": "heart failure"
+  },
+  "17": {
+    "verdict": "partial",
+    "note": "arrhythmia, not atrial fibrillation"
+  },
+  "18": {
+    "verdict": "match",
+    "note": "urinary tract infection"
+  },
+  "19": {
+    "verdict": "match",
+    "note": "pneumonia"
+  },
+  "20": {
+    "verdict": "different",
+    "note": "cataracts; the eye pain left unexplained"
+  },
+  "21": {
+    "verdict": "match",
+    "note": "macular degeneration"
+  },
+  "22": {
+    "verdict": "match",
+    "note": "ACL injury"
+  },
+  "23": {
+    "verdict": "partial",
+    "note": "sciatica, not its cause (disc herniation)"
+  },
+  "24": {
+    "verdict": "different",
+    "note": "peripheral nerve disorder"
+  },
+  "25": {
+    "verdict": "match",
+    "note": "low blood pressure from blood loss"
+  }
+}
