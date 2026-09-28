@@ -91,12 +91,18 @@ services:
       NLI_URL: ${MEDRAG_NLI_URL:-http://inference:8001}
       EVIDENCE_QUOTES: "true"
       ANSWER_POLICY: evidence_gated
+      # Patient-style questions: search in clinical terms too, add live PubMed abstracts
+      # and MedlinePlus health topics (set by make once make knowledge-medlineplus ran).
+      QUERY_REWRITE: "true"
+      LIVE_PUBMED: "true"
+      KNOWLEDGE_DIR: ${MEDRAG_KNOWLEDGE_DIR:-}
       CORS_ORIGINS: ""
       # The one LLM spend ledger (and budget cap) shared with local runs.
       LLM_SPEND_LEDGER: /app/host-data/llm_spend.json
     volumes:
       - indexes:/app/data/indexes:ro
       - ../data:/app/host-data
+      - ../data/knowledge:/app/data/knowledge:ro
       - ${HF_CACHE_DIR:-hf-cache}:/cache/huggingface
     extra_hosts:
       - host.docker.internal:host-gateway  # a verifier tunnelled to the host
