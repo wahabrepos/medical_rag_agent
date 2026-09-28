@@ -1,0 +1,17 @@
+# Keep secrets, data, caches and history out of images and the build context.
+**/.env
+**/.env.*
+!**/.env.example
+.git
+data/
+eval/runs/
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/node_modules
+apps/web/.next
+apps/web/out
+docs/adr/
+docs/media/
